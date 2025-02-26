@@ -1,6 +1,90 @@
 <?php
 include 'database_connection.php';
 
+function upload_profile_image($file, $idNumber) {
+    $db = Database::getInstance();
+    $con = $db->getConnection();
+
+    // ✅ Ensure correct folder path
+    $targetDir = __DIR__ . "/../images/";  
+    $fileName = time() . "_" . basename($file["name"]); // Prevent duplicate filenames
+    $targetFilePath = $targetDir . $fileName;
+    $imageFileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
+
+    // ✅ Validate Image File
+    if (!getimagesize($file["tmp_name"])) {
+        return "Error: Uploaded file is not an image.";
+    }
+
+    // ✅ Check file size (Max: 2MB)
+    if ($file["size"] > 2097152) {
+        return "Error: File size too large. Max 2MB.";
+    }
+
+    // ✅ Allowed file types
+    $allowedTypes = ["jpg", "jpeg", "png", "gif"];
+    if (!in_array($imageFileType, $allowedTypes)) {
+        return "Error: Invalid file type.";
+    }
+
+    // ✅ Move file & update database
+    if (move_uploaded_file($file["tmp_name"], $targetFilePath)) {
+        // ✅ Save only the filename in DB, not the full path
+        $sql = "UPDATE students SET profile_image = ? WHERE id_number = ?";
+        $stmt = $con->prepare($sql);
+        if (!$stmt) {
+            die("SQL Prepare Failed: " . $con->error);
+        }
+        $stmt->bind_param("ss", $fileName, $idNumber);
+
+        if ($stmt->execute()) {
+            $_SESSION["profile_image"] = $fileName; // ✅ Update session
+            return "Success";
+        } else {
+            return "Database update failed: " . $stmt->error;
+        }
+    } else {
+        return "Error: Could not move uploaded file.";
+    }
+}
+
+
+
+
+
+
+// ✅ Edit Student Profile (Now includes Profile Image)
+function edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $email, $course, $address, $profile_image)
+{
+    $db = Database::getInstance();
+    $con = $db->getConnection();
+
+    $sql = "UPDATE students SET 
+                lastName = ?, 
+                firstName = ?, 
+                middleName = ?, 
+                yearLevel = ?, 
+                course = ?, 
+                email = ?, 
+                address = ?, 
+                profile_image = ? 
+            WHERE id_number = ?";
+
+    $stmt = $con->prepare($sql);
+    if (!$stmt) {
+        die("Error preparing SQL: " . $con->error);
+    }
+
+    $stmt->bind_param("sssssssss", $last_Name, $first_Name, $middle_Name, $course_Level, $course, $email, $address, $profile_image, $idNum);
+
+    if ($stmt->execute()) {
+        echo "Profile updated successfully!<br>";
+        return true;
+    } else {
+        die("Database update failed: " . $stmt->error);
+    }
+}
+
 
 function loginStudent()
 {
@@ -52,19 +136,6 @@ function retrieve_student_history($idNumber){
     return $listPerson;
 }
 
-function edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $email, $course, $address)
-{
-    $db = Database::getInstance();
-    $con = $db->getConnection();
-
-    $sql = "UPDATE `students` SET  `lastName` = '$last_Name', `firstName`= '$first_Name', `middleName`= '$middle_Name', `yearLevel`= '$course_Level', `course` = '$course', `email` = '$email', `address`= '$address' WHERE `id_number` = '$idNum'";
-
-    if (mysqli_query($con, $sql)) {
-        return true;
-    } else {
-        return false;
-    }
-}
 function view_announcement()
 {
     $db = Database::getInstance();

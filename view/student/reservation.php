@@ -36,110 +36,69 @@ require_once '../asset/navbar_student.php';
 
 <body>
 
-    <div class="container container-fluid container-lg ">
+<div class="container">
+    <h4 class="text-center my-4">Reservation</h4>
 
+    <form action="Reservation.php" method="POST">
+        <div class="row g-3">
+            <!-- Left Column -->
+            <div class="col-md-6">
+                <label for="id" class="form-label">ID Number</label>
+                <input id="id" name="id_number" type="text" value="<?php echo $_SESSION['id_number'] ?>" readonly class="form-control">
 
+                <label for="name" class="form-label mt-3">Student Name</label>
+                <input id="name" name="studentName" type="text" value="<?php echo  $_SESSION['name'] ?>" readonly class="form-control">
 
-        <br>
-        <br>
-        <h4 class="text-center">Reservation</h4>
+                <label for="purposes" class="form-label mt-3">Purpose</label>
+                <select name="purpose" id="purposes" class="form-select" required>
+                    <option value="C Programming" <?php if($programming == "C Programming") echo 'selected'; ?>>C Programming</option>
+                    <option value="Java Programming" <?php if($programming == "Java Programming") echo 'selected'; ?>>Java Programming</option>
+                    <option value="C# Programming" <?php if($programming == "C# Programming") echo 'selected'; ?>>C# Programming</option>
+                    <option value="Php Programming" <?php if($programming == "Php Programming") echo 'selected'; ?>>Php Programming</option>
+                    <option value="ASP.Net Programming" <?php if($programming == "ASP.Net Programming") echo 'selected'; ?>>ASP.Net Programming</option>
+                </select>
 
-        <form action="Reservation.php" method="POST">
-            <div class=" container mx-5 col-md-11 my-5">
-
-                <div class="form-group row">
-                    <label for="id" class="col-sm-4 col-form-label">ID Number:</label>
-                    <div class="col-sm-8">
-                        <input id="id" name="id_number" type="text" value="<?php echo $_SESSION['id_number'] ?>" readonly class="form-control" />
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label for="name" class="col-sm-4 col-form-label">Student Name:</label>
-                    <div class="col-sm-8">
-                        <input id="name" name="studentName" type="text" value="<?php echo  $_SESSION['name'] ?>" readonly class="form-control" />
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label for="purposes" class="col-sm-4 col-form-label">Purpose:</label>
-                    <div class="col-sm-8">
-                        <select name="purpose" id="purposes" class="form-control" required>
-                            <option value="C Programming" <?php if($programming == "C Programming") echo 'selected'; ?>>C Programming</option>
-                            <option value="Java Programming" <?php if($programming == "Java Programming") echo 'selected'; ?>>Java Programming</option>
-                            <option value="C# Programming" <?php if($programming == "C# Programming") echo 'selected'; ?>>C# Programming</option>
-                            <option value="Php Programming" <?php if($programming == "Php Programming") echo 'selected'; ?>>Php Programming</option>
-                            <option value="ASP.Net Programming" <?php if($programming == "ASP.Net Programming") echo 'selected'; ?>>ASP.Net Programming</option>
-                        </select>
-                    </div>
-                </div>
-                <form action="Reservation.php" method="POST" onsubmit="updateHiddenField()">
-                    <div class="form-group row">
-                        <label for="lab" class="col-sm-4 col-form-label">Lab:</label>
-                        <div class="col-sm-8">
-                            <select name="lab" id="lab"  class="form-control" required>
-                                <option value="524" <?php if($selected_lab == "524") echo 'selected'; ?>>524</option>
-                                <option value="526" <?php if($selected_lab == "526") echo 'selected'; ?>>526</option>
-                                <option value="528" <?php if($selected_lab == "528") echo 'selected'; ?>>528</option>
-                                <option value="530" <?php if($selected_lab == "530") echo 'selected'; ?>>530</option>
-                                <option value="542" <?php if($selected_lab == "542") echo 'selected'; ?>>542</option>
-                                <option value="Mac" <?php if($selected_lab == "Mac") echo 'selected'; ?>>Mac Laboratory</option>
-                            </select>
-                            <button class="btn btn-primary mt-2" type="submit" name="submitReserve">Submit</button>
-                        </div>
-                    </div>
-                </form>
-             
-
-                <?php
-               
-
-                    if ($result) {
-                        ?>
-            
-            <div class='form-group row'>
-                <label for='pc_number' class='col-sm-4 col-form-label'>Available PC:</label>
-                    <div class='col-sm-8'>
-                        <select name="pc_number" id="pc_number" class='form-control'>
-                            <?php foreach($result as $row): ?>
-                                <option value="<?php echo $row['pc_id']; ?>"><?php echo $row['pc_id']; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                <label for="lab" class="form-label mt-3">Lab</label>
+                <select name="lab" id="lab" class="form-select" required>
+                    <option value="524" <?php if($selected_lab == "524") echo 'selected'; ?>>524</option>
+                    <option value="526" <?php if($selected_lab == "526") echo 'selected'; ?>>526</option>
+                    <option value="528" <?php if($selected_lab == "528") echo 'selected'; ?>>528</option>
+                    <option value="530" <?php if($selected_lab == "530") echo 'selected'; ?>>530</option>
+                    <option value="542" <?php if($selected_lab == "542") echo 'selected'; ?>>542</option>
+                    <option value="Mac" <?php if($selected_lab == "Mac") echo 'selected'; ?>>Mac Laboratory</option>
+                </select>
             </div>
-            
-                   <?php
-                    } 
-                ?>
 
+            <!-- Right Column -->
+            <div class="col-md-6">
+                <?php if ($result): ?>
+                    <label for="pc_number" class="form-label">Available PC</label>
+                    <select name="pc_number" id="pc_number" class="form-select">
+                        <?php foreach($result as $row): ?>
+                            <option value="<?php echo $row['pc_id']; ?>"><?php echo $row['pc_id']; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php endif; ?>
 
+                <label for="time" class="form-label">Time In</label>
+                <input class="form-control" type="time" id="time" name="time" required>
 
+                <label for="date" class="form-label mt-3">Date</label>
+                <input class="form-control" type="date" id="date" name="date" required>
 
-                <div class="form-group row">
-                    <label for="time" class="col-sm-4 col-form-label">Time In:</label>
-                    <div class="col-sm-8">
-                        <input class="form-control" type="time" id="time" name="time">
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label for="date" class="col-sm-4 col-form-label">Date:</label>
-                    <div class="col-sm-8">
-                        <input class="form-control" type="date" id="date" name="date">
-                    </div>
-                </div>
-        </form>
-
-        <div class="form-group row">
-            <label for="name" class="col-sm-4 col-form-label">Remaining Session: </label>
-            <div class="col-sm-8">
-                <input id="name" type="text" value="<?php echo  $_SESSION['remaining'] ?>" readonly class="form-control" />
+                <label for="remaining" class="form-label mt-3">Remaining Session</label>
+                <input id="remaining" type="text" value="<?php echo $_SESSION['remaining'] ?>" readonly class="form-control">
             </div>
         </div>
 
-        <div classs="form-group row align-content-end">
-            <button type="submit" name="reserve_user" class="btn btn-primary">Reserve</button>
+        <!-- Buttons -->
+        <div class="d-flex justify-content-end mt-4">
+            <button type="submit" name="submitReserve" class="btn btn-primary me-2">Submit</button>
+            <button type="submit" name="reserve_user" class="btn btn-success">Reserve</button>
         </div>
+    </form>
+</div>
 
-
-    </div>
 
     <script>
         function updateHiddenField() {
