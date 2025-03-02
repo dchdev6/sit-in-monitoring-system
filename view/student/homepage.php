@@ -30,17 +30,8 @@ $announce = view_announcement();
                 <div class="card-body flex-grow-1 text-center">
                 <img class="img-fluid rounded-circle border border-3 shadow-sm mb-3" 
      style="width: 150px; height: 150px; object-fit: cover;" 
-     src="<?php echo 'http://localhost/Sit-in-monitoring-system/images/' . ($_SESSION['profile_image'] ?? 'default-profile.png') . '?' . time(); ?>" 
+     src="<?php echo '../../images/' . ($_SESSION['profile_image'] ?? 'default-profile.png'); ?>" 
      alt="Profile Picture">
-
-
-
-
-
-
-
-
-                    
                     <p class="mb-1"><strong>Name:</strong> <?php echo $_SESSION['name']; ?></p>
                     <p class="mb-1"><strong>Course:</strong> <?php echo $_SESSION['course']; ?></p>
                     <p class="mb-1"><strong>Year:</strong> <?php echo $_SESSION['yearLevel']; ?></p>
@@ -56,13 +47,17 @@ $announce = view_announcement();
             <div class="card h-75 w-100 d-flex flex-column">
                 <h5 class="card-header text-white bg-primary"><i class="fa-solid fa-bullhorn"></i> Announcement</h5>
                 <div class="card-body flex-grow-1">
-                    <?php foreach ($announce as $row) : ?>
-                        <p><strong><?php echo $row['admin_name'] . " | " . $row['date']; ?></strong></p>
-                        <div class="card bg-light p-2">
-                            <p><?php echo $row['message']; ?></p>
-                        </div>
-                        <hr>
-                    <?php endforeach; ?>
+                    <?php if (!empty($announce)) : ?>
+                        <?php foreach ($announce as $row) : ?>
+                            <p><strong><?php echo $row['admin_name'] . " | " . $row['date']; ?></strong></p>
+                            <div class="card bg-light p-2">
+                                <p><?php echo $row['message']; ?></p>
+                            </div>
+                            <hr>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <p>No announcements available.</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -94,18 +89,17 @@ $announce = view_announcement();
     </div>
 </div>
 
-
-</body>
-
-</html>
-
 <script>
-  if (<?php echo $_SESSION["id"]; ?> === 1) {
+  if (<?php echo isset($_SESSION['login_success']) && $_SESSION['login_success'] ? 'true' : 'false'; ?>) {
     Swal.fire({
       title: "Successful Login!",
       text: "Welcome! <?php echo $_SESSION["name"]; ?>",
       icon: "success"
     });
-    <?php $_SESSION["id"] = 0; ?>
+    <?php $_SESSION['login_success'] = false; // Reset the flag ?>
   }
 </script>
+
+</body>
+
+</html>

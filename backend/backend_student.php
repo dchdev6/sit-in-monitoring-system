@@ -7,7 +7,7 @@ function upload_profile_image($file, $idNumber) {
 
     // ✅ Ensure correct folder path
     $targetDir = __DIR__ . "/../images/";  
-    $fileName = time() . "_" . basename($file["name"]); // Prevent duplicate filenames
+    $fileName = basename($file["name"]); // Prevent duplicate filenames
     $targetFilePath = $targetDir . $fileName;
     $imageFileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
 
@@ -59,6 +59,7 @@ function edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $co
     $db = Database::getInstance();
     $con = $db->getConnection();
 
+    // SQL query to update student information
     $sql = "UPDATE students SET 
                 lastName = ?, 
                 firstName = ?, 
@@ -70,21 +71,24 @@ function edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $co
                 profile_image = ? 
             WHERE id_number = ?";
 
+    // Prepare the SQL statement
     $stmt = $con->prepare($sql);
     if (!$stmt) {
         die("Error preparing SQL: " . $con->error);
     }
 
+    // Bind parameters to the SQL statement
     $stmt->bind_param("sssssssss", $last_Name, $first_Name, $middle_Name, $course_Level, $course, $email, $address, $profile_image, $idNum);
 
+    // Execute the SQL statement
     if ($stmt->execute()) {
-        echo "Profile updated successfully!<br>";
-        return true;
+        error_log("Profile updated successfully for ID: " . $idNum);
+        return true; // Update successful
     } else {
+        error_log("Database update failed: " . $stmt->error);
         die("Database update failed: " . $stmt->error);
     }
 }
-
 
 function loginStudent()
 {

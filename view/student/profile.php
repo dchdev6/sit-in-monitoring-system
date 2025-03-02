@@ -22,16 +22,16 @@ require_once '../../controller/api_student.php';
                     <h2 class="text-center fw-bold mt-5 mb-4">Edit Profile</h2>
 
                     <div class="text-center mb-3">
-                        <!-- ✅ FIXED: Uses correct profile image path -->
+                        <!-- Profile Picture Preview -->
                         <img id="profilePreview" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;" 
-                             src="<?php echo !empty($_SESSION['profile_image']) ? '../images/' . $_SESSION['profile_image'] : '../images/hutao.webp'; ?>" 
+                             src="<?php echo !empty($_SESSION['profile_image']) ? '../../images/' . $_SESSION['profile_image'] : '../../images/default-profile.jpg'; ?>" 
                              alt="Profile Picture">
                     </div>
 
                     <div class="mb-3 text-center">
                         <label for="profileImage" class="form-label">Upload Profile Picture</label>
                         <input type="file" class="form-control" id="profileImage" name="profile_image" accept="image/*" onchange="previewImage(event)">
-                        <!-- ✅ FIXED: Keep old profile image if no new file is uploaded -->
+                        <!-- Hidden field to retain existing image if no new file is uploaded -->
                         <input type="hidden" name="existing_profile_image" value="<?php echo $_SESSION['profile_image']; ?>">
                     </div>
 
@@ -39,6 +39,7 @@ require_once '../../controller/api_student.php';
                         <div class="col-md-6">
                             <label for="idNumber" class="form-label">ID Number</label>
                             <input type="text" value="<?php echo $_SESSION["id_number"]; ?>" id="idNumber" class="form-control" name="idNumber" readonly>
+                            <input type="hidden" name="idNumber" value="<?php echo $_SESSION['id_number']; ?>">
 
                             <label for="lName" class="form-label mt-3">Last Name</label>
                             <input type="text" value="<?php echo $_SESSION["lname"]; ?>" id="lName" class="form-control" name="lName" required>
