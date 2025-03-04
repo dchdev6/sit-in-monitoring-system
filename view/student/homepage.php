@@ -1,4 +1,5 @@
 <?php
+
 require_once '../../includes/navbar_student.php';
 
 $announce = view_announcement();

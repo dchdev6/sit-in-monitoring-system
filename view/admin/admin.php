@@ -1,6 +1,6 @@
 <?php
 
-include '../../Controller/api_admin.php';
+include '../../api/api_admin.php';
 
 
 $announce = view_announcement();

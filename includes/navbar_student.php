@@ -65,12 +65,12 @@ include '../../api/api_student.php';
                     <a class="nav-link text-dark" href="history.php">History</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-dark" href="Reservation.php">Reservation</a>
+                    <a class="nav-link text-dark" href="reservation.php">Reservation</a>
                 </li>
 
                 <!-- Logout Button -->
                 <li class="nav-item">
-                    <a class="nav-link text-dark" href="../../Login.php">Log out</a>
+                    <a class="nav-link text-dark" href="../../auth/logout.php">Log out</a>
                 </li>
             </ul>
         </div>
