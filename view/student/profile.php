@@ -1,7 +1,7 @@
 <?php
 
-require_once '../asset/navbar_student.php';
-require_once '../../controller/api_student.php';
+require_once '../../includes/navbar_student.php';
+require_once '../../api/api_student.php';
 ?>
 
 <!DOCTYPE html>
@@ -24,7 +24,7 @@ require_once '../../controller/api_student.php';
                     <div class="text-center mb-3">
                         <!-- Profile Picture Preview -->
                         <img id="profilePreview" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;" 
-                             src="<?php echo !empty($_SESSION['profile_image']) ? '../../images/' . $_SESSION['profile_image'] : '../../images/default-profile.jpg'; ?>" 
+                             src="<?php echo !empty($_SESSION['profile_image']) ? '../../assets/images/' . $_SESSION['profile_image'] : '../../images/default-profile.jpg'; ?>" 
                              alt="Profile Picture">
                     </div>
 
@@ -56,10 +56,28 @@ require_once '../../controller/api_student.php';
                             <input type="email" value="<?php echo $_SESSION["email"]; ?>" id="email" class="form-control" name="email" required>
 
                             <label for="courseLevel" class="form-label mt-3">Course Level</label>
-                            <input type="text" value="<?php echo $_SESSION["yearLevel"]; ?>" id="courseLevel" class="form-control" name="courseLevel" required>
+                                <select name="courseLevel" id="courseLevel" class="form-select" required>
+                                    <option value="1" <?php echo ($_SESSION["yearLevel"] == 1) ? 'selected' : ''; ?>>1</option>
+                                    <option value="2" <?php echo ($_SESSION["yearLevel"] == 2) ? 'selected' : ''; ?>>2</option>
+                                    <option value="3" <?php echo ($_SESSION["yearLevel"] == 3) ? 'selected' : ''; ?>>3</option>
+                                    <option value="4" <?php echo ($_SESSION["yearLevel"] == 4) ? 'selected' : ''; ?>>4</option>
+                                </select>
 
-                            <label for="course" class="form-label mt-3">Course</label>
-                            <input type="text" value="<?php echo $_SESSION["course"]; ?>" id="course" class="form-control" name="course" required>
+                                <label for="course" class="form-label mt-3">Course</label>
+                                    <select name="course" id="course" class="form-select" required>
+                                        <option value="BSCS" <?php echo ($_SESSION["course"] == 'BSCS') ? 'selected' : ''; ?>>Bachelor of Science in Computer Science</option>
+                                        <option value="BSIT" <?php echo ($_SESSION["course"] == 'BSIT') ? 'selected' : ''; ?>>Bachelor of Science in Information Technology</option>
+                                        <option value="BSIS" <?php echo ($_SESSION["course"] == 'BSIS') ? 'selected' : ''; ?>>Bachelor of Science in Information System</option>
+                                        <option value="BSP" <?php echo ($_SESSION["course"] == 'BSP') ? 'selected' : ''; ?>>Bachelor of Science in Psychology</option>
+                                        <option value="BSBA" <?php echo ($_SESSION["course"] == 'BSBA') ? 'selected' : ''; ?>>Bachelor of Science in Business Administration</option>
+                                        <option value="BSN" <?php echo ($_SESSION["course"] == 'BSN') ? 'selected' : ''; ?>>Bachelor of Science in Nursing</option>
+                                        <option value="BSM" <?php echo ($_SESSION["course"] == 'BSM') ? 'selected' : ''; ?>>Bachelor of Science in Midwifery</option>
+                                        <option value="BAB" <?php echo ($_SESSION["course"] == 'BAB') ? 'selected' : ''; ?>>Bachelor of Arts in Broadcasting</option>
+                                        <option value="BAC" <?php echo ($_SESSION["course"] == 'BAC') ? 'selected' : ''; ?>>Bachelor of Arts in Communication</option>
+                                        <option value="BADC" <?php echo ($_SESSION["course"] == 'BADC') ? 'selected' : ''; ?>>Bachelor of Arts in Development Communication</option>
+                                        <option value="BAJ" <?php echo ($_SESSION["course"] == 'BAJ') ? 'selected' : ''; ?>>Bachelor of Arts in Journalism</option>
+                                        <option value="BAMC" <?php echo ($_SESSION["course"] == 'BAMC') ? 'selected' : ''; ?>>Bachelor of Arts in Mass Communication</option>
+                                    </select>
 
                             <label for="address" class="form-label mt-3">Address</label>
                             <input type="text" value="<?php echo $_SESSION["address"]; ?>" id="address" class="form-control" name="address" required>

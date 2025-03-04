@@ -1,8 +1,10 @@
 <?php
 
-
 session_start();
 error_reporting(0);
+
+date_default_timezone_set('Asia/Manila');
+
 class Database {
     private static $instance;
     private $con;
@@ -13,7 +15,13 @@ class Database {
     private $db_port = "3306"; 
 
     private function __construct() {
-        $this->con = mysqli_connect($this->db_host, $this->db_username , $this->db_password, $this->db_name, $this->db_port);
+        $this->con = mysqli_connect(
+            $this->db_host, 
+            $this->db_username, 
+            $this->db_password, 
+            $this->db_name, 
+            $this->db_port
+        );
     }
 
     public static function getInstance() {
@@ -27,7 +35,5 @@ class Database {
         return $this->con;
     }
 }
-
-date_default_timezone_set('Asia/Manila');
 
 ?>

@@ -1,5 +1,5 @@
 <?php
-require_once '../asset/navbar_student.php';
+require_once '../../includes/navbar_student.php';
 
 
  // Establish database connection

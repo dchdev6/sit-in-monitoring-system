@@ -1,5 +1,5 @@
 <?php
-include '../../Controller/api_admin.php';
+include '../../api/api_admin.php';
 
 $listPerson = retrieve_current_sit_in();
 

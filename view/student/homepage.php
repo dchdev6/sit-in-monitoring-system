@@ -1,5 +1,5 @@
 <?php
-require_once '../asset/navbar_student.php';
+require_once '../../includes/navbar_student.php';
 
 $announce = view_announcement();
 ?>
@@ -30,7 +30,7 @@ $announce = view_announcement();
                 <div class="card-body flex-grow-1 text-center">
                 <img class="img-fluid rounded-circle border border-3 shadow-sm mb-3" 
      style="width: 150px; height: 150px; object-fit: cover;" 
-     src="<?php echo '../../images/' . ($_SESSION['profile_image'] ?? 'default-profile.png'); ?>" 
+     src="<?php echo '../../assets/images/' . ($_SESSION['profile_image'] ?? 'default-profile.png'); ?>" 
      alt="Profile Picture">
                     <p class="mb-1"><strong>Name:</strong> <?php echo $_SESSION['name']; ?></p>
                     <p class="mb-1"><strong>Course:</strong> <?php echo $_SESSION['course']; ?></p>

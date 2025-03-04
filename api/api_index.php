@@ -1,6 +1,6 @@
 <?php
 
-    include 'Backend\backend_index.php';
+    include '../backend/backend_index.php';
 
     if(session_check()){
         session_destroy();
@@ -56,7 +56,7 @@ if(isset($_POST["submit"])){
         $_SESSION['admin_name'] = 'CCS Admin';
         $_SESSION['admin_id_number'] = 1;
         $_SESSION["admin_id"] = 1;
-        echo '<script>window.location.href = "View/Admin/Admin.php";</script>';
+        echo '<script>window.location.href = "../view/admin/admin.php";</script>';
     }
     else{
 
@@ -76,7 +76,7 @@ if(isset($_POST["submit"])){
         $_SESSION['remaining'] = $user["session"];
         $_SESSION["id"] = 1;
     
-        echo '<script>window.location.href = "View/Student/Homepage.php";</script>';	
+        echo '<script>window.location.href = "../view/student/homepage.php";</script>';	
     }
     else
     {

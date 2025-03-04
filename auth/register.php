@@ -1,6 +1,6 @@
 <?php 
-require_once 'navbar.php';
-require_once 'Controller\api_index.php';
+require_once '../includes/navbar.php';
+require_once '../api/api_index.php';
 
 
 

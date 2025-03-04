@@ -1,5 +1,5 @@
 <?php
-include '../../Controller/api_student.php';
+include '../../api/api_student.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,7 +8,7 @@ include '../../Controller/api_student.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CCS | Dashboard</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -21,8 +21,8 @@ include '../../Controller/api_student.php';
     <div class="container">
         <!-- Logos replacing "Dashboard" -->
         <a class="navbar-brand d-flex align-items-center" href="Homepage.php">
-            <img src="../../images/uc.png" class="img-fluid me-2" style="height: 50px; width: auto;" alt="UC Logo">
-            <img src="../../images/ccs.png" class="img-fluid" style="height: 50px; width: auto;" alt="CCS Logo">
+            <img src="../../assets/images/uc.png" class="img-fluid me-2" style="height: 50px; width: auto;" alt="UC Logo">
+            <img src="../../assets/images/ccs.png" class="img-fluid" style="height: 50px; width: auto;" alt="CCS Logo">
         </a>
         
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
