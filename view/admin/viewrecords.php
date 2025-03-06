@@ -1,6 +1,6 @@
 <?php
 
-include '../../api/api_admin.php';
+include '../../includes/navbar_admin.php';
 
 $listPerson = retrieve_current_sit_in();
 
