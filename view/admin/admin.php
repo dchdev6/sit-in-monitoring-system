@@ -1,7 +1,6 @@
 <?php
 
-include '../../api/api_admin.php';
-
+include '../../includes/navbar_admin.php';
 
 $announce = view_announcement();
 $feedback = view_feedback();
@@ -56,7 +55,7 @@ $feedback = view_feedback();
 
             <div class="column">
 
-                <div class="card" style="max-width:37rem">
+                <div class="card" style="max-width:75rem">
                     <div class=" card-header"><i class="fa-solid fa-bullhorn"></i> Announcement</div>
                     <div class="card-body" style="height:42.5rem">
                         <label for="an">New Announcement</label>

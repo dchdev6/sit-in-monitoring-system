@@ -1,6 +1,6 @@
 <?php
 
-include '../../Controller/api_admin.php';
+include '../../includes/navbar_admin.php';
 
 $user = retrieve_edit_student($_SESSION["editNum"]);
 

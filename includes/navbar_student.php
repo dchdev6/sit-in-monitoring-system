@@ -13,9 +13,18 @@ include '../../api/api_student.php';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+<style>
+    .navbar-brand:hover,
+    .nav-link:hover {
+      color: #007bff !important;
+    }
+  </style>
+
 </head>
 
 <body>
+
 
 <nav class="navbar navbar-expand-lg navbar-light bg-white">
     <div class="container">
@@ -70,7 +79,7 @@ include '../../api/api_student.php';
 
                 <!-- Logout Button -->
                 <li class="nav-item">
-                    <a class="nav-link text-dark" href="../../auth/logout.php">Log out</a>
+                    <a class="nav-link text-dark" href="index.php">Log out</a>
                 </li>
             </ul>
         </div>

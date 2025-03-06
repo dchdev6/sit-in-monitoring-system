@@ -1,5 +1,6 @@
 <?php
-include '../../Controller/api_admin.php';
+
+include '../../includes/navbar_admin.php';
 
 $listPerson = retrieve_sit_in();
 ?>

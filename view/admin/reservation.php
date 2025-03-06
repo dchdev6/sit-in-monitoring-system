@@ -1,5 +1,7 @@
 <?php
-include '../../Controller/api_admin.php';
+
+include '../../includes/navbar_admin.php';
+
 ?>
 
 <!DOCTYPE html>
