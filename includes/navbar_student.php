@@ -79,7 +79,7 @@ include '../../api/api_student.php';
 
                 <!-- Logout Button -->
                 <li class="nav-item">
-                    <a class="nav-link text-dark" href="index.php">Log out</a>
+                    <a class="nav-link text-dark" href="../../auth/logout.php">Log out</a>
                 </li>
             </ul>
         </div>

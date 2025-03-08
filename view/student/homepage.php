@@ -63,6 +63,7 @@ $announce = view_announcement();
             </div>
         </div>
 
+
         <!-- Rules and Regulations Card -->
         <div class="col-md-4 d-flex">
             <div class="card h-75 w-100 d-flex flex-column">
