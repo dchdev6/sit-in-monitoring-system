@@ -14,7 +14,7 @@ require_once '../../api/api_student.php';
 <body>
 
 <!-- ✅ FIXED: Changed action to api_student.php to update both profile & image -->
-<form action="../../Controller/api_student.php" method="POST" enctype="multipart/form-data">
+<form action="../../api/api_student.php" method="POST" enctype="multipart/form-data">
     <section class="vh-75 d-flex align-items-center">
         <div class="container">
             <div class="row justify-content-center">

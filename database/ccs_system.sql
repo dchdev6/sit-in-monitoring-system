@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 25, 2025 at 05:13 PM
+-- Generation Time: Mar 10, 2025 at 08:43 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -39,8 +39,8 @@ CREATE TABLE `announce` (
 --
 
 INSERT INTO `announce` (`announce_id`, `admin_name`, `date`, `message`) VALUES
-(1, 'CCS Admin', '2024-May-08', 'Important Announcement! New website launch! 🎉'),
-(2, 'CCS Admin', '2025-Feb-10', 'Hiiii');
+(7, 'CCS Admin', '2024-May-08', 'Important Announcement! New website launch! 🎉'),
+(9, 'CCS Admin', '2025-Feb-10', 'Hiiii');
 
 -- --------------------------------------------------------
 
@@ -55,6 +55,15 @@ CREATE TABLE `feedback` (
   `date` varchar(20) NOT NULL,
   `message` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `feedback`
+--
+
+INSERT INTO `feedback` (`feedback_id`, `id_number`, `lab`, `date`, `message`) VALUES
+(3, 19835644, 0, '2024-May-08', 'Ang lab 524 kay bati'),
+(4, 19835644, 524, '2024-May-15', 'Guba ang pc'),
+(5, 19835644, 524, '2024-May-15', 'Okay tanan');
 
 -- --------------------------------------------------------
 
@@ -107,12 +116,45 @@ CREATE TABLE `students` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `student_pc`
+--
+
+CREATE TABLE `student_pc` (
+  `pc_id` int(11) NOT NULL,
+  `lab_524` int(11) NOT NULL,
+  `lab_526` int(11) NOT NULL,
+  `lab_528` int(11) NOT NULL,
+  `lab_530` int(11) NOT NULL,
+  `lab_542` int(11) NOT NULL,
+  `lab_Mac` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `student_session`
 --
 
 CREATE TABLE `student_session` (
   `id_number` int(11) NOT NULL,
   `session` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_sit_in`
+--
+
+CREATE TABLE `student_sit_in` (
+  `sit_id` int(11) NOT NULL,
+  `id_number` int(11) NOT NULL,
+  `sit_purpose` varchar(50) NOT NULL,
+  `sit_lab` varchar(20) NOT NULL,
+  `sit_login` varchar(15) NOT NULL,
+  `sit_logout` varchar(15) NOT NULL,
+  `sit_date` varchar(10) NOT NULL,
+  `status` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -150,10 +192,22 @@ ALTER TABLE `students`
   ADD PRIMARY KEY (`id_number`);
 
 --
+-- Indexes for table `student_pc`
+--
+ALTER TABLE `student_pc`
+  ADD PRIMARY KEY (`pc_id`);
+
+--
 -- Indexes for table `student_session`
 --
 ALTER TABLE `student_session`
   ADD PRIMARY KEY (`id_number`);
+
+--
+-- Indexes for table `student_sit_in`
+--
+ALTER TABLE `student_sit_in`
+  ADD PRIMARY KEY (`sit_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -163,13 +217,13 @@ ALTER TABLE `student_session`
 -- AUTO_INCREMENT for table `announce`
 --
 ALTER TABLE `announce`
-  MODIFY `announce_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `announce_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `feedback`
 --
 ALTER TABLE `feedback`
-  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `notification`
@@ -182,6 +236,12 @@ ALTER TABLE `notification`
 --
 ALTER TABLE `reservation`
   MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `student_sit_in`
+--
+ALTER TABLE `student_sit_in`
+  MODIFY `sit_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Constraints for dumped tables

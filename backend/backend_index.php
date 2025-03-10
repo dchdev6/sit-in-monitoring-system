@@ -1,4 +1,5 @@
 <?php
+
 require_once 'database_connection.php';
 
 
@@ -17,25 +18,14 @@ function student_login($idNum, $password)
     $db = Database::getInstance();
     $con = $db->getConnection();
 
-    $sql = "SELECT students.id_number, students.firstName, students.middleName, students.lastName,
-        students.yearLevel, students.email, students.course, students.address, students.profile_image, student_session.session
-        FROM students INNER JOIN student_session ON students.id_number = student_session.id_number 
-        WHERE students.id_number = '$idNum' AND students.password = '$password'";
-
-
-
+    $sql = " SELECT students.id_number, students.firstName, students.middleName,
+        students.lastName, students.yearLevel , students.email, students.course, students.address, student_session.session
+         from students inner join student_session on students.id_number 
+         = student_session.id_number WHERE students.id_number = '$idNum' AND students.password = '$password'";
     $result = mysqli_query($con, $sql);
-    $user = mysqli_fetch_array($result, MYSQLI_ASSOC);
-
-    if ($user) {
-        $_SESSION["id_number"] = $user["id_number"];
-        $_SESSION["firstName"] = $user["firstName"];
-        $_SESSION["lastName"] = $user["lastName"];
-        $_SESSION["profile_image"] = $user["profile_image"]; // ✅ Store profile image
-        return $user;
-    }
-    return null;
+    return $user = mysqli_fetch_array($result, MYSQLI_ASSOC);
 }
+
 
 
 function student_register($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $passWord, $course, $email, $address)
