@@ -91,16 +91,22 @@ $announce = view_announcement();
     </div>
 </div>
 
-<script>
-  if (<?php echo isset($_SESSION['login_success']) && $_SESSION['login_success'] ? 'true' : 'false'; ?>) {
+<?php if (isset($_SESSION['login_success']) && $_SESSION['login_success']): ?>
+  <script>
     Swal.fire({
       title: "Successful Login!",
-      text: "Welcome! <?php echo $_SESSION["name"]; ?>",
-      icon: "success"
+      text: "Welcome, <?php echo addslashes($_SESSION['name']); ?>!",
+      icon: "success",
+      toast: true,
+      position: "top-start",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
     });
-    <?php $_SESSION['login_success'] = false; // Reset the flag ?>
-  }
-</script>
+  </script>
+  <?php $_SESSION['login_success'] = false; // Reset the flag ?>
+<?php endif; ?>
+
 
 </body>
 

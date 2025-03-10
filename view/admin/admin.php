@@ -1,8 +1,20 @@
 <?php
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 include '../../includes/navbar_admin.php';
 
 $announce = view_announcement();
 $feedback = view_feedback();
+
+if (!$announce) {
+    echo "Error: Announcements not loaded.";
+}
+if (!$feedback) {
+    echo "Error: Feedback not loaded.";
+}
+
+
 ?>
 
 <!DOCTYPE html>

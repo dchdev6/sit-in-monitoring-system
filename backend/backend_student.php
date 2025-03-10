@@ -6,7 +6,7 @@ function upload_profile_image($file, $idNumber) {
     $db = Database::getInstance();
     $con = $db->getConnection();
 
-    $targetDir = __DIR__ . "/../images/";  
+    $targetDir = __DIR__ . "/../assets/images/";  
     $fileName = basename($file["name"]);
     $targetFilePath = $targetDir . $fileName;
     $imageFileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
@@ -63,7 +63,7 @@ function loginStudent() {
         echo '<script>Swal.fire({ icon: "success", title: "Logged In!", toast: true, position: "top-start", showConfirmButton: false, timer: 3000, timerProgressBar: true });</script>';
         $_SESSION['success_toast_displayed'] = true;
     } else if ($_SESSION['id_number'] == null) {
-        echo '<script>window.location.href = "../../Login.php";</script>';
+        echo '<script>window.location.href = "../../auth/login.php";</script>';
     }
 }
 
