@@ -6,7 +6,7 @@ function upload_profile_image($file, $idNumber) {
     $db = Database::getInstance();
     $con = $db->getConnection();
 
-    $targetDir = __DIR__ . "/../assets/images/";  
+    $targetDir = __DIR__ . "/../assets/images/";
     $fileName = basename($file["name"]);
     $targetFilePath = $targetDir . $fileName;
     $imageFileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
@@ -23,15 +23,13 @@ function upload_profile_image($file, $idNumber) {
     }
 
     if (move_uploaded_file($file["tmp_name"], $targetFilePath)) {
+        // ✅ Update Database
         $sql = "UPDATE students SET profile_image = ? WHERE id_number = ?";
         $stmt = $con->prepare($sql);
-        if (!$stmt) {
-            die("SQL Prepare Failed: " . $con->error);
-        }
         $stmt->bind_param("ss", $fileName, $idNumber);
 
         if ($stmt->execute()) {
-            $_SESSION["profile_image"] = $fileName;
+            $_SESSION["profile_image"] = $fileName; // ✅ Save to session
             return "Success";
         } else {
             return "Database update failed: " . $stmt->error;
@@ -41,6 +39,9 @@ function upload_profile_image($file, $idNumber) {
     }
 }
 
+
+
+
 function edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $email, $course, $address, $profile_image) {
     $db = Database::getInstance();
     $con = $db->getConnection();
@@ -48,24 +49,45 @@ function edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $co
     $sql = "UPDATE students SET lastName = ?, firstName = ?, middleName = ?, yearLevel = ?, course = ?, email = ?, address = ?, profile_image = ? WHERE id_number = ?";
     $stmt = $con->prepare($sql);
     if (!$stmt) {
-        die("Error preparing SQL: " . $con->error);
+        die("SQL Error: " . $con->error);
     }
+
     $stmt->bind_param("sssssssss", $last_Name, $first_Name, $middle_Name, $course_Level, $course, $email, $address, $profile_image, $idNum);
-    if ($stmt->execute()) {
+    
+    return $stmt->execute();
+}
+
+function loginUser($idNumber, $password) {
+    $db = Database::getInstance();
+    $con = $db->getConnection();
+
+    $sql = "SELECT * FROM students WHERE id_number = ? AND password = ?";
+    $stmt = $con->prepare($sql);
+    $stmt->bind_param("ss", $idNumber, $password);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        session_start(); // Start the session
+
+        $_SESSION["id_number"] = $row["id_number"];
+        $_SESSION["name"] = $row["firstName"] . " " . $row["middleName"] . " " . $row["lastName"];
+        $_SESSION["profile_image"] = !empty($row["profile_image"]) ? $row["profile_image"] : "default-profile.jpg";
+        $_SESSION["course"] = $row["course"];
+        $_SESSION["yearLevel"] = $row["yearLevel"];
+        $_SESSION["email"] = $row["email"];
+        $_SESSION["address"] = $row["address"];
+        $_SESSION["remaining"] = $row["session"];
+
         return true;
     } else {
-        die("Database update failed: " . $stmt->error);
+        return false;
     }
 }
 
-function loginStudent() {
-    if ($_SESSION['id_number'] != 0 && !isset($_SESSION['success_toast_displayed'])) {
-        echo '<script>Swal.fire({ icon: "success", title: "Logged In!", toast: true, position: "top-start", showConfirmButton: false, timer: 3000, timerProgressBar: true });</script>';
-        $_SESSION['success_toast_displayed'] = true;
-    } else if ($_SESSION['id_number'] == null) {
-        echo '<script>window.location.href = "../../auth/login.php";</script>';
-    }
-}
+
+
+
 
 function retrieve_student_history($idNumber) {
     $db = Database::getInstance();

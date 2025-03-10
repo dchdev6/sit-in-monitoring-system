@@ -1,8 +1,10 @@
-<?php
 
+
+
+<?php
 require_once '../../includes/navbar_student.php';
 
-$announce = view_announcement();
+$announce = view_announcement(); 
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,8 +33,10 @@ $announce = view_announcement();
                 <div class="card-body flex-grow-1 text-center">
                 <img class="img-fluid rounded-circle border border-3 shadow-sm mb-3" 
      style="width: 150px; height: 150px; object-fit: cover;" 
-     src="<?php echo '../../assets/images/' . ($_SESSION['profile_image'] ?? 'default-profile.png'); ?>" 
+     src="<?php echo '../../assets/images/' . ($_SESSION['profile_image'] ?? 'default-profile.jpg') . '?t=' . time(); ?>" 
      alt="Profile Picture">
+
+
                     <p class="mb-1"><strong>Name:</strong> <?php echo $_SESSION['name']; ?></p>
                     <p class="mb-1"><strong>Course:</strong> <?php echo $_SESSION['course']; ?></p>
                     <p class="mb-1"><strong>Year:</strong> <?php echo $_SESSION['yearLevel']; ?></p>
@@ -91,22 +95,16 @@ $announce = view_announcement();
     </div>
 </div>
 
-<?php if (isset($_SESSION['login_success']) && $_SESSION['login_success']): ?>
-  <script>
+<script>
+  if (<?php echo isset($_SESSION['login_success']) && $_SESSION['login_success'] ? 'true' : 'false'; ?>) {
     Swal.fire({
       title: "Successful Login!",
-      text: "Welcome, <?php echo addslashes($_SESSION['name']); ?>!",
-      icon: "success",
-      toast: true,
-      position: "top-start",
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true
+      text: "Welcome! <?php echo $_SESSION["name"]; ?>",
+      icon: "success"
     });
-  </script>
-  <?php $_SESSION['login_success'] = false; // Reset the flag ?>
-<?php endif; ?>
-
+    <?php $_SESSION['login_success'] = false; // Reset the flag ?>
+  }
+</script>
 
 </body>
 

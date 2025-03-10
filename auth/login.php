@@ -1,4 +1,5 @@
 <?php
+
 require_once '../api/api_index.php';
 require_once '../includes/navbar.php';
 	

@@ -33,7 +33,8 @@ if (isset($_POST["submit"])) {
     // Update Student Profile
     $updateResult = edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $email, $course, $address, $profile_image);
     if ($updateResult) {
-        // Update session variables with new data
+        // Reload the session with updated values
+        $_SESSION["profile_image"] = $profile_image;  // Refresh profile image
         $_SESSION["lname"] = $last_Name;
         $_SESSION["fname"] = $first_Name;
         $_SESSION["mname"] = $middle_Name;
@@ -41,14 +42,12 @@ if (isset($_POST["submit"])) {
         $_SESSION["email"] = $email;
         $_SESSION["course"] = $course;
         $_SESSION["address"] = $address;
-        $_SESSION["profile_image"] = $profile_image;
-
-        // ✅ Update the name in the correct format: First Name, Middle Name, Last Name
-        $_SESSION['name'] = $first_Name . " " . $middle_Name . " " . $last_Name;
-
-        // Redirect to homepage after successful update
+        $_SESSION['name'] = $first_Name . " " . $middle_Name . " " . $last_Name; // Full name format
+    
+        // Redirect to homepage to apply session updates
         header("Location: ../view/student/homepage.php");
         exit;
+    
     } else {
         die("Profile Update Failed");
     }

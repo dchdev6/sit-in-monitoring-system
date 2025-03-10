@@ -11,7 +11,7 @@ class Database {
     private $db_host = "localhost"; 
     private $db_username = "root"; 
     private $db_password = ""; 
-    private $db_name = "ccs_systems"; 
+    private $db_name = "ccs_system"; 
     private $db_port = "3306"; 
 
     private function __construct() {

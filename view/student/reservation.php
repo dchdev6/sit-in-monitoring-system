@@ -3,7 +3,7 @@ require_once '../../includes/navbar_student.php';
 
 
  // Establish database connection
- $con = mysqli_connect('localhost', 'root', '', 'ccs_systems');
+ $con = mysqli_connect('localhost', 'root', '', 'ccs_system');
  if ($con === false) {
      die("Error: Could not connect to the database. " . mysqli_connect_error());
  }
