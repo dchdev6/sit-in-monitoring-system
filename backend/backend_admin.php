@@ -153,15 +153,19 @@ function student_logout($id, $sitId, $log, $logout, $newSession)
     $db = Database::getInstance();
     $con = $db->getConnection();
 
-    $sql = "UPDATE `student_sit_in` SET `status` = 'Finished', `sit_logout` = '$log', `sit_date` = '$logout' WHERE `id_number` = '$id' AND `sit_id` = '$sitId' ";
+    $sql = "UPDATE `student_sit_in` SET `status` = 'Finished', `sit_logout` = '$log', `sit_date` = '$logout' WHERE `id_number` = '$id' AND `sit_id` = '$sitId'";
     $sql1 = "UPDATE `student_session` SET `session` = '$newSession' WHERE `id_number` = '$id'";
 
     if (mysqli_query($con, $sql) && mysqli_query($con, $sql1)) {
         return true;
     } else {
+        echo "SQL Error: " . mysqli_error($con); // Show SQL error instead of blank screen
         return false;
     }
 }
+
+
+
 
 function retrieve_edit_student($idNum)
 {
@@ -208,23 +212,29 @@ function retrieve_current_sit_in()
 {
     $db = Database::getInstance();
     $con = $db->getConnection();
-
     $date = date('Y-m-d');
 
-    $sqlTable = " SELECT student_sit_in.sit_id, students.id_number, students.firstName,students.lastName,
-        student_sit_in.sit_purpose, student_sit_in.sit_lab , student_sit_in.sit_login,
-        student_sit_in.sit_logout,student_sit_in.sit_date, student_sit_in.status FROM
-        students INNER JOIN student_sit_in ON students.id_number = student_sit_in.id_number
-        INNER JOIN student_session ON student_sit_in.id_number = student_session.id_number WHERE student_sit_in.sit_date = '$date' ;";
-    $result = mysqli_query($con, $sqlTable);
-    if (mysqli_num_rows($result) > 0) {
-        $listPerson = [];
-        while ($row = mysqli_fetch_array($result)) {
+    $sql = "SELECT student_sit_in.sit_id, students.id_number, students.firstName, students.lastName,
+        student_sit_in.sit_purpose, student_sit_in.sit_lab, student_sit_in.sit_login, 
+        student_sit_in.sit_logout, student_sit_in.sit_date, student_sit_in.status
+        FROM students 
+        INNER JOIN student_sit_in ON students.id_number = student_sit_in.id_number
+        WHERE student_sit_in.status = 'Active'";
+
+    $result = mysqli_query($con, $sql);
+    $listPerson = [];
+
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
             $listPerson[] = $row;
         }
+    } else {
+        echo "Error: " . mysqli_error($con); // Debugging
     }
+
     return $listPerson;
 }
+
 
 function filter_date($date)
 {
@@ -317,22 +327,28 @@ function view_announcement(){
     }
     return $announcement;
 }
-function view_feedback()
-{
+function view_feedback() {
     $db = Database::getInstance();
     $con = $db->getConnection();
 
-    $sql = "SELECT * FROM feedback ORDER BY feedback_id desc";
-
+    $sql = "SELECT id_number, lab, date, message FROM feedback ORDER BY feedback_id DESC";
     $result = mysqli_query($con, $sql);
-    if (mysqli_num_rows($result) > 0) {
-        $feedback = [];
-        while ($row = mysqli_fetch_array($result)) {
-            $feedback[] = $row;
+
+    $feedback = [];
+    if ($result && mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $feedback[] = [
+                'id_number' => $row['id_number'] ?? 'N/A',
+                'lab' => $row['lab'] ?? 'N/A',
+                'date' => $row['date'] ?? 'N/A',
+                'message' => $row['message'] ?? 'N/A'
+            ];
         }
     }
     return $feedback;
 }
+
+
 function retrieve_pc($lab){
     $db = Database::getInstance();
     $con = $db->getConnection();
