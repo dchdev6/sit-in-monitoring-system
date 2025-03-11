@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 10, 2025 at 08:43 PM
+-- Generation Time: Mar 11, 2025 at 05:28 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -34,14 +34,6 @@ CREATE TABLE `announce` (
   `message` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `announce`
---
-
-INSERT INTO `announce` (`announce_id`, `admin_name`, `date`, `message`) VALUES
-(7, 'CCS Admin', '2024-May-08', 'Important Announcement! New website launch! 🎉'),
-(9, 'CCS Admin', '2025-Feb-10', 'Hiiii');
-
 -- --------------------------------------------------------
 
 --
@@ -55,15 +47,6 @@ CREATE TABLE `feedback` (
   `date` varchar(20) NOT NULL,
   `message` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `feedback`
---
-
-INSERT INTO `feedback` (`feedback_id`, `id_number`, `lab`, `date`, `message`) VALUES
-(3, 19835644, 0, '2024-May-08', 'Ang lab 524 kay bati'),
-(4, 19835644, 524, '2024-May-15', 'Guba ang pc'),
-(5, 19835644, 524, '2024-May-15', 'Okay tanan');
 
 -- --------------------------------------------------------
 
@@ -110,8 +93,16 @@ CREATE TABLE `students` (
   `course` varchar(20) NOT NULL,
   `email` varchar(50) NOT NULL,
   `address` varchar(50) NOT NULL,
-  `status` varchar(10) NOT NULL
+  `status` varchar(10) NOT NULL,
+  `profile_image` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `students`
+--
+
+INSERT INTO `students` (`id_number`, `lastName`, `firstName`, `middleName`, `yearLevel`, `password`, `course`, `email`, `address`, `status`, `profile_image`) VALUES
+(20946976, 'Arcana', 'Sean Joseph', 'C', 4, '123', 'BSCS', 'sean@gmail.com', 'Basak', 'TRUE', '60df39ed-33f4-40a6-a027-3add9971066a.jpg');
 
 -- --------------------------------------------------------
 
@@ -139,6 +130,13 @@ CREATE TABLE `student_session` (
   `id_number` int(11) NOT NULL,
   `session` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `student_session`
+--
+
+INSERT INTO `student_session` (`id_number`, `session`) VALUES
+(20946976, 30);
 
 -- --------------------------------------------------------
 
@@ -217,7 +215,7 @@ ALTER TABLE `student_sit_in`
 -- AUTO_INCREMENT for table `announce`
 --
 ALTER TABLE `announce`
-  MODIFY `announce_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `announce_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `feedback`

@@ -95,9 +95,6 @@ if(isset($_POST["submit"])){
 
 }
 
-
-//Register
-
 // Register
 if(isset($_POST["submitRegister"])){
     $idNum =$_POST['idNumber'];
