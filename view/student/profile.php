@@ -23,9 +23,10 @@ require_once '../../api/api_student.php';
 
                     <div class="text-center mb-3">
                         <!-- Profile Picture Preview -->
-                        <img id="profilePreview" class="rounded-circle" style="width: 120px; height: 120px; object-fit: cover;" 
-                             src="<?php echo !empty($_SESSION['profile_image']) ? '../../assets/images/' . $_SESSION['profile_image'] : '../../images/default-profile.jpg'; ?>" 
-                             alt="Profile Picture">
+                        <img class="img-fluid rounded-circle border border-3 shadow-sm mb-3" 
+                            style="width: 150px; height: 150px; object-fit: cover;" 
+                            src="<?php echo '../../assets/images/' . ($_SESSION['profile_image'] ?? 'default-profile.jpg')?>" 
+                            alt="Profile Picture">
                     </div>
 
                     <div class="mb-3 text-center">

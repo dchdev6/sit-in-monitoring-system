@@ -77,6 +77,7 @@ if(isset($_POST["submit"])){
         $_SESSION["address"] = $user["address"];
         $_SESSION['remaining'] = $user["session"];
         $_SESSION["id"] = 1;
+        $_SESSION["profile_image"] = $user ["profile_image"];
     
         echo '<script>window.location.href = "../view/student/homepage.php";</script>';	
     }
