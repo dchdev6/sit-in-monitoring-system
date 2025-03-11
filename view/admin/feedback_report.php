@@ -46,6 +46,79 @@ include '../../includes/navbar_admin.php';
             transition: background-color 0.3s ease;
         }
 
+        .dataTables_wrapper .dataTables_filter input {
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            padding: 0.375rem 0.75rem;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 5px;
+            margin: 0 2px;
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background-color: #144c94;
+            color: white !important;
+            border: 1px solid #144c94;
+        }
+    </style>
+</head>
+
+<?php
+// Include necessary backend files
+require_once '../../backend/backend_admin.php'; // Ensure this file contains the `view_feedback()` function
+require_once '../../backend/database_connection.php'; // Ensure this file contains the database connection logic
+
+// Fetch feedback data
+$feedbackData = view_feedback();
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Report</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/2.0.2/css/dataTables.bootstrap5.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        h1 {
+            color: #144c94;
+            font-weight: 600;
+            margin-top: 2rem;
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .table thead th {
+            background-color: #144c94;
+            color: white;
+            font-weight: 600;
+        }
+
+        .table tbody tr {
+            transition: background-color 0.3s ease;
+        }
 
         .dataTables_wrapper .dataTables_filter input {
             border-radius: 5px;
@@ -73,7 +146,7 @@ include '../../includes/navbar_admin.php';
         <h1 class="text-center mb-4">Feedback Report</h1>
 
         <!-- Feedback Table -->
-        <table id="example" class="table table-striped display compact table-responsive" style="width:100%">
+        <table id="feedbackTable" class="table table-striped display compact table-responsive" style="width:100%">
             <thead>
                 <tr>
                     <th>Student ID Number</th>
@@ -83,15 +156,16 @@ include '../../includes/navbar_admin.php';
                 </tr>
             </thead>
             <tbody>
-                <?php foreach (view_feedback() as $person) : ?>
-                    <tr>
-                        <td><?php echo $person['id_number']; ?></td>
-                        <td><?php echo $person['lab']; ?></td>
-                        <td><?php echo $person['date']; ?></td>
-                        <td><?php echo $person['message']; ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                <?php if (empty(view_feedback())) : ?>
+                <?php if (!empty($feedbackData)) : ?>
+                    <?php foreach ($feedbackData as $person) : ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($person['id_number']); ?></td>
+                            <td><?php echo htmlspecialchars($person['lab']); ?></td>
+                            <td><?php echo htmlspecialchars($person['date']); ?></td>
+                            <td><?php echo htmlspecialchars($person['message']); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else : ?>
                     <tr>
                         <td colspan="4" class="text-center">No data available</td>
                     </tr>
@@ -109,47 +183,46 @@ include '../../includes/navbar_admin.php';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Initialize the DataTable
-        let myDataTable = new DataTable('#example', {
-            layout: {
-                topStart: {
-                    buttons: ['print']
-                }
-            },
-            language: {
-                search: "Filter:"
-            }
-        });
-
-        // Function to show the SweetAlert popup
-        function showSweetAlert() {
-            let timerInterval;
-            Swal.fire({
-                title: "Downloading Data!",
-                html: "Processing in <b></b> milliseconds.",
-                timer: 2000,
-                timerProgressBar: true,
-                didOpen: () => {
-                    Swal.showLoading();
-                    const timer = Swal.getPopup().querySelector("b");
-                    timerInterval = setInterval(() => {
-                        timer.textContent = `${Swal.getTimerLeft()}`;
-                    }, 100);
+        document.addEventListener('DOMContentLoaded', function() {
+            let myDataTable = new DataTable('#feedbackTable', {
+                layout: {
+                    topStart: {
+                        buttons: ['print']
+                    }
                 },
-                willClose: () => {
-                    clearInterval(timerInterval);
-                }
-            }).then((result) => {
-                if (result.dismiss === Swal.DismissReason.timer) {
-                    console.log("I was closed by the timer");
+                language: {
+                    search: "Filter:"
                 }
             });
-        }
 
-        // Attach click event listener to DataTable buttons
-        document.addEventListener('DOMContentLoaded', function() {
-            let buttons = document.querySelectorAll('.dt-button');
-            buttons.forEach(button => {
-                button.addEventListener('click', showSweetAlert);
+            // Function to show the SweetAlert popup
+            function showSweetAlert() {
+                let timerInterval;
+                Swal.fire({
+                    title: "Downloading Data!",
+                    html: "Processing in <b></b> milliseconds.",
+                    timer: 2000,
+                    timerProgressBar: true,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        const timer = Swal.getPopup().querySelector("b");
+                        timerInterval = setInterval(() => {
+                            timer.textContent = `${Swal.getTimerLeft()}`;
+                        }, 100);
+                    },
+                    willClose: () => {
+                        clearInterval(timerInterval);
+                    }
+                }).then((result) => {
+                    if (result.dismiss === Swal.DismissReason.timer) {
+                        console.log("I was closed by the timer");
+                    }
+                });
+            }
+
+            // Attach click event listener to DataTable buttons
+            myDataTable.on('click', 'button', function() {
+                showSweetAlert();
             });
         });
     </script>
