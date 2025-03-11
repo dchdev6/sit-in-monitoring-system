@@ -1,5 +1,6 @@
 <?php
-include '..\..\backend\backend_admin.php';
+include __DIR__ . '/../backend/backend_admin.php';
+
 
 loginAdmin();
 //Object Student
@@ -141,33 +142,36 @@ if (isset($_POST["edit"])) {
 }
 
 //Logout 
+
+
+
 if (isset($_POST["logout"])) {
+  session_start();
+
   $id = $_POST['idNum'];
   $sitId = $_POST['sitId'];
-  $log = date("h:i:sa");
+  $log = date("H:i:s");
   $logout = date('Y-m-d');
   $ses = $_POST["session"];
   $sitlab = $_POST["sitLab"];
-  $newSession = $ses - 1;
+  $newSession = max(0, $ses - 1);
 
   if (student_logout($id, $sitId, $log, $logout, $newSession)) {
-    echo '<script>const Toast = Swal.mixin({
-            toast: true,
-            position: "top-end",
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-              toast.onmouseenter = Swal.stopTimer;
-              toast.onmouseleave = Swal.resumeTimer;
-            }
-          });
-          Toast.fire({
-            icon: "success",
-            title: "Student Logout!"
-          });</script>';
+      echo "<script>
+          alert('Logout successful!');
+          window.location.href = '../view/admin/viewrecords.php';
+      </script>";
+      exit();
+  } else {
+      echo "<script>
+          alert('Logout failed. Check database logs.');
+          window.history.back();
+      </script>";
   }
 }
+
+
+
 
 
 

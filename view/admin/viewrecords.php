@@ -41,24 +41,26 @@ $listPerson = retrieve_current_sit_in();
             </thead>
 
             <tbody>
-                <?php foreach ($listPerson as $person) : ?>
-                    <tr>
-                        <td><?php echo $person['sit_id']; ?></td>
-                        <td><?php echo $person['id_number']; ?></td>
-                        <td><?php echo $person['firstName'] . " " . $person['lastName']; ?></td>
-                        <td><?php echo $person['sit_purpose']; ?></td>
-                        <td><?php echo $person['sit_lab']; ?></td>
-                        <td><?php echo $person['sit_login']; ?></td>
-                        <td><?php echo $person['sit_logout']; ?></td>
-                        <td><?php echo $person['sit_date']; ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                <?php if (empty($listPerson)) : ?>
-                    <tr>
-                        <td colspan="8">No data available</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
+    <?php if (!empty($listPerson)) : ?>
+        <?php foreach ($listPerson as $person) : ?>
+            <tr>
+                <td><?php echo htmlspecialchars($person['sit_id']); ?></td>
+                <td><?php echo htmlspecialchars($person['id_number']); ?></td>
+                <td><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
+                <td><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
+                <td><?php echo htmlspecialchars($person['sit_lab']); ?></td>
+                <td><?php echo htmlspecialchars($person['sit_login']); ?></td>
+                <td><?php echo htmlspecialchars($person['sit_logout']); ?></td>
+                <td><?php echo htmlspecialchars($person['sit_date']); ?></td>
+            </tr>
+        <?php endforeach; ?>
+    <?php else : ?>
+        <tr>
+            <td colspan="8" class="text-center">No data available</td>
+        </tr>
+    <?php endif; ?>
+</tbody>
+
         </table>
     </div>
 
@@ -130,13 +132,13 @@ $listPerson = retrieve_current_sit_in();
                 datasets: [{
                     label: 'Laboratories',
                     data: [
-                        <?php echo retrieve_lab_524(); ?>,
-                        <?php echo retrieve_lab_526(); ?>,
-                        <?php echo retrieve_lab_528(); ?>,
-                        <?php echo retrieve_lab_530(); ?>,
-                        <?php echo retrieve_lab_542(); ?>,
-                        <?php echo retrieve_lab_Mac(); ?>
-                    ],
+    <?php echo (int) retrieve_c_sharp_programming_current(); ?>,
+    <?php echo (int) retrieve_c_programming_current(); ?>,
+    <?php echo (int) retrieve_java_programming_current(); ?>,
+    <?php echo (int) retrieve_asp_programming_current(); ?>,
+    <?php echo (int) retrieve_php_programming_current(); ?>
+]
+,
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)',
                         'rgba(255, 159, 64, 0.2)',

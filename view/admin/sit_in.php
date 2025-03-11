@@ -45,7 +45,7 @@ $listPerson = retrieve_sit_in();
                         <td><?php echo $person['status']; ?></td>
 
                         <td class="d-inline-flex p-3 gap-2">
-                            <form action="api_admin.php" method="POST">
+                            <form action="../../api/api_admin.php" method="POST">
                                 <button type="submit" name="logout" class="btn btn-danger">Logout</button>
                                 <input type="hidden" name="session" value="<?php echo $person['session']; ?>" />
                                 <input type="hidden" name="idNum" value="<?php echo $person['id_number']; ?>" />
