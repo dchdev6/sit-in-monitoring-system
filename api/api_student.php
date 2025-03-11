@@ -2,7 +2,6 @@
 
 include __DIR__ . '../../backend/backend_student.php';
 
-session_start(); // Ensure session starts
 
 if (isset($_POST["submit"])) {
     // Retrieve form data
@@ -43,17 +42,19 @@ if (isset($_POST["submit"])) {
         $_SESSION["course"] = $course;
         $_SESSION["address"] = $address;
         $_SESSION['name'] = $first_Name . " " . $middle_Name . " " . $last_Name; // Full name format
-    
+
+        // Debugging: Print session data
+        error_log("Session updated with profile image: " . $_SESSION["profile_image"]);
+
         // Redirect to homepage to apply session updates
         header("Location: ../view/student/homepage.php");
         exit;
-    
     } else {
         die("Profile Update Failed");
     }
 }
 
-// ✅ Handle Feedback Submission
+// Handle Feedback Submission
 if (isset($_POST['submit_feedback'])) {
     $message = $_POST['feedback_text'];
     $id = $_SESSION['id_number'];
@@ -66,7 +67,7 @@ if (isset($_POST['submit_feedback'])) {
     }
 }
 
-// ✅ Handle Reservation Submission
+// Handle Reservation Submission
 if (isset($_POST['reserve_user'])) {
     $id_number = $_POST['id_number'];
     $purpose = $_POST['purpose'];

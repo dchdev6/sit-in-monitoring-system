@@ -33,7 +33,7 @@ $announce = view_announcement();
                 <div class="card-body flex-grow-1 text-center">
                 <img class="img-fluid rounded-circle border border-3 shadow-sm mb-3" 
      style="width: 150px; height: 150px; object-fit: cover;" 
-     src="<?php echo '../../assets/images/' . ($_SESSION['profile_image'] ?? 'default-profile.jpg') . '?t=' . time(); ?>" 
+     src="<?php echo '../../assets/images/' . ($_SESSION['profile_image'] ?? 'default-profile.jpg')?>" 
      alt="Profile Picture">
 
 
