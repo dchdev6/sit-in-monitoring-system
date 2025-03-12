@@ -114,10 +114,6 @@ function loginUser($idNumber, $password) {
     }
 }
 
-
-
-
-
 function retrieve_student_history($idNumber) {
     $db = Database::getInstance();
     $con = $db->getConnection();

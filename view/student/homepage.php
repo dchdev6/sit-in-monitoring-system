@@ -1,7 +1,7 @@
-
-
-
 <?php
+session_start();
+error_log("Session Profile Image: " . $_SESSION["profile_image"]);
+
 require_once '../../includes/navbar_student.php';
 
 $announce = view_announcement(); 
@@ -31,10 +31,14 @@ $announce = view_announcement();
             <div class="card h-75 w-100 d-flex flex-column">
                 <h5 class="card-header text-white text-center bg-primary">Student Information</h5>
                 <div class="card-body flex-grow-1 text-center">
+                    
                 <img class="img-fluid rounded-circle border border-3 shadow-sm mb-3" 
      style="width: 150px; height: 150px; object-fit: cover;" 
-     src="<?php echo '../../assets/images/' . ($_SESSION['profile_image'] ?? 'default-profile.jpg')?>" 
+     src="<?php echo '../../assets/images/' . ($_SESSION['profile_image'] ?? 'default-profile.jpg'); ?>" 
      alt="Profile Picture">
+<?php error_log("Session Profile Image: " . $_SESSION["profile_image"]); ?>
+
+
 
 
                     <p class="mb-1"><strong>Name:</strong> <?php echo $_SESSION['name']; ?></p>
