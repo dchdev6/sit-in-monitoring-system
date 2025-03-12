@@ -2,9 +2,10 @@
 
     include '../backend/backend_index.php';
 
-    if(session_check()){
-        session_destroy();
-    }
+    session_start();
+    session_destroy();
+    session_start(); // Start a fresh session
+    
 ?>
 <!DOCTYPE html>
 <html lang="en">

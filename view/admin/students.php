@@ -21,21 +21,21 @@ $listPerson = retrieve_students();
   <!-- Custom Styles -->
   <style>
     body {
-      background-color: #f8f9fa;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: Arial, sans-serif;
     }
 
     h1 {
       color: #007bff;
       font-weight: 600;
       margin-top: 2rem;
+      text-align: center;
     }
 
     .btn-primary {
       background-color: #007bff;
       border: none;
       padding: 0.5rem 1.5rem;
-      border-radius: 5px;
+      border-radius: 8px;
       transition: background-color 0.3s ease;
     }
 
@@ -47,12 +47,17 @@ $listPerson = retrieve_students();
       background-color: #dc3545;
       border: none;
       padding: 0.5rem 1.5rem;
-      border-radius: 5px;
+      border-radius: 8px;
       transition: background-color 0.3s ease;
     }
 
     .btn-danger:hover {
       background-color: #bb2d3b;
+    }
+
+    .table-container {
+      margin: 2rem auto;
+      max-width: 95%;
     }
 
     .table {
@@ -62,30 +67,17 @@ $listPerson = retrieve_students();
     }
 
     .table thead th {
-      background-color: #144c94;
-      color: white;
-      font-weight: 600;
-    }
-
-    .table tbody tr {
-      transition: background-color 0.3s ease;
-    }
-
-    .table tbody tr:hover {
-      background-color: #f1f1f1;
-    }
-
-    .actions {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
+      background-color: #0d6efd !important;
+      color: white !important;
+      text-align: center;
+      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1 class="text-center mb-4">Students Information</h1>
+  <div class="container table-container">
+    <h1>Students Information</h1>
 
     <!-- Action Buttons -->
     <div class="d-flex justify-content-center gap-3 mb-4">
@@ -99,7 +91,7 @@ $listPerson = retrieve_students();
 
     <!-- Table -->
     <div class="table-responsive">
-      <table id="example" class="table table-striped table-hover">
+      <table id="example" class="table table-striped table-bordered" style="width:100%">
         <thead>
           <tr>
             <th>ID Number</th>
@@ -118,21 +110,19 @@ $listPerson = retrieve_students();
               <td><?php echo $person['yearLevel']; ?></td>
               <td><?php echo $person['course']; ?></td>
               <td><?php echo $person['session']; ?></td>
-              <td>
-                <div class="actions">
-                  <form action="Admin.php" method="POST" class="d-inline">
-                    <input type="hidden" name="idNum" value="<?php echo $person['id_number']; ?>" />
-                    <button type="submit" name="edit" class="btn btn-primary btn-sm">
-                      <i class="fas fa-edit"></i>
-                    </button>
-                  </form>
-                  <form action="Students.php" method="POST" class="d-inline delete-form">
-                    <input type="hidden" name="idNum" value="<?php echo $person['id_number']; ?>" />
-                    <button type="submit" name="deleteStudent" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this student?')">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </form>
-                </div>
+              <td class="text-center">
+                <form action="Admin.php" method="POST" class="d-inline">
+                  <input type="hidden" name="idNum" value="<?php echo $person['id_number']; ?>" />
+                  <button type="submit" name="edit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </form>
+                <form action="Students.php" method="POST" class="d-inline delete-form">
+                  <input type="hidden" name="idNum" value="<?php echo $person['id_number']; ?>" />
+                  <button type="submit" name="deleteStudent" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this student?')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
               </td>
             </tr>
           <?php endforeach; ?>
@@ -151,41 +141,6 @@ $listPerson = retrieve_students();
   <script>
     // Initialize DataTable
     new DataTable('#example');
-
-    // Reset Session Confirmation
-    document.getElementById("resetButton").addEventListener("click", function() {
-      Swal.fire({
-        title: "Do you want to reset the session?",
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Reset",
-        cancelButtonText: "Cancel",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          resetSession();
-        }
-      });
-    });
-
-    function resetSession() {
-      fetch("Students.php", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: "reset=true",
-        })
-        .then((response) => {
-          if (response.ok) {
-            Swal.fire("Session Reset!", "", "success");
-          } else {
-            Swal.fire("Error", "Failed to reset session", "error");
-          }
-        })
-        .catch(() => {
-          Swal.fire("Error", "Failed to reset session", "error");
-        });
-    }
   </script>
 </body>
 

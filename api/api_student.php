@@ -1,10 +1,8 @@
 <?php
-
 include __DIR__ . '../../backend/backend_student.php';
 
 
 if (isset($_POST["submit"])) {
-    // Retrieve form data
     $idNum = $_POST['idNumber'];
     $last_Name = $_POST['lName'];
     $first_Name = $_POST['fName'];
@@ -14,26 +12,20 @@ if (isset($_POST["submit"])) {
     $course = $_POST['course'];
     $address = $_POST['address'];
 
-    // Handle Profile Image Upload
-    $profile_image = $_SESSION["profile_image"]; // Default to existing image
+    // ✅ Handle Profile Image Upload
+    $profile_image = $_SESSION["profile_image"];
     if (!empty($_FILES["profile_image"]["name"])) {
-        error_log("New profile image uploaded: " . $_FILES["profile_image"]["name"]);
         $uploadStatus = upload_profile_image($_FILES["profile_image"], $idNum);
-        error_log("Upload status: " . $uploadStatus);
-
         if ($uploadStatus === "Success") {
-            $profile_image = basename($_FILES["profile_image"]["name"]); // Update to new image filename
-            error_log("New profile image filename: " . $profile_image);
+            $profile_image = basename($_FILES["profile_image"]["name"]);
         } else {
             die("Upload Error: " . $uploadStatus);
         }
     }
 
-    // Update Student Profile
-    $updateResult = edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $email, $course, $address, $profile_image);
-    if ($updateResult) {
-        // Reload the session with updated values
-        $_SESSION["profile_image"] = $profile_image;  // Refresh profile image
+    // ✅ Update Student Profile
+    if (edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $email, $course, $address, $profile_image)) {
+        $_SESSION["profile_image"] = $profile_image;
         $_SESSION["lname"] = $last_Name;
         $_SESSION["fname"] = $first_Name;
         $_SESSION["mname"] = $middle_Name;
@@ -41,12 +33,9 @@ if (isset($_POST["submit"])) {
         $_SESSION["email"] = $email;
         $_SESSION["course"] = $course;
         $_SESSION["address"] = $address;
-        $_SESSION['name'] = $first_Name . " " . $middle_Name . " " . $last_Name; // Full name format
+        $_SESSION['name'] = $first_Name . " " . $middle_Name . " " . $last_Name;
 
-        // Debugging: Print session data
         error_log("Session updated with profile image: " . $_SESSION["profile_image"]);
-
-        // Redirect to homepage to apply session updates
         header("Location: ../view/student/homepage.php");
         exit;
     } else {
