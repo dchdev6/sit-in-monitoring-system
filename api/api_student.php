@@ -1,4 +1,5 @@
 <?php
+
 include __DIR__ . '../../backend/backend_student.php';
 
 
@@ -57,17 +58,56 @@ if (isset($_POST['submit_feedback'])) {
 }
 
 // Handle Reservation Submission
+
+
 if (isset($_POST['reserve_user'])) {
+    echo "Form submitted!<br>"; // Debugging line
+
     $id_number = $_POST['id_number'];
     $purpose = $_POST['purpose'];
     $lab = $_POST['lab'];
-    $pc_number = $_POST['pc_number'];
     $time = $_POST['time'];
     $date = $_POST['date'];
 
-    if (submit_reservation($id_number, $purpose, $lab, $pc_number, $time, $date)) {
-        echo "<script>Swal.fire({title: 'Success', text: 'Reservation Submitted', icon: 'success', timer: 2000});</script>";
-        notifications($id_number, "Reservation Confirmed! | $date\nYou have successfully submitted a reservation.");
+    // Ensure required fields are not empty
+    if (empty($id_number) || empty($purpose) || empty($lab) || empty($time) || empty($date)) {
+        die("Error: Missing required fields.");
     }
+
+    echo "All fields are set!<br>"; // Debugging line
+
+    // Connect to database
+    $db = Database::getInstance();
+    $con = $db->getConnection();
+
+    if (!$con) {
+        die("Database connection failed: " . mysqli_connect_error());
+    }
+
+    echo "Database connected!<br>"; // Debugging line
+
+    // Insert directly into reservation table
+    $sql = "INSERT INTO reservation (reservation_date, reservation_time, lab, purpose, id_number, status) 
+            VALUES (?, ?, ?, ?, ?, 'Pending')";
+    
+    $stmt = $con->prepare($sql);
+
+    if (!$stmt) {
+        die("SQL Error: " . $con->error);
+    }
+
+    echo "SQL Prepared!<br>"; // Debugging line
+
+    $stmt->bind_param("sssss", $date, $time, $lab, $purpose, $id_number);
+
+    if ($stmt->execute()) {
+        echo "<script>
+            alert('Reservation Submitted Successfully!');
+            window.location.href = '../view/student/homepage.php';
+        </script>";
+        exit(); // ✅ Make sure the script stops here
+    }
+    
 }
 ?>
+
