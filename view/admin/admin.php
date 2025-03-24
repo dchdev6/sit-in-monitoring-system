@@ -3,6 +3,13 @@ include '../../includes/navbar_admin.php';
 
 $announce = view_announcement();
 $feedback = view_feedback();
+
+// Check for success message for sweet alert
+$successMessage = '';
+if(isset($_SESSION['success_message'])) {
+    $successMessage = $_SESSION['success_message'];
+    unset($_SESSION['success_message']);
+}
 ?>
 
 <!DOCTYPE html>
@@ -11,207 +18,687 @@ $feedback = view_feedback();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Dashboard for Student Programming Lab Management">
     <title>Admin Dashboard</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <!-- Custom Styles -->
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Animation library -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'Tahoma', 'sans-serif'],
+                    },
+                }
+            }
         }
-
-        .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    </script>
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .stat-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-
-        .card:hover {
+        .stat-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
-
-        .card-header {
-            background-color: #007bff;
-            color: white;
-            font-size: 1.25rem;
-            font-weight: 600;
-            border-radius: 10px 10px 0 0;
-            padding: 1rem;
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 4px;
         }
-
-        .card-body {
-            padding: 1.5rem;
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
         }
-
-        .btn-success {
-            background-color: #28a745;
-            border: none;
-            padding: 0.5rem 1.5rem;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
         }
-
-        .btn-success:hover {
-            background-color: #218838;
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
         }
-
-        textarea.form-control {
-            resize: none;
-            border-radius: 5px;
-            border: 1px solid #ced4da;
-            padding: 0.75rem;
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
         }
-
-        .announcement-list {
-            max-height: 390px;
-            overflow-y: auto;
-            padding-right: 10px;
+        .animate-slide-in-right {
+            animation: slideInRight 0.5s ease-in-out;
         }
-
-        .announcement-list p {
-            margin-bottom: 0.5rem;
+        .animate-slide-in-left {
+            animation: slideInLeft 0.5s ease-in-out;
         }
-
-        .announcement-list hr {
-            margin: 1rem 0;
-            border-top: 1px solid #eee;
+        .animate-slide-in-up {
+            animation: slideInUp 0.5s ease-in-out;
         }
-
+        .animate-pulse-slow {
+            animation: pulseSlow 3s infinite ease-in-out;
+        }
+        .animate-float {
+            animation: float 3s infinite ease-in-out;
+        }
+        .animate-bounce-subtle {
+            animation: bounceSlight 2s infinite ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseSlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        @keyframes bounceSlight {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .stagger-item {
+            opacity: 0;
+        }
         .chart-container {
-            margin-top: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%);
+            z-index: 10;
+            animation: revealChart 1.5s ease-out forwards;
+        }
+        @keyframes revealChart {
+            0% { left: 0; }
+            100% { left: 100%; }
+        }
+        .hover-scale {
+            transition: transform 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.02);
         }
     </style>
 </head>
 
-<body>
-    <div class="container mt-5">
-        <!-- Statistics and Announcement Section -->
-        <div class="row g-4">
-            <!-- Statistics Card -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-chart-column me-2"></i> Statistics
+<body class="bg-gray-50 font-sans text-gray-800 opacity-0 transition-opacity duration-500">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <h1 class="text-2xl font-bold text-gray-800 mb-8 flex items-center animate-slide-in-left">
+            <i class="fas fa-gauge-high mr-3 text-primary-600 animate-pulse-slow"></i>
+            Dashboard Overview
+        </h1>
+
+        <!-- Main Stats Row -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 transition duration-300 stat-card hover:border-primary-200 stagger-item">
+                <div class="flex items-center">
+                    <div class="rounded-full bg-blue-100 p-3 mr-4 shadow-sm animate-float">
+                        <i class="fas fa-user-graduate text-blue-600"></i>
                     </div>
-                    <div class="card-body">
-                        <p class="card-text"><strong>Students Registered: </strong> <?php echo retrieve_students_dashboard(); ?></p>
-                        <p class="card-text"><strong>Currently Sit-in: </strong> <?php echo retrieve_current_sit_in_dashboard(); ?></p>
-                        <p class="card-text"><strong>Total Sit-in: </strong> <?php echo retrieve_total_sit_in_dashboard(); ?></p>
-                        <div class="chart-container">
-                            <canvas id="myChart"></canvas>
-                        </div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">Students Registered</p>
+                        <p class="text-2xl font-bold counter-animate"><?php echo retrieve_students_dashboard(); ?></p>
                     </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 transition duration-300 stat-card hover:border-primary-200 stagger-item">
+                <div class="flex items-center">
+                    <div class="rounded-full bg-green-100 p-3 mr-4 shadow-sm animate-float">
+                        <i class="fas fa-chair text-green-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">Currently Sit-in</p>
+                        <p class="text-2xl font-bold counter-animate"><?php echo retrieve_current_sit_in_dashboard(); ?></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 transition duration-300 stat-card hover:border-primary-200 stagger-item">
+                <div class="flex items-center">
+                    <div class="rounded-full bg-purple-100 p-3 mr-4 shadow-sm animate-float">
+                        <i class="fas fa-chart-line text-purple-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 font-medium">Total Sit-in</p>
+                        <p class="text-2xl font-bold counter-animate"><?php echo retrieve_total_sit_in_dashboard(); ?></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl shadow-lg p-5 text-white transition duration-300 stat-card stagger-item">
+                <div class="flex items-center">
+                    <div class="rounded-full bg-white/20 p-3 mr-4 shadow-sm animate-float">
+                        <i class="fas fa-code text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-white/90 font-medium">Top Programming Language</p>
+                        <p class="text-2xl font-bold">
+                            <?php
+                            $languages = [
+                                'C#' => retrieve_c_sharp_programming(),
+                                'C' => retrieve_c_programming(),
+                                'Java' => retrieve_java_programming(),
+                                'ASP.Net' => retrieve_asp_programming(),
+                                'PHP' => retrieve_php_programming()
+                            ];
+                            echo array_keys($languages, max($languages))[0];
+                            ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts & Announcements Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Programming Languages Chart -->
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 md:col-span-1 transition duration-300 hover:border-primary-200 hover-scale stagger-item">
+                <div class="border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+                    <h2 class="font-semibold text-gray-800">
+                        <i class="fas fa-code text-primary-600 mr-2 animate-bounce-subtle"></i>
+                        Programming Languages
+                    </h2>
+                </div>
+                <div class="p-6 chart-container">
+                    <canvas id="programmingLanguagesChart" class="max-h-80"></canvas>
                 </div>
             </div>
 
             <!-- Announcement Card -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fas fa-bullhorn me-2"></i> Announcement
-                    </div>
-                    <div class="card-body">
-                        <label for="an" class="form-label">New Announcement</label>
-                        <form action="Admin.php" method="POST">
-                            <textarea name="announcement_text" id="an" class="form-control mb-3" rows="3"></textarea>
-                            <button type="submit" name="post_announcement" class="btn btn-success">Submit</button>
-                        </form>
-
-                        <h3 class="mt-4"><strong>Posted Announcement</strong></h3>
-                        <hr>
-
-                        <div class="announcement-list">
-                            <?php foreach ($announce as $row) : ?>
-                                <p><strong><?php echo $row['admin_name'] . " | " . $row['date']; ?></strong></p>
-                                <p><?php echo $row['message']; ?></p>
-                                <hr>
-                            <?php endforeach; ?>
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 md:col-span-2 transition duration-300 hover:border-primary-200 hover-scale stagger-item">
+                <div class="border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+                    <h2 class="font-semibold text-gray-800">
+                        <i class="fas fa-bullhorn text-primary-600 mr-2 animate-bounce-subtle"></i>
+                        Announcements
+                    </h2>
+                    <button type="button" id="newAnnouncementBtn" class="text-sm bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
+                        <i class="fas fa-plus mr-2"></i> New
+                    </button>
+                </div>
+                
+                <!-- New Announcement Form (Initially Hidden) -->
+                <div id="announcementForm" class="hidden p-5 bg-gray-50 border-b border-gray-100 animate-fade-in">
+                    <form action="Admin.php" method="POST" class="space-y-4" id="announcement-form">
+                        <div>
+                            <label for="an" class="block text-sm font-medium text-gray-700 mb-1">Announcement Message</label>
+                            <textarea name="announcement_text" id="an" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" rows="3" placeholder="Type your announcement here..."></textarea>
                         </div>
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" id="cancelAnnouncement" class="bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition duration-300">Cancel</button>
+                            <button type="submit" name="post_announcement" class="bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg transition duration-300 shadow-sm">Post Announcement</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Announcements List -->
+                <div class="p-5">
+                    <div class="max-h-96 overflow-y-auto pr-2 space-y-4 scrollbar-thin announcement-container">
+                        <?php if(empty($announce)): ?>
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-bullhorn text-gray-300 text-4xl mb-3 animate-bounce-subtle"></i>
+                                <p>No announcements posted yet</p>
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($announce as $index => $row) : ?>
+                                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all duration-300 announcement-item" style="transition-delay: <?php echo $index * 100; ?>ms">
+                                    <div class="flex items-center mb-2">
+                                        <div class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mr-3 shadow-sm">
+                                            <i class="fas fa-user-tie"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-gray-800"><?php echo htmlspecialchars($row['admin_name']); ?></p>
+                                            <p class="text-xs text-gray-500"><?php echo htmlspecialchars($row['date']); ?></p>
+                                        </div>
+                                        <div class="ml-auto">
+                                            <button type="button" class="text-gray-400 hover:text-red-500 transition-colors" 
+                                                   onclick="confirmDeleteAnnouncement(<?php echo $row['announcement_id']; ?>)">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-700 ml-12"><?php echo htmlspecialchars($row['message']); ?></p>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Students Year Level Card -->
-        <div class="card mt-4">
-            <div class="card-header">
-                <i class="fas fa-chalkboard-user me-2"></i> Students Year Level
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 transition duration-300 hover:border-primary-200 hover-scale stagger-item">
+            <div class="border-b border-gray-100 px-6 py-4">
+                <h2 class="font-semibold text-gray-800">
+                    <i class="fas fa-chalkboard-user text-primary-600 mr-2 animate-bounce-subtle"></i>
+                    College of Computer Studies - Students by Year Level
+                </h2>
             </div>
-            <div class="card-body">
-                <canvas id="students"></canvas>
+            <div class="p-6 chart-container">
+                <canvas id="studentYearLevelChart" class="max-h-96"></canvas>
             </div>
         </div>
     </div>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- CountUp.js for animated counters -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.0.8/countUp.min.js"></script>
+    
     <script>
-        const ctx = document.getElementById('myChart');
-        const stud = document.getElementById('students');
-
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['C#', 'C', 'Java', 'ASP.Net', 'Php'],
-                datasets: [{
-                    label: 'Programming Languages',
-                    data: [<?php echo retrieve_c_sharp_programming(); ?>, <?php echo retrieve_c_programming(); ?>, <?php echo retrieve_java_programming(); ?>, <?php echo retrieve_asp_programming(); ?>, <?php echo retrieve_php_programming(); ?>],
-                    backgroundColor: [
-                        '#FF6384',
-                        '#36A2EB',
-                        '#FFCE56',
-                        '#4BC0C0',
-                        '#9966FF'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    }
+        // Page load animation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fade in the body
+            setTimeout(() => {
+                document.body.style.opacity = "1";
+            }, 100);
+            
+            // Stagger in elements with class .stagger-item
+            const staggerItems = document.querySelectorAll('.stagger-item');
+            staggerItems.forEach((item, index) => {
+                setTimeout(() => {
+                    item.style.opacity = "1";
+                    item.classList.add('animate-slide-in-up');
+                }, 300 + (index * 150));
+            });
+            
+            // Animate announcement items
+            const announcementItems = document.querySelectorAll('.announcement-item');
+            announcementItems.forEach((item, index) => {
+                setTimeout(() => {
+                    item.classList.add('animate-slide-in-right');
+                }, 500 + (index * 100));
+            });
+            
+            // Animate counters
+            const counterElements = document.querySelectorAll('.counter-animate');
+            counterElements.forEach(element => {
+                const targetValue = parseInt(element.textContent);
+                const countUp = new CountUp(element, 0, targetValue, 0, 2.5, {
+                    useEasing: true,
+                    useGrouping: true,
+                    separator: ',',
+                });
+                
+                if (!countUp.error) {
+                    setTimeout(() => {
+                        countUp.start();
+                    }, 500);
+                } else {
+                    console.error(countUp.error);
                 }
+            });
+        });
+        
+        // Show success alerts with SweetAlert2
+        <?php if(!empty($successMessage)): ?>
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: '<?php echo $successMessage; ?>',
+            confirmButtonColor: '#0284c7',
+            timer: 3000,
+            timerProgressBar: true,
+            showClass: {
+                popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'
             }
         });
-
-        new Chart(stud, {
-            type: 'bar',
-            data: {
-                labels: ['Freshmen', 'Sophomore', 'Junior', 'Senior'],
-                datasets: [{
-                    label: 'College of Computer Studies Students Year Level',
-                    data: [<?php echo retrieve_first(); ?>, <?php echo retrieve_second(); ?>, <?php echo retrieve_third(); ?>, <?php echo retrieve_fourth(); ?>],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(255, 159, 64, 0.2)',
-                        'rgba(255, 205, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgb(255, 99, 132)',
-                        'rgb(255, 159, 64)',
-                        'rgb(255, 205, 86)',
-                        'rgb(75, 192, 192)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
+        <?php endif; ?>
+        
+        // Form submission with SweetAlert confirmation
+        document.getElementById('announcement-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const textarea = document.getElementById('an');
+            
+            if (textarea.value.trim() === '') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Please enter an announcement message!',
+                    confirmButtonColor: '#0284c7',
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp'
                     }
+                });
+                return;
+            }
+            
+            Swal.fire({
+                title: 'Post Announcement?',
+                text: 'This will be visible to all users',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0284c7',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, post it!',
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
                 }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Posting...',
+                        html: 'Please wait while we process your request',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading()
+                        }
+                    });
+                    setTimeout(() => {
+                        this.submit();
+                    }, 800); // Small delay to show the loading indicator
+                }
+            });
+        });
+        
+        // Function to confirm deletion of announcement
+        function confirmDeleteAnnouncement(id) {
+            Swal.fire({
+                title: 'Delete Announcement?',
+                text: 'This action cannot be undone',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete it!',
+                showClass: {
+                    popup: 'animate__animated animate__fadeInDown'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutUp'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Deleting...',
+                        html: 'Please wait while we process your request',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: () => {
+                            Swal.showLoading()
+                        }
+                    });
+                    setTimeout(() => {
+                        window.location.href = `delete_announcement.php?id=${id}`;
+                    }, 800); // Small delay to show the loading indicator
+                }
+            });
+        }
+        
+        // Toggle announcement form with animation
+        document.getElementById('newAnnouncementBtn').addEventListener('click', function() {
+            const form = document.getElementById('announcementForm');
+            
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+                form.classList.add('animate__animated', 'animate__fadeIn');
+                document.getElementById('an').focus();
+            } else {
+                form.classList.add('animate__animated', 'animate__fadeOut');
+                setTimeout(() => {
+                    form.classList.add('hidden');
+                    form.classList.remove('animate__animated', 'animate__fadeOut');
+                }, 500);
             }
         });
+        
+        document.getElementById('cancelAnnouncement').addEventListener('click', function() {
+            const form = document.getElementById('announcementForm');
+            form.classList.add('animate__animated', 'animate__fadeOut');
+            setTimeout(() => {
+                form.classList.add('hidden');
+                form.classList.remove('animate__animated', 'animate__fadeOut');
+            }, 500);
+        });
+    
+        // Chart initialization with animations
+        setTimeout(() => {
+            // Programming Languages Chart
+            const programmingLanguagesCtx = document.getElementById('programmingLanguagesChart');
+            const programmingLanguagesChart = new Chart(programmingLanguagesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['C#', 'C', 'Java', 'ASP.Net', 'PHP'],
+                    datasets: [{
+                        label: 'Programming Languages',
+                        data: [
+                            <?php echo retrieve_c_sharp_programming(); ?>, 
+                            <?php echo retrieve_c_programming(); ?>, 
+                            <?php echo retrieve_java_programming(); ?>, 
+                            <?php echo retrieve_asp_programming(); ?>, 
+                            <?php echo retrieve_php_programming(); ?>
+                        ],
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#10b981',
+                            '#f59e0b',
+                            '#6366f1', 
+                            '#ec4899'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            displayColors: true,
+                            boxPadding: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.formattedValue;
+                                    return `${label}: ${value}`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true,
+                        duration: 2000,
+                        easing: 'easeOutBounce'
+                    }
+                }
+            });
+
+            // Students by Year Level Chart with animation
+            const studentYearLevelCtx = document.getElementById('studentYearLevelChart');
+            const studentYearLevelChart = new Chart(studentYearLevelCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Freshmen', 'Sophomore', 'Junior', 'Senior'],
+                    datasets: [{
+                        label: 'Number of Students',
+                        data: [
+                            <?php echo retrieve_first(); ?>, 
+                            <?php echo retrieve_second(); ?>, 
+                            <?php echo retrieve_third(); ?>, 
+                            <?php echo retrieve_fourth(); ?>
+                        ],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(99, 102, 241, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)',
+                            'rgb(245, 158, 11)',
+                            'rgb(99, 102, 241)'
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        maxBarThickness: 70
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                drawBorder: false,
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 14
+                            },
+                            bodyFont: {
+                                size: 13
+                            },
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Students: ${context.raw}`;
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        delay: function(context) {
+                            return context.dataIndex * 200;
+                        },
+                        duration: 1500,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }, 800);
+
+        // Add notification system for demo purposes
+        setTimeout(() => {
+            const toastTypes = [
+                { 
+                    title: 'New Student Registered', 
+                    message: 'A new student has just registered in the system', 
+                    icon: 'fas fa-user-plus',
+                    color: 'blue'
+                },
+                { 
+                    title: 'System Update', 
+                    message: 'The system will undergo maintenance tonight at 2 AM', 
+                    icon: 'fas fa-wrench',
+                    color: 'yellow'
+                },
+                { 
+                    title: 'Reminder', 
+                    message: 'Faculty meeting scheduled for tomorrow at 10 AM', 
+                    icon: 'fas fa-bell',
+                    color: 'green'
+                }
+            ];
+            
+            // Show a random toast notification
+            const randomToast = toastTypes[Math.floor(Math.random() * toastTypes.length)];
+            
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true,
+                showClass: {
+                    popup: 'animate__animated animate__fadeInRight'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutRight'
+                },
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer)
+                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+                }
+            });
+
+            Toast.fire({
+                icon: 'info',
+                title: `<i class="${randomToast.icon} text-${randomToast.color}-500 mr-2"></i> ${randomToast.title}`,
+                html: `<span class="text-sm">${randomToast.message}</span>`
+            });
+        }, 5000);  // Show after 5 seconds for demo
     </script>
 </body>
 
