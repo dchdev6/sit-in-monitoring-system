@@ -1,12 +1,9 @@
 <?php
-
 include '../../includes/navbar_admin.php';
 
 $user = retrieve_edit_student($_SESSION["editNum"]);
 
-
 if ($user["id_number"] != null) {
-
   $_SESSION['id_number'] = $user["id_number"];
   $_SESSION['name'] =  $user["firstName"] . " " . $user["middleName"] . " " . $user["lastName"];
   $_SESSION['fname'] = $user["firstName"];
@@ -22,147 +19,289 @@ if ($user["id_number"] != null) {
 <html lang="en">
 
 <head>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile</title>
+  <title>Edit Profile</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Animation library -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 
-<body>
+<body class="bg-gray-50">
+  <div class="min-h-screen py-8">
+    <div class="container mx-auto px-4">
+      <div class="max-w-6xl mx-auto animate__animated animate__fadeIn">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div class="md:flex">
+            <div class="md:w-1/2 p-8 md:p-12 animate__animated animate__fadeInLeft">
+              <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">
+                <i class="fas fa-user-edit mr-2 text-blue-600"></i>Edit Profile
+              </h1>
+              
+              <form action="Edit.php" method="post" id="editProfileForm">
+                <div class="space-y-5">
+                  <!-- ID Number -->
+                  <div class="relative transition-all duration-300 ease-in-out hover:scale-102">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="idNumber">ID Number</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-id-card text-gray-400"></i>
+                      </div>
+                      <input type="text" value="<?php echo $_SESSION["id_number"]; ?>" id="idNumber" name="idNumber" readonly
+                        class="bg-gray-100 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-4 py-3 border-gray-300 rounded-lg text-gray-500"
+                        placeholder="ID Number" />
+                    </div>
+                  </div>
 
+                  <!-- Last Name -->
+                  <div class="relative transition-all duration-300 ease-in-out hover:scale-102">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="lName">Last Name</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-gray-400"></i>
+                      </div>
+                      <input type="text" value="<?php echo $_SESSION["lname"]; ?>" id="lName" name="lName" required
+                        class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-4 py-3 border-gray-300 rounded-lg"
+                        placeholder="Last Name" />
+                    </div>
+                  </div>
 
+                  <!-- First Name -->
+                  <div class="relative transition-all duration-300 ease-in-out hover:scale-102">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="fName">First Name</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-gray-400"></i>
+                      </div>
+                      <input type="text" value="<?php echo $_SESSION["fname"]; ?>" id="fName" name="fName" required
+                        class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-4 py-3 border-gray-300 rounded-lg"
+                        placeholder="First Name" />
+                    </div>
+                  </div>
 
-  <form action="Edit.php" method="post">
-    <section class="vh-100 pt-4">
+                  <!-- Middle Name -->
+                  <div class="relative transition-all duration-300 ease-in-out hover:scale-102">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="mName">Middle Name</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-gray-400"></i>
+                      </div>
+                      <input type="text" value="<?php echo $_SESSION["mname"]; ?>" id="mName" name="mName" required
+                        class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-4 py-3 border-gray-300 rounded-lg"
+                        placeholder="Middle Name" />
+                    </div>
+                  </div>
 
-      <div class="container h-100">
-        <div class="row d-flex justify-content-center align-items-center h-100">
-          <div class="col-lg-12 col-xl-11">
-            <div class="card text-black" style="border-radius: 25px;">
-              <div class="card-body p-md-5">
-                <div class="row justify-content-center">
-                  <div class="col-md-10 col-lg-6 col-xl-5 order-2 order-lg-1">
+                  <!-- Year Level -->
+                  <div class="relative transition-all duration-300 ease-in-out hover:scale-102">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="level">Course Level</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-layer-group text-gray-400"></i>
+                      </div>
+                      <select name="level" id="level" 
+                        class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-4 py-3 border-gray-300 rounded-lg">
+                        <option value="1" <?php echo ($_SESSION["yearLevel"] == 1) ? 'selected' : ''; ?>>1</option>
+                        <option value="2" <?php echo ($_SESSION["yearLevel"] == 2) ? 'selected' : ''; ?>>2</option>
+                        <option value="3" <?php echo ($_SESSION["yearLevel"] == 3) ? 'selected' : ''; ?>>3</option>
+                        <option value="4" <?php echo ($_SESSION["yearLevel"] == 4) ? 'selected' : ''; ?>>4</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Email -->
+                  <div class="relative transition-all duration-300 ease-in-out hover:scale-102">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="email">Email</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-envelope text-gray-400"></i>
+                      </div>
+                      <input type="email" value="<?php echo $_SESSION["email"]; ?>" id="email" name="email" required
+                        class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-4 py-3 border-gray-300 rounded-lg"
+                        placeholder="Email" />
+                    </div>
+                  </div>
+
+                  <!-- Course -->
+                  <div class="relative transition-all duration-300 ease-in-out hover:scale-102">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="course">Course</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-graduation-cap text-gray-400"></i>
+                      </div>
+                      <select name="course" id="course" 
+                        class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-4 py-3 border-gray-300 rounded-lg">
+                        <option value="BSIT" <?php echo ($_SESSION["course"] == "BSIT") ? 'selected' : ''; ?>>BSIT</option>
+                        <option value="BSCS" <?php echo ($_SESSION["course"] == "BSCS") ? 'selected' : ''; ?>>BSCS</option>
+                        <option value="ACT" <?php echo ($_SESSION["course"] == "ACT") ? 'selected' : ''; ?>>ACT</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Address -->
+                  <div class="relative transition-all duration-300 ease-in-out hover:scale-102">
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="address">Address</label>
+                    <div class="mt-1 relative rounded-md shadow-sm">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-map-marker-alt text-gray-400"></i>
+                      </div>
+                      <input type="text" value="<?php echo $_SESSION["address"]; ?>" id="address" name="address" required
+                        class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-4 py-3 border-gray-300 rounded-lg"
+                        placeholder="Address" />
+                    </div>
+                  </div>
+
+                  <!-- Buttons -->
+                  <div class="flex space-x-4 pt-4">
+                    <button type="submit" name="submitEdit" id="saveButton"
+                      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1 flex items-center justify-center">
+                      <i class="fas fa-save mr-2"></i> Save Changes
+                    </button>
+                    <button type="button" id="resetPasswordBtn"
+                      class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg shadow transition-all duration-300 ease-in-out hover:shadow-lg transform hover:-translate-y-1 flex items-center justify-center">
+                      <i class="fas fa-key mr-2"></i> Reset Password
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
             
-
-                    <p class="text-center h1 fw-bold mb-5 mx-1 mx-md-4 mt-4">Edit Profile</p>
-
-                    <form class="mx-1 mx-md-4">
-
-                      <div class="d-flex flex-row align-items-center mb-4">
-                        <i class="fas fa-user fa-lg me-3 fa-fw"></i>
-                        <div class="form-outline flex-fill mb-0">
-                          <input type="text" value="<?php echo $_SESSION["id_number"]; ?>" id="idNumber" class="form-control" name="idNumber" readonly />
-                          <label class="form-label" for="idNumber">ID Number</label>
-                        </div>
-                      </div>
-
-                      <div class="d-flex flex-row align-items-center mb-4">
-                        <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
-                        <div class="form-outline flex-fill mb-0">
-                          <input type="text" value="<?php echo $_SESSION["lname"]; ?>" id="lName" class="form-control" name="lName" required />
-                          <label class="form-label" for="lName">Last Name</label>
-                        </div>
-                      </div>
-
-                      <div class="d-flex flex-row align-items-center mb-4">
-                        <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
-                        <div class="form-outline flex-fill mb-0">
-                          <input type="text" value="<?php echo $_SESSION["fname"]; ?>" id="fName" class="form-control" name="fName" required />
-                          <label class="form-label" for="fName">First Name</label>
-                        </div>
-                      </div>
-
-                      <div class="d-flex flex-row align-items-center mb-4">
-                        <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
-                        <div class="form-outline flex-fill mb-0">
-                          <input type="text" value="<?php echo $_SESSION["mname"]; ?>" id="mName" class="form-control" name="mName" required />
-                          <label class="form-label" for="mName">Middle Name</label>
-                        </div>
-                      </div>
-
-                      <div class="d-flex flex-row align-items-center mb-4">
-                        <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
-                        <div class="form-outline flex-fill mb-0">
-
-                          <select value="<?php echo $_SESSION["yearLevel"]; ?>" name="level" id="level" class="form-control">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-
-                          </select>
-                          <label class="form-label" for="level">Course Level</label>
-
-                        </div>
-                      </div>
-
-
-
-                      <div class="d-flex flex-row align-items-center mb-4">
-                        <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
-                        <div class="form-outline flex-fill mb-0">
-                          <input type="email" value="<?php echo $_SESSION["email"]; ?>" id="email" class="form-control" name="email" required />
-                          <label class="form-label" for="email">Email</label>
-                        </div>
-                      </div>
-
-
-                      <div class="d-flex flex-row align-items-center mb-4">
-                        <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
-                        <div class="form-outline flex-fill mb-0">
-
-                          <select name="course" value="<?php echo $_SESSION["course"]; ?>" id="course" class="form-control">
-                            <option value="BSIT">BSIT</option>
-                            <option value="BSCS">BSCS</option>
-                            <option value="ACT">ACT</option>
-
-
-                          </select>
-
-
-                          <label class="form-label" for="course">Course</label>
-                        </div>
-                      </div>
-
-                      <div class="d-flex flex-row align-items-center mb-4">
-                        <i class="fas fa-envelope fa-lg me-3 fa-fw"></i>
-                        <div class="form-outline flex-fill mb-0">
-                          <input type="text" value="<?php echo $_SESSION["address"]; ?>" id="address" class="form-control" name="address" required />
-                          <label class="form-label" for="address">Address</label>
-                        </div>
-                      </div>
-
-
-
-
-                      <div class="d-flex justify-content-center mx-4 mb-3 mb-lg-4 gap-3">
-                        <button class="btn btn-primary btn-lg" type="submit" name="submitEdit">Save</button>
-                        <a class="btn btn-danger btn-lg" type="button" href="Reset.php">Reset Password</a>
-                      </div>
-
-                    </form>
-
-                  </div>
-                  <div class="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
-
-                    <img src="../../images/sign.webp" class="img-fluid" alt="Sample image">
-
-                  </div>
+            <div class="md:w-1/2 bg-gradient-to-br from-blue-500 to-indigo-600 p-8 md:p-12 flex items-center justify-center animate__animated animate__fadeInRight">
+              <div class="text-center">
+                <img src="../../images/sign.webp" alt="Profile Illustration" class="w-3/4 mx-auto rounded-lg shadow-lg transform transition-all duration-500 hover:scale-105">
+                <div class="mt-8 text-white">
+                  <h3 class="text-2xl font-bold mb-2"><?php echo $_SESSION["name"]; ?></h3>
+                  <p class="text-blue-100 mb-1"><i class="fas fa-graduation-cap mr-2"></i><?php echo $_SESSION["course"]; ?> - Year <?php echo $_SESSION["yearLevel"]; ?></p>
+                  <p class="text-blue-100"><i class="fas fa-envelope mr-2"></i><?php echo $_SESSION["email"]; ?></p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </section>
-  </form>
+    </div>
+  </div>
 
+  <script>
+    // Initialize form elements to show currently selected options
+    document.addEventListener('DOMContentLoaded', function() {
+      // Form submission with SweetAlert2
+      document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        Swal.fire({
+          title: 'Save Changes?',
+          text: 'Do you want to update your profile information?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Yes, save it!',
+          cancelButtonText: 'Cancel',
+          backdrop: `rgba(0,0,123,0.4)`,
+          showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+          },
+          hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Show loading state
+            Swal.fire({
+              title: 'Saving...',
+              html: 'Updating your profile information',
+              timer: 1000,
+              timerProgressBar: true,
+              didOpen: () => {
+                Swal.showLoading();
+              }
+            }).then(() => {
+              // Submit the form
+              this.submit();
+            });
+          }
+        });
+      });
 
+      // Reset Password button
+      document.getElementById('resetPasswordBtn').addEventListener('click', function() {
+        Swal.fire({
+          title: 'Reset Password?',
+          text: 'Are you sure you want to reset your password?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Yes, reset it!',
+          cancelButtonText: 'Cancel',
+          backdrop: `rgba(0,0,123,0.4)`,
+          showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+          },
+          hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = 'Reset.php';
+          }
+        });
+      });
+      
+      // Add input field animations
+      const inputFields = document.querySelectorAll('input, select');
+      inputFields.forEach(field => {
+        field.addEventListener('focus', function() {
+          this.parentElement.parentElement.classList.add('scale-105');
+          this.parentElement.parentElement.classList.add('shadow-md');
+        });
+        
+        field.addEventListener('blur', function() {
+          this.parentElement.parentElement.classList.remove('scale-105');
+          this.parentElement.parentElement.classList.remove('shadow-md');
+        });
+      });
+    });
 
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    // Success message if coming back from a successful update
+    <?php if (isset($_GET['success']) && $_GET['success'] == 'true'): ?>
+    Swal.fire({
+      title: 'Success!',
+      text: 'Your profile has been updated successfully.',
+      icon: 'success',
+      showClass: {
+        popup: 'animate__animated animate__fadeInDown'
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutUp'
+      }
+    });
+    <?php endif; ?>
+    
+    // Error message
+    <?php if (isset($_GET['error']) && $_GET['error'] == 'true'): ?>
+    Swal.fire({
+      title: 'Error!',
+      text: 'There was a problem updating your profile.',
+      icon: 'error',
+      showClass: {
+        popup: 'animate__animated animate__fadeInDown'
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutUp'
+      }
+    });
+    <?php endif; ?>
+  </script>
 </body>
-
 </html>
