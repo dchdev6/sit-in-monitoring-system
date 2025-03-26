@@ -412,93 +412,219 @@ if(isset($_POST['deny_reservation'])){
 
 
 
-  <!-- Modal -->
-  <form action="Admin.php" method="GET">
-
+  <!-- Search Student Modal -->
+<form action="Admin.php" method="GET">
     <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title text-center " id="exampleModalLabel">Search Student</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body text-center">
-            <input type="text" name="searchBar" placeholder="Search...">
-          </div>
-          <div class="modal-footer">
-
-            <button type="submit" name="search" class="btn btn-primary">Search</button>
-          </div>
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content rounded-lg shadow-lg border-0">
+                <div class="modal-header bg-primary-50 border-0">
+                    <h5 class="modal-title text-primary-800 font-semibold" id="exampleModalLabel">
+                        <i class="fas fa-search me-2"></i>Search Student
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body p-4">
+                    <h6 class="font-medium text-gray-700 mb-4 text-center">Enter Student ID or Name</h6>
+                    
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        </div>
+                        <input 
+                            type="text" 
+                            name="searchBar" 
+                            placeholder="Search by ID number or name..." 
+                            class="form-control bg-white border border-gray-300 text-gray-900 text-lg rounded-md pl-10 py-3 w-full focus:ring-primary-500 focus:border-primary-500"
+                            autofocus
+                        >
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 opacity-70">
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Enter to search</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 text-xs text-gray-500 px-1">
+                        <p><i class="fas fa-info-circle mr-1"></i> Search by student ID number for exact match or name for related results.</p>
+                    </div>
+                </div>
+                
+                <div class="modal-footer flex justify-center border-0 bg-gray-50 rounded-b-lg">
+                    <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition duration-200 flex items-center" data-dismiss="modal">
+                        <i class="fas fa-times-circle mr-2"></i>Cancel
+                    </button>
+                    <button type="submit" name="search" class="px-4 py-2 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-md transition duration-200 flex items-center shadow-sm">
+                        <i class="fas fa-search mr-2"></i>Search Student
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </form>
+</form>
+
+<script>
+    // Add animation when modal appears
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchModal = document.getElementById('exampleModal');
+        if (searchModal) {
+            searchModal.addEventListener('show.bs.modal', function () {
+                const modalContent = this.querySelector('.modal-content');
+                modalContent.classList.add('animate__animated', 'animate__fadeInDown', 'animate__faster');
+                
+                // Focus the search input when modal opens
+                setTimeout(() => {
+                    this.querySelector('input[name="searchBar"]').focus();
+                }, 300);
+            });
+            
+            searchModal.addEventListener('hidden.bs.modal', function () {
+                const modalContent = this.querySelector('.modal-content');
+                modalContent.classList.remove('animate__animated', 'animate__fadeInDown', 'animate__faster');
+            });
+        }
+    });
+</script>
 
 
 <!-- Modal -->
 <form action="Admin.php" method="POST">
     <div class="modal fade" id="exampleModalCenter" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLongTitle">Sit In Form</h5>
+            <div class="modal-content rounded-lg shadow-lg border-0">
+                <div class="modal-header bg-primary-50 border-0">
+                    <h5 class="modal-title text-primary-800 font-semibold" id="exampleModalLongTitle">
+                        <i class="fas fa-laptop-code me-2"></i>Sit In Form
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body text-center container d-flex flex-md-column gap-3">
-                    <div class="form-group row">
-                        <label for="id" class="col-sm-4 col-form-label">ID Number:</label>
-                        <div class="col-sm-8">
-                            <input id="id" name="studentID" type="text" value="<?php echo $student->id ?>" readonly class="form-control" />
+                
+                <div class="modal-body p-4">
+                    <h6 class="font-medium text-gray-700 mb-4 text-center">Student Information</h6>
+                    
+                    <div class="space-y-3">
+                        <div class="form-group row align-items-center">
+                            <label for="id" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">ID Number:</label>
+                            <div class="col-sm-8">
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    </div>
+                                    <input id="id" name="studentID" type="text" value="<?php echo $student->id ?>" readonly 
+                                        class="form-control bg-gray-50 border border-gray-300 text-gray-900 rounded-md pl-10 py-2" />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="name" class="col-sm-4 col-form-label">Student Name:</label>
-                        <div class="col-sm-8">
-                            <input id="name" name="studentName" type="text" value="<?php echo $student->name ?>" readonly class="form-control" />
+                        
+                        <div class="form-group row align-items-center">
+                            <label for="name" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">Student Name:</label>
+                            <div class="col-sm-8">
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    </div>
+                                    <input id="name" name="studentName" type="text" value="<?php echo $student->name ?>" readonly 
+                                        class="form-control bg-gray-50 border border-gray-300 text-gray-900 rounded-md pl-10 py-2" />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="purposes" class="col-sm-4 col-form-label">Purpose:</label>
-                        <div class="col-sm-8">
-                            <select name="purpose" id="purposes" class="form-control">
-                                <option value="C-Programming">C Programming</option>
-                                <option value="Java Programming">Java Programming</option>
-                                <option value="C# Programming">C# Programming</option>
-                                <option value="Php Programming">Php Programming</option>
-                                <option value="ASP.Net Programming">ASP.Net Programming</option>
-                            </select>
+                        
+                        <div class="form-group row align-items-center">
+                            <label for="purposes" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">Purpose:</label>
+                            <div class="col-sm-8">
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    </div>
+                                    <select name="purpose" id="purposes" 
+                                        class="form-control bg-white border border-gray-300 text-gray-900 rounded-md pl-10 py-2 appearance-none">
+                                        <option value="C-Programming">C Programming</option>
+                                        <option value="Java Programming">Java Programming</option>
+                                        <option value="C# Programming">C# Programming</option>
+                                        <option value="Php Programming">PHP Programming</option>
+                                        <option value="ASP.Net Programming">ASP.NET Programming</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="lab" class="col-sm-4 col-form-label">Lab:</label>
-                        <div class="col-sm-8">
-                            <select name="lab" id="lab" class="form-control">
-                                <option value="524">524</option>
-                                <option value="526">526</option>
-                                <option value="528">528</option>
-                                <option value="530">530</option>
-                                <option value="542">542</option>
-                                <option value="Mac">Mac Laboratory</option>
-                            </select>
+                        
+                        <div class="form-group row align-items-center">
+                            <label for="lab" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">Lab:</label>
+                            <div class="col-sm-8">
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    </div>
+                                    <select name="lab" id="lab" 
+                                        class="form-control bg-white border border-gray-300 text-gray-900 rounded-md pl-10 py-2 appearance-none">
+                                        <option value="524">524</option>
+                                        <option value="526">526</option>
+                                        <option value="528">528</option>
+                                        <option value="530">530</option>
+                                        <option value="542">542</option>
+                                        <option value="Mac">Mac Laboratory</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group row">
-                        <label for="remaining" class="col-sm-4 col-form-label">Remaining Session: </label>
-                        <div class="col-sm-8">
-                            <input id="remaining" type="text" value="<?php echo $student->records ?>" readonly class="form-control" />
+                        
+                        <div class="form-group row align-items-center">
+                            <label for="remaining" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">Sessions Left:</label>
+                            <div class="col-sm-8">
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    </div>
+                                    <input id="remaining" type="text" value="<?php echo $student->records ?>" readonly 
+                                        class="form-control bg-gray-50 border border-gray-300 text-gray-900 rounded-md pl-10 py-2" />
+                                    
+                                    <?php if ($student->records <= 3): ?>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?php echo $student->records > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'; ?>">
+                                            <i class="fas <?php echo $student->records > 0 ? 'fa-exclamation-triangle mr-1' : 'fa-times-circle mr-1'; ?>"></i>
+                                            <?php echo $student->records > 0 ? 'Low' : 'None'; ?>
+                                        </span>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                                <?php if ($student->records <= 3): ?>
+                                <p class="mt-1 text-xs text-gray-500 italic">
+                                    <?php echo $student->records > 0 
+                                        ? 'Student is low on available sessions.' 
+                                        : 'Student has no available sessions left.'; ?>
+                                </p>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" name="sitIn" class="btn btn-primary">Sit In</button>
+                <div class="modal-footer flex justify-center border-0 bg-gray-50 rounded-b-lg">
+                    <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition duration-200 flex items-center" data-bs-dismiss="modal">
+                        <i class="fas fa-times-circle mr-2"></i>Cancel
+                    </button>
+                    <button type="submit" name="sitIn" class="px-4 py-2 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-md transition duration-200 flex items-center shadow-sm" <?php echo $student->records <= 0 ? 'disabled' : ''; ?>>
+                        <i class="fas fa-sign-in-alt mr-2"></i>Proceed with Sit-In
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 </form>
+
+<script>
+    // Add animation when modal appears
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('exampleModalCenter');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function () {
+                const modalContent = this.querySelector('.modal-content');
+                modalContent.classList.add('animate__animated', 'animate__fadeInDown', 'animate__faster');
+            });
+            
+            modal.addEventListener('hidden.bs.modal', function () {
+                const modalContent = this.querySelector('.modal-content');
+                modalContent.classList.remove('animate__animated', 'animate__fadeInDown', 'animate__faster');
+            });
+        }
+    });
+</script>
 
 
 

@@ -63,6 +63,28 @@ if(isset($_SESSION['success_message'])) {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+        /* Enhanced card animations */
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.75rem;
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0);
+            transition: box-shadow 0.3s ease;
+            pointer-events: none;
+        }
+        .stat-card:hover::after {
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+        }
+        .stat-card .icon-wrapper {
+            transition: transform 0.5s ease;
+        }
+        .stat-card:hover .icon-wrapper {
+            transform: scale(1.1) rotate(5deg);
+        }
         .scrollbar-thin::-webkit-scrollbar {
             width: 4px;
         }
@@ -166,14 +188,14 @@ if(isset($_SESSION['success_message'])) {
 
         <!-- Main Stats Row -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 transition duration-300 stat-card hover:border-primary-200 stagger-item">
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 transition duration-300 stat-card hover:border-primary-200 stagger-item relative" role="region" aria-label="Students registered statistics">
                 <div class="flex items-center">
-                    <div class="rounded-full bg-blue-100 p-3 mr-4 shadow-sm animate-float">
-                        <i class="fas fa-user-graduate text-blue-600"></i>
+                    <div class="rounded-full bg-blue-100 p-3 mr-4 shadow-sm animate-float icon-wrapper">
+                        <i class="fas fa-user-graduate text-blue-600" aria-hidden="true"></i>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 font-medium">Students Registered</p>
-                        <p class="text-2xl font-bold counter-animate"><?php echo retrieve_students_dashboard(); ?></p>
+                        <p class="text-sm text-gray-500 font-medium" id="students-label">Students Registered</p>
+                        <p class="text-2xl font-bold counter-animate" id="students-count" aria-labelledby="students-label"><?php echo retrieve_students_dashboard(); ?></p>
                     </div>
                 </div>
             </div>
@@ -272,25 +294,28 @@ if(isset($_SESSION['success_message'])) {
                     <div class="max-h-96 overflow-y-auto pr-2 space-y-4 scrollbar-thin announcement-container">
                         <?php if(empty($announce)): ?>
                             <div class="text-center py-8 text-gray-500">
-                                <i class="fas fa-bullhorn text-gray-300 text-4xl mb-3 animate-bounce-subtle"></i>
+                                <div class="bg-gray-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                                    <i class="fas fa-bullhorn text-gray-300 text-3xl animate-bounce-subtle"></i>
+                                </div>
                                 <p>No announcements posted yet</p>
+                                <p class="text-sm text-gray-400 mt-1">Create your first announcement to keep everyone informed</p>
                             </div>
                         <?php else: ?>
                             <?php foreach ($announce as $index => $row) : ?>
-                                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all duration-300 announcement-item" style="transition-delay: <?php echo $index * 100; ?>ms">
+                                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all duration-300 announcement-item relative group" style="transition-delay: <?php echo $index * 100; ?>ms">
+                                    <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button type="button" class="text-gray-400 hover:text-red-500 transition-colors p-1" 
+                                               onclick="confirmDeleteAnnouncement(<?php echo $row['announcement_id']; ?>)">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
                                     <div class="flex items-center mb-2">
-                                        <div class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 mr-3 shadow-sm">
+                                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white mr-3 shadow-sm">
                                             <i class="fas fa-user-tie"></i>
                                         </div>
                                         <div>
                                             <p class="font-semibold text-gray-800"><?php echo htmlspecialchars($row['admin_name']); ?></p>
                                             <p class="text-xs text-gray-500"><?php echo htmlspecialchars($row['date']); ?></p>
-                                        </div>
-                                        <div class="ml-auto">
-                                            <button type="button" class="text-gray-400 hover:text-red-500 transition-colors" 
-                                                   onclick="confirmDeleteAnnouncement(<?php echo $row['announcement_id']; ?>)">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
                                         </div>
                                     </div>
                                     <p class="text-gray-700 ml-12"><?php echo htmlspecialchars($row['message']); ?></p>
@@ -313,6 +338,33 @@ if(isset($_SESSION['success_message'])) {
             <div class="p-6 chart-container">
                 <canvas id="studentYearLevelChart" class="max-h-96"></canvas>
             </div>
+        </div>
+    </div>
+
+    <!-- Floating Quick Action Button -->
+    <div class="fixed bottom-8 right-8">
+        <button id="quickActionBtn" class="bg-primary-600 hover:bg-primary-700 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-primary-300" aria-label="Quick actions menu">
+            <i class="fas fa-plus text-xl"></i>
+        </button>
+        
+        <!-- Quick Actions Menu -->
+        <div id="quickActionMenu" class="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl border border-gray-200 w-48 py-2 opacity-0 invisible transition-all duration-300 transform translate-y-2" role="menu">
+            <a href="manage_students.php" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
+                <i class="fas fa-user-graduate mr-3 text-primary-500 w-5"></i>
+                Manage Students
+            </a>
+            <a href="sit_in_records.php" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
+                <i class="fas fa-clipboard-list mr-3 text-primary-500 w-5"></i>
+                View Records
+            </a>
+            <a href="generate_reports.php" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
+                <i class="fas fa-chart-bar mr-3 text-primary-500 w-5"></i>
+                Generate Reports
+            </a>
+            <button id="quickNewAnnouncement" class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
+                <i class="fas fa-bullhorn mr-3 text-primary-500 w-5"></i>
+                New Announcement
+            </button>
         </div>
     </div>
 
@@ -552,7 +604,9 @@ if(isset($_SESSION['success_message'])) {
                                 label: function(context) {
                                     const label = context.label || '';
                                     const value = context.formattedValue;
-                                    return `${label}: ${value}`;
+                                    const total = context.chart.data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                                    const percentage = Math.round((context.raw / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
                                 }
                             }
                         }
@@ -699,6 +753,41 @@ if(isset($_SESSION['success_message'])) {
                 html: `<span class="text-sm">${randomToast.message}</span>`
             });
         }, 5000);  // Show after 5 seconds for demo
+
+        // Add this to your existing JavaScript
+        document.getElementById('quickActionBtn').addEventListener('click', function() {
+            const menu = document.getElementById('quickActionMenu');
+            
+            if (menu.classList.contains('invisible')) {
+                // Show menu
+                menu.classList.remove('invisible', 'opacity-0', 'translate-y-2');
+                menu.classList.add('opacity-100', 'translate-y-0');
+                this.innerHTML = '<i class="fas fa-times text-xl"></i>';
+                this.setAttribute('aria-expanded', 'true');
+            } else {
+                // Hide menu
+                menu.classList.add('invisible', 'opacity-0', 'translate-y-2');
+                menu.classList.remove('opacity-100', 'translate-y-0');
+                this.innerHTML = '<i class="fas fa-plus text-xl"></i>';
+                this.setAttribute('aria-expanded', 'false');
+            }
+        });
+
+        document.getElementById('quickNewAnnouncement').addEventListener('click', function() {
+            // Hide the menu
+            document.getElementById('quickActionMenu').classList.add('invisible', 'opacity-0', 'translate-y-2');
+            document.getElementById('quickActionMenu').classList.remove('opacity-100', 'translate-y-0');
+            document.getElementById('quickActionBtn').innerHTML = '<i class="fas fa-plus text-xl"></i>';
+            
+            // Show the announcement form
+            const form = document.getElementById('announcementForm');
+            form.classList.remove('hidden');
+            form.classList.add('animate__animated', 'animate__fadeIn');
+            document.getElementById('an').focus();
+            
+            // Scroll to the form
+            form.scrollIntoView({ behavior: 'smooth' });
+        });
     </script>
 </body>
 
