@@ -27,6 +27,8 @@ $listPerson = retrieve_current_sit_in();
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Animation Library - AOS -->
   <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   <script>
     tailwind.config = {
       theme: {
@@ -276,6 +278,14 @@ $listPerson = retrieve_current_sit_in();
       transform: translateY(0px);
       transition: opacity 0.3s, transform 0.3s;
     }
+
+    /* Hidden button styling */
+    .hidden-button {
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+      visibility: hidden;
+    }
   </style>
 </head>
 
@@ -296,9 +306,24 @@ $listPerson = retrieve_current_sit_in();
           Refresh
         </button>
         
-        <button id="exportBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-          <i class="fas fa-download mr-2 text-gray-500"></i>
-          Export
+        <button id="excelBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+          <i class="fas fa-file-excel mr-2"></i>
+          Excel
+        </button>
+        
+        <button id="pdfBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+          <i class="fas fa-file-pdf mr-2"></i>
+          PDF
+        </button>
+        
+        <button id="csvBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+          <i class="fas fa-file-csv mr-2"></i>
+          CSV
+        </button>
+        
+        <button id="printBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+          <i class="fas fa-print mr-2"></i>
+          Print
         </button>
       </div>
     </div>
@@ -431,6 +456,9 @@ $listPerson = retrieve_current_sit_in();
       <p class="text-xs text-gray-500">© <?php echo date("Y"); ?> Sit-in Monitoring System</p>
     </div>
   </div>
+  
+  <!-- Hidden container for DataTables buttons -->
+  <div id="exportButtons" style="display:none;"></div>
 
   <!-- jQuery (required for DataTables) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -440,13 +468,19 @@ $listPerson = retrieve_current_sit_in();
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- AOS Animation Library -->
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <!-- DataTables Buttons JS -->
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/dataTables.buttons.min.js"></script>
+
+  <!-- DataTables Buttons JS - SPECIFIC VERSIONS -->
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/buttons.print.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+  <!-- FileSaver for CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- SheetJS for direct Excel export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <script>
     $(document).ready(function() {
@@ -506,18 +540,21 @@ $listPerson = retrieve_current_sit_in();
           }
         },
         order: [[0, 'desc']],
+        dom: '<"flex justify-between items-center mb-4"lf>rt<"flex justify-between items-center mt-4"ip>',
         buttons: [
           {
             extend: 'excel',
-            className: 'hidden',
+            text: 'Excel',
             exportOptions: { columns: ':visible' },
-            title: 'Sit-in Records - ' + new Date().toLocaleDateString()
+            title: 'Sit-in Records - ' + new Date().toLocaleDateString(),
+            className: 'hidden-button'
           },
           {
             extend: 'pdf',
-            className: 'hidden',
+            text: 'PDF',
             exportOptions: { columns: ':visible' },
             title: 'Sit-in Records',
+            className: 'hidden-button',
             customize: function(doc) {
               doc.pageMargins = [20, 30, 20, 30];
               doc.defaultStyle.fontSize = 10;
@@ -551,11 +588,19 @@ $listPerson = retrieve_current_sit_in();
           },
           {
             extend: 'print',
-            className: 'hidden',
-            exportOptions: { columns: ':visible' }
+            text: 'Print',
+            exportOptions: { columns: ':visible' },
+            className: 'hidden-button'
+          },
+          {
+            extend: 'csv',
+            text: 'CSV',
+            exportOptions: { columns: ':visible' },
+            title: 'Sit-in Records - ' + new Date().toLocaleDateString(),
+            className: 'hidden-button'
           }
         ],
-        "drawCallback": function() {
+        drawCallback: function() {
           // Animate rows when table is drawn or redrawn
           $('.row-animation').each(function(i) {
             const $row = $(this);
@@ -575,6 +620,9 @@ $listPerson = retrieve_current_sit_in();
           });
         }
       });
+
+      // Make sure table is initialized BEFORE setting up the export button
+      table.buttons().container().appendTo('#exportButtons');
       
       // Add shimmer effect to search when typing
       $('.dataTables_filter input').on('input', function() {
@@ -583,60 +631,307 @@ $listPerson = retrieve_current_sit_in();
           $(this).removeClass('shimmer');
         }, 500);
       });
-      
-      // Export button functionality with animation
-      $('#exportBtn').on('click', function() {
+
+      // Debug info
+      console.log('Table object:', table);
+      console.log('Table buttons object:', table.buttons);
+
+      // Excel export button
+      $('#excelBtn').off('click').on('click', function() {
+        // Add visual feedback
         $(this).addClass('animate-pulse');
         
-        Swal.fire({
-          title: 'Export Options',
-          html: `
-            <div class="grid grid-cols-1 gap-3 mt-4">
-              <button id="btnExcelExport" class="bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                <i class="fas fa-file-excel mr-2"></i> Export to Excel
-              </button>
-              <button id="btnPdfExport" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                <i class="fas fa-file-pdf mr-2"></i> Export to PDF
-              </button>
-              <button id="btnPrintExport" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                <i class="fas fa-print mr-2"></i> Print Table
-              </button>
-            </div>
-          `,
-          showConfirmButton: false,
-          showCloseButton: true,
-          showClass: {
-            popup: 'animate__animated animate__fadeInDown'
-          },
-          hideClass: {
-            popup: 'animate__animated animate__fadeOutUp'
-          },
-          didOpen: () => {
-            $('#btnExcelExport').on('click', function() {
-              $('.buttons-excel').click();
-              Swal.close();
-            });
-            
-            $('#btnPdfExport').on('click', function() {
-              $('.buttons-pdf').click();
-              Swal.close();
-            });
-            
-            $('#btnPrintExport').on('click', function() {
-              $('.buttons-print').click();
-              Swal.close();
-            });
-          }
-        }).then(() => {
-          $(this).removeClass('animate-pulse');
-        });
+        try {
+          // Show loading
+          Swal.fire({
+            title: 'Exporting to Excel',
+            text: 'Please wait...',
+            timerProgressBar: true,
+            didOpen: () => {
+              Swal.showLoading();
+              
+              setTimeout(() => {
+                // Manual Excel Export
+                const tableData = [];
+                const headers = [];
+                
+                $('#sitInTable thead th').each(function() {
+                  headers.push($(this).text());
+                });
+                tableData.push(headers);
+                
+                $('#sitInTable tbody tr').each(function() {
+                  const rowData = [];
+                  $(this).find('td').each(function() {
+                    rowData.push($(this).text().trim());
+                  });
+                  tableData.push(rowData);
+                });
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(tableData);
+                XLSX.utils.book_append_sheet(wb, ws, "Sit-in Records");
+                
+                // Save file
+                XLSX.writeFile(wb, 'Sit-in_Records_' + new Date().toLocaleDateString().replace(/\//g, '-') + '.xlsx');
+                
+                Swal.close();
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success!',
+                  text: 'Excel file has been generated and downloaded.',
+                  timer: 2000,
+                  showConfirmButton: false
+                });
+              }, 500); // Short delay to ensure UI responsiveness
+            }
+          });
+        } catch(e) {
+          console.error("Excel export failed:", e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Export Failed',
+            text: 'Excel export could not be completed. ' + e.message
+          });
+        } finally {
+          setTimeout(() => {
+            $(this).removeClass('animate-pulse');
+          }, 1000);
+        }
       });
-      
+
+      // PDF export button
+      $('#pdfBtn').off('click').on('click', function() {
+        // Add visual feedback
+        $(this).addClass('animate-pulse');
+        
+        try {
+          // Show loading
+          Swal.fire({
+            title: 'Generating PDF',
+            text: 'Please wait...',
+            timerProgressBar: true,
+            didOpen: () => {
+              Swal.showLoading();
+              
+              setTimeout(() => {
+                const tableData = [];
+                const headers = [];
+                
+                $('#sitInTable thead th').each(function() {
+                  headers.push($(this).text());
+                });
+                
+                $('#sitInTable tbody tr').each(function() {
+                  const rowData = [];
+                  $(this).find('td').each(function() {
+                    rowData.push($(this).text().trim());
+                  });
+                  tableData.push(rowData);
+                });
+                
+                // Create PDF document definition
+                const docDefinition = {
+                  pageMargins: [20, 60, 20, 40],
+                  header: {
+                    text: 'Sit-in Monitoring System',
+                    alignment: 'center',
+                    margin: [0, 20, 0, 0],
+                    fontSize: 18,
+                    bold: true
+                  },
+                  footer: function(currentPage, pageCount) {
+                    return { 
+                      text: currentPage.toString() + ' of ' + pageCount,
+                      alignment: 'center', 
+                      fontSize: 8,
+                      margin: [0, 10, 0, 0]
+                    };
+                  },
+                  content: [
+                    { text: 'Generated on: ' + new Date().toLocaleDateString(), alignment: 'center', fontSize: 10, margin: [0, 0, 0, 20] },
+                    {
+                      table: {
+                        headerRows: 1,
+                        widths: Array(headers.length).fill('*'),
+                        body: [headers, ...tableData]
+                      },
+                      layout: 'lightHorizontalLines'
+                    }
+                  ]
+                };
+                
+                // Generate PDF
+                pdfMake.createPdf(docDefinition).download('Sit-in_Records_' + new Date().toLocaleDateString().replace(/\//g, '-') + '.pdf');
+                
+                Swal.close();
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success!',
+                  text: 'PDF has been generated and downloaded.',
+                  timer: 2000,
+                  showConfirmButton: false
+                });
+              }, 500);
+            }
+          });
+        } catch(e) {
+          console.error("PDF export failed:", e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Export Failed',
+            text: 'PDF export could not be completed. ' + e.message
+          });
+        } finally {
+          setTimeout(() => {
+            $(this).removeClass('animate-pulse');
+          }, 1000);
+        }
+      });
+
+      // CSV export button
+      $('#csvBtn').off('click').on('click', function() {
+        // Add visual feedback
+        $(this).addClass('animate-pulse');
+        
+        try {
+          // Show loading
+          Swal.fire({
+            title: 'Generating CSV',
+            text: 'Please wait...',
+            timerProgressBar: true,
+            didOpen: () => {
+              Swal.showLoading();
+              
+              setTimeout(() => {
+                // Get table data
+                const tableData = [];
+                const headers = [];
+                
+                $('#sitInTable thead th').each(function() {
+                  headers.push($(this).text());
+                });
+                
+                // Add headers as first row
+                tableData.push(headers.join(','));
+                
+                // Add data rows
+                $('#sitInTable tbody tr').each(function() {
+                  const rowData = [];
+                  $(this).find('td').each(function() {
+                    // Escape commas in the cell data
+                    let cellData = $(this).text().trim();
+                    // If cell contains commas, wrap in quotes
+                    if (cellData.includes(',')) {
+                      cellData = '"' + cellData + '"';
+                    }
+                    rowData.push(cellData);
+                  });
+                  tableData.push(rowData.join(','));
+                });
+                
+                // Join with newlines
+                const csvContent = tableData.join('\n');
+                
+                // Download directly without FileSaver dependency
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'Sit-in_Records_' + new Date().toLocaleDateString().replace(/\//g, '-') + '.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                Swal.close();
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success!',
+                  text: 'CSV file has been generated and downloaded.',
+                  timer: 2000,
+                  showConfirmButton: false
+                });
+              }, 500);
+            }
+          });
+        } catch(e) {
+          console.error("CSV export failed:", e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Export Failed',
+            text: 'CSV export could not be completed. ' + e.message
+          });
+        } finally {
+          setTimeout(() => {
+            $(this).removeClass('animate-pulse');
+          }, 1000);
+        }
+      });
+
+      // Print button
+      $('#printBtn').off('click').on('click', function() {
+        // Add visual feedback
+        $(this).addClass('animate-pulse');
+        
+        try {
+          let printWindow = window.open('', '_blank');
+          let tableHTML = document.getElementById('sitInTable').outerHTML;
+          
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>Sit-in Records</title>
+                <style>
+                  body { font-family: Arial, sans-serif; margin: 20px; }
+                  table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                  th { background-color: #f2f2f2; }
+                  h1, h2 { text-align: center; }
+                  @media print {
+                    table { page-break-inside: auto; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                    thead { display: table-header-group; }
+                  }
+                </style>
+              </head>
+              <body>
+                <h1>Sit-in Monitoring System</h1>
+                <h2>Sit-in Records - ${new Date().toLocaleDateString()}</h2>
+                ${tableHTML}
+              </body>
+            </html>
+          `);
+          
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+            $(this).removeClass('animate-pulse');
+          }, 1000);
+        } catch(e) {
+          console.error("Print failed:", e);
+          Swal.fire({
+            icon: 'error',
+            title: 'Print Failed',
+            text: 'Print could not be initiated. ' + e.message
+          });
+          $(this).removeClass('animate-pulse');
+        }
+      });
+
       // Refresh button functionality with animation
       $('#refreshBtn').on('click', function() {
         const $icon = $(this).find('i');
+        const $button = $(this);
+        
+        // Disable button to prevent multiple clicks
+        $button.prop('disabled', true);
         $icon.addClass('fa-spin');
-        $(this).addClass('animate-pulse');
+        $button.addClass('animate-pulse');
         
         // Show loading message with SweetAlert2
         Swal.fire({
@@ -645,13 +940,14 @@ $listPerson = retrieve_current_sit_in();
           timerProgressBar: true,
           didOpen: () => {
             Swal.showLoading();
-          }
+          },
+          allowOutsideClick: false
         });
         
-        // Simulate refresh with animation
+        // Simple refresh after a brief timeout to show the loading animation
         setTimeout(function() {
-          location.reload();
-        }, 800);
+          window.location.reload();
+        }, 1000);
       });
     });
   </script>

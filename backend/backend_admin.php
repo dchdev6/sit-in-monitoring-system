@@ -696,3 +696,26 @@ function notification($id_number,$message){
     mysqli_query($con,$sql);
     
 }
+
+function reset_all_student_sessions($defaultValue = 30) {
+    $db = Database::getInstance();
+    $con = $db->getConnection();
+    
+    try {
+        // Update all students' session values to the default
+        // IMPORTANT: Update the student_session table, not the students table
+        $sql = "UPDATE student_session SET session = ?";
+        $stmt = $con->prepare($sql);
+        $stmt->bind_param("i", $defaultValue);
+        $result = $stmt->execute();
+        
+        // Close statement
+        $stmt->close();
+        
+        return $result;
+    } catch (Exception $e) {
+        // Log error for debugging
+        error_log("Reset sessions error: " . $e->getMessage());
+        return false;
+    }
+}

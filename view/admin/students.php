@@ -86,14 +86,11 @@ $listPerson = retrieve_students();
     .dataTables_filter input {
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      padding: 0.5rem 1rem 0.5rem 2.5rem;
+      padding: 0.5rem 1rem; /* Remove left padding that was accommodating the icon */
       margin-left: 0.5rem;
       font-size: 0.875rem;
       transition: all 0.2s;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230ea5e9'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: 0.75rem center;
-      background-size: 1rem;
+      background-image: none; /* Remove the background image */
     }
     
     .dataTables_filter input:focus {
@@ -105,15 +102,12 @@ $listPerson = retrieve_students();
     .dataTables_length select {
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      padding: 0.5rem 2rem 0.5rem 0.75rem;
+      padding: 0.5rem 0.75rem; /* Adjust padding (remove extra right padding) */
       font-size: 0.875rem;
-      background-position: right 0.5rem center;
       transition: all 0.2s;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230ea5e9'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-size: 1rem;
-      -webkit-appearance: none;
-      appearance: none;
+      background-image: none;
+      -webkit-appearance: auto; /* Reset to browser default */
+      appearance: auto; /* Reset to browser default */
     }
     
     .dataTables_length select:focus {
@@ -187,14 +181,14 @@ $listPerson = retrieve_students();
       position: absolute;
       bottom: 0;
       left: 0;
-      height: 2px;
+      height: 0;
       width: 0;
-      background-color: #0ea5e9;
-      transition: width 0.3s ease;
+      background-color: transparent;
+      transition: none;
     }
     
     table.dataTable thead th:hover::after {
-      width: 100%;
+      width: 0;
     }
     
     table.dataTable tbody tr {
@@ -744,8 +738,8 @@ $listPerson = retrieve_students();
           $('.dataTables_filter label').addClass('flex items-center');
           $('.dataTables_length select').addClass('focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500');
           
-          // Reposition search icon
-          $('.dataTables_filter input').removeClass('pl-10').addClass('pl-9');
+          // Remove any padding adjustments that were for the icon
+          $('.dataTables_filter input').removeClass('pl-9');
         }
       });
       
@@ -765,7 +759,7 @@ $listPerson = retrieve_students();
           title: '<div class="flex items-center mb-2"><i class="fas fa-sync-alt text-yellow-500 mr-3"></i>Reset All Sessions?</div>',
           html: `
             <div class="text-left">
-              <p class="mb-3">This will reset the session count for all students to the default value.</p>
+              <p class="mb-3">This will reset the session count for all students to 30 sessions.</p>
               <div class="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm flex items-start">
                 <i class="fas fa-exclamation-triangle mr-2 mt-0.5"></i>
                 <span>This action cannot be undone. All current session counts will be lost.</span>
@@ -795,41 +789,68 @@ $listPerson = retrieve_students();
               timerProgressBar: true,
               didOpen: () => {
                 Swal.showLoading();
+                
+                // Send AJAX request to reset sessions
+                $.ajax({
+                  url: '../../includes/reset_sessions.php', // Verify this path is correct
+                  method: 'POST',
+                  dataType: 'json',
+                  timeout: 5000, // Add timeout to catch network errors
+                  cache: false, // Prevent caching
+                  success: function(response) {
+                    console.log("Response received:", response); // Log the response
+                    
+                    if (response.success) {
+                      const defaultValue = response.defaultValue;
+                      
+                      // Success state
+                      Swal.fire({
+                        icon: 'success',
+                        title: 'Reset Complete!',
+                        html: `
+                          <div class="text-left">
+                            <p class="mb-2">All student sessions have been reset successfully.</p>
+                            <div class="bg-green-50 text-green-800 p-3 rounded-lg text-sm flex items-start mt-3">
+                              <i class="fas fa-check-circle mr-2 mt-0.5"></i>
+                              <span>Session counts have been set to ${defaultValue} sessions.</span>
+                            </div>
+                          </div>
+                        `,
+                        confirmButtonColor: '#0ea5e9',
+                        showClass: {
+                          popup: 'animate__animated animate__fadeInDown animate__faster'
+                        }
+                      }).then(() => {
+                        // Reload the page to refresh the data
+                        window.location.reload();
+                      });
+                    } else {
+                      // Error state
+                      Swal.fire({
+                        icon: 'error',
+                        title: 'Reset Failed',
+                        text: 'There was an error resetting the session counts: ' + response.message,
+                        confirmButtonColor: '#0ea5e9'
+                      });
+                    }
+                  },
+                  error: function(xhr, textStatus, errorThrown) {
+                    console.error("AJAX Error:", textStatus, errorThrown); // Log detailed error info
+                    
+                    // Error state for AJAX failure
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Connection Error',
+                      text: 'Could not connect to the server. Error: ' + textStatus + ' - ' + errorThrown,
+                      confirmButtonColor: '#0ea5e9'
+                    });
+                  }
+                });
               },
-              showClass: {
-                popup: 'animate__animated animate__fadeIn animate__faster'
-              }
-            }).then(() => {
-              // Success state
-              Swal.fire({
-                icon: 'success',
-                title: 'Reset Complete!',
-                html: `
-                  <div class="text-left">
-                    <p class="mb-2">All student sessions have been reset successfully.</p>
-                    <div class="bg-green-50 text-green-800 p-3 rounded-lg text-sm flex items-start mt-3">
-                      <i class="fas fa-check-circle mr-2 mt-0.5"></i>
-                      <span>Session counts have been set to the default value.</span>
-                    </div>
-                  </div>
-                `,
-                confirmButtonColor: '#0ea5e9',
-                showClass: {
-                  popup: 'animate__animated animate__fadeInDown animate__faster'
-                }
-              });
-              
-              // Reset all counters and update UI
-              $('.counter, .counter-decimal').text('0');
-              setTimeout(animateCounter, 500);
-              
-              // Update status badges
-              $('.status-badge').removeClass('low medium').addClass('good');
-              $('.status-badge i').removeClass('fa-exclamation-circle fa-clock').addClass('fa-check-circle');
-              $('.status-badge').text('30 sessions');
-              
-              // Redraw table to show updated data
-              table.draw();
+              showConfirmButton: false,
+              allowOutsideClick: false,
+              allowEscapeKey: false,
+              allowEnterKey: false
             });
           }
         });
@@ -890,87 +911,88 @@ $listPerson = retrieve_students();
         });
       });
       
-      // View Details Button with enhanced modal
+      // Enhanced compact single-row student details modal with improved spacing
       $('.view-details').on('click', function() {
         const studentId = $(this).data('id');
         
+        // Add spin animation
         $(this).addClass('animate-spin');
         setTimeout(() => {
           $(this).removeClass('animate-spin');
         }, 500);
         
+        // Extract data from the table row
+        const rowData = $(this).closest('tr').find('td');
+        const studentName = rowData.eq(1).text().trim();
+        const yearLevel = rowData.eq(2).text().trim();
+        const course = rowData.eq(3).text().trim();
+        const sessions = rowData.eq(4).text().trim();
+        
+        // Use a flatter, single-line design with all key details
         Swal.fire({
-          title: '<div class="flex items-center justify-center mb-2"><div class="bg-primary-100 p-2 rounded-lg mr-3"><i class="fas fa-user-graduate text-primary-600"></i></div><span>Student Details</span></div>',
+          title: '<div class="flex items-center justify-between w-full pr-6"><span class="flex items-center"><i class="fas fa-user-graduate text-primary-600 mr-2"></i>Student Details</span><span class="text-sm font-normal text-gray-500">ID: ' + studentId + '</span></div>',
           html: `
-            <div class="bg-gray-50 rounded-lg p-5 border border-gray-200">
-              <div class="space-y-3">
-                <div class="bg-white rounded-lg p-3 flex items-center shadow-sm">
-                  <div class="bg-primary-50 p-2 rounded-lg mr-3">
-                    <i class="fas fa-id-card text-primary-500"></i>
+            <div class="bg-white rounded-lg border border-gray-200">
+              <!-- Name and badge row -->
+              <div class="px-4 py-3 flex items-center justify-between border-b border-gray-200">
+                <div class="flex items-center">
+                  <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center mr-3">
+                    <i class="fas fa-user text-primary-600"></i>
                   </div>
-                  <div>
-                    <div class="text-xs text-gray-500">Student ID</div>
-                    <div class="font-medium">${studentId}</div>
-                  </div>
+                  <h3 class="font-bold text-gray-800">${studentName}</h3>
                 </div>
-                
-                <div class="bg-white rounded-lg p-3 flex items-center shadow-sm">
-                  <div class="bg-primary-50 p-2 rounded-lg mr-3">
-                    <i class="fas fa-envelope text-primary-500"></i>
-                  </div>
-                  <div>
-                    <div class="text-xs text-gray-500">Email Address</div>
-                    <div class="font-medium">student${studentId}@example.com</div>
-                  </div>
-                </div>
-                
-                <div class="bg-white rounded-lg p-3 flex items-center shadow-sm">
-                  <div class="bg-primary-50 p-2 rounded-lg mr-3">
-                    <i class="fas fa-phone text-primary-500"></i>
-                  </div>
-                  <div>
-                    <div class="text-xs text-gray-500">Phone Number</div>
-                    <div class="font-medium">(123) 456-7890</div>
-                  </div>
-                </div>
-                
-                <div class="bg-white rounded-lg p-3 flex items-center shadow-sm">
-                  <div class="bg-primary-50 p-2 rounded-lg mr-3">
-                    <i class="fas fa-map-marker-alt text-primary-500"></i>
-                  </div>
-                  <div>
-                    <div class="text-xs text-gray-500">Address</div>
-                    <div class="font-medium">123 University Ave, Campus City</div>
-                  </div>
-                </div>
-                
-                <div class="bg-white rounded-lg p-3 flex items-center shadow-sm">
-                  <div class="bg-primary-50 p-2 rounded-lg mr-3">
-                    <i class="fas fa-calendar-alt text-primary-500"></i>
-                  </div>
-                  <div>
-                    <div class="text-xs text-gray-500">Last Session</div>
-                    <div class="font-medium">March 20, 2025</div>
-                  </div>
+                <div class="flex items-center space-x-2">
+                  <span class="bg-blue-50 px-2 py-0.5 rounded text-xs text-blue-700">${course}</span>
+                  <span class="bg-purple-50 px-2 py-0.5 rounded text-xs text-purple-700">${yearLevel}</span>
+                  <span class="status-badge ${parseInt(sessions) <= 6 ? 'low' : (parseInt(sessions) <= 15 ? 'medium' : 'good')}">
+                    <i class="fas ${parseInt(sessions) <= 6 ? 'fa-exclamation-circle' : (parseInt(sessions) <= 15 ? 'fa-clock' : 'fa-check-circle')}"></i>
+                    ${sessions}
+                  </span>
                 </div>
               </div>
               
-              <div class="mt-4 flex justify-center">
-                <button type="button" class="text-primary-600 border border-primary-300 bg-primary-50 hover:bg-primary-100 text-sm font-medium py-2 px-4 rounded-lg transition-all duration-300 flex items-center mr-2" onclick="showEditStudent('${studentId}')">
-                  <i class="fas fa-edit mr-2"></i>
-                  Edit Student
-                </button>
-                <button type="button" class="text-red-600 border border-red-300 bg-red-50 hover:bg-red-100 text-sm font-medium py-2 px-4 rounded-lg transition-all duration-300 flex items-center" onclick="showDeleteConfirm('${studentId}')">
-                  <i class="fas fa-trash mr-2"></i>
-                  Delete
-                </button>
+              <!-- Information row - all in one line -->
+              <div class="grid grid-cols-4 divide-x divide-gray-200">
+                <div class="p-3 flex items-center">
+                  <i class="fas fa-envelope text-primary-500 mr-2"></i>
+                  <div class="overflow-hidden">
+                    <div class="text-xs text-gray-500">Email</div>
+                    <div class="font-medium text-sm truncate">student${studentId}@example.com</div>
+                  </div>
+                </div>
+                
+                <div class="p-3 flex items-center">
+                  <i class="fas fa-phone text-primary-500 mr-2"></i>
+                  <div>
+                    <div class="text-xs text-gray-500">Phone</div>
+                    <div class="font-medium text-sm">(123) 456-7890</div>
+                  </div>
+                </div>
+                
+                <div class="p-3 flex items-center">
+                  <i class="fas fa-calendar-alt text-primary-500 mr-2"></i>
+                  <div>
+                    <div class="text-xs text-gray-500">Last Session</div>
+                    <div class="font-medium text-sm">Mar 20, 2025</div>
+                  </div>
+                </div>
+                
+                <div class="p-3 flex justify-end">
+                  <button type="button" class="text-primary-600 border border-primary-300 bg-primary-50 hover:bg-primary-100 text-xs font-medium py-1 px-2 rounded transition-all duration-300 flex items-center mr-1" onclick="showEditStudent('${studentId}')">
+                    <i class="fas fa-edit mr-1"></i> Edit
+                  </button>
+                  <button type="button" class="text-red-600 border border-red-300 bg-red-50 hover:bg-red-100 text-xs font-medium py-1 px-2 rounded transition-all duration-300 flex items-center" onclick="showDeleteConfirm('${studentId}')">
+                    <i class="fas fa-trash mr-1"></i> Delete
+                  </button>
+                </div>
               </div>
             </div>
           `,
           showConfirmButton: false,
-          showCancelButton: true,
-          cancelButtonText: 'Close',
-          cancelButtonColor: '#64748b',
+          showCancelButton: false,
+          showCloseButton: true,
+          padding: '0.5rem',
+          width: 'auto',
           showClass: {
             popup: 'animate__animated animate__fadeInDown animate__faster'
           },
@@ -979,112 +1001,109 @@ $listPerson = retrieve_students();
           },
           customClass: {
             container: 'student-details-modal',
-            popup: 'rounded-xl border border-gray-100',
-            header: 'border-b border-gray-100 pb-3',
-            closeButton: 'focus:outline-none focus:shadow-none',
-            cancelButton: 'rounded-lg px-4 py-2'
-          },
-          buttonsStyling: true,
-          footer: `<div class="text-xs text-gray-400 text-center w-full pb-2">Last updated: ${new Date().toLocaleDateString()}</div>`
+            popup: 'rounded-lg shadow-md max-w-4xl',
+            closeButton: 'focus:outline-none text-gray-500 hover:text-gray-700',
+            title: 'pr-8' // Add right padding to the title
+          }
         });
       });
-    });
 
-    // Helper functions for the modal actions
-    function showEditStudent(studentId) {
-      // Submit form to navigate to edit page
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = 'Admin.php';
-      
-      const idInput = document.createElement('input');
-      idInput.type = 'hidden';
-      idInput.name = 'idNum';
-      idInput.value = studentId;
-      
-      const editInput = document.createElement('input');
-      editInput.type = 'hidden';
-      editInput.name = 'edit';
-      editInput.value = '1';
-      
-      form.appendChild(idInput);
-      form.appendChild(editInput);
-      document.body.appendChild(form);
-      form.submit();
-    }
+      // Helper functions for the modal actions
+      function showEditStudent(studentId) {
+        // Submit form to navigate to edit page
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'Admin.php';
+        
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'idNum';
+        idInput.value = studentId;
+        
+        const editInput = document.createElement('input');
+        editInput.type = 'hidden';
+        editInput.name = 'edit';
+        editInput.value = '1';
+        
+        form.appendChild(idInput);
+        form.appendChild(editInput);
+        document.body.appendChild(form);
+        form.submit();
+      }
 
-    function showDeleteConfirm(studentId) {
-      Swal.fire({
-        title: '<div class="flex items-center text-red-600"><i class="fas fa-exclamation-triangle mr-3"></i>Delete Student?</div>',
-        html: `
-          <div class="text-left">
-            <p class="mb-3">You are about to delete student with ID: <strong>${studentId}</strong></p>
-            <div class="bg-red-50 text-red-800 p-3 rounded-lg text-sm flex items-start">
-              <i class="fas fa-trash mr-2 mt-0.5"></i>
-              <span>This action cannot be undone. All student data and session records will be permanently deleted.</span>
+      function showDeleteConfirm(studentId) {
+        Swal.fire({
+          title: '<div class="flex items-center text-red-600"><i class="fas fa-exclamation-triangle mr-3"></i>Delete Student?</div>',
+          html: `
+            <div class="text-left">
+              <p class="mb-3">You are about to delete student with ID: <strong>${studentId}</strong></p>
+              <div class="bg-red-50 text-red-800 p-3 rounded-lg text-sm flex items-start">
+                <i class="fas fa-trash mr-2 mt-0.5"></i>
+                <span>This action cannot be undone. All student data and session records will be permanently deleted.</span>
+              </div>
             </div>
-          </div>
-        `,
-        showCancelButton: true,
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: '<i class="fas fa-trash-alt mr-2"></i>Yes, delete',
-        cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
+          `,
+          showCancelButton: true,
+          confirmButtonColor: '#ef4444',
+          cancelButtonColor: '#64748b',
+          confirmButtonText: '<i class="fas fa-trash-alt mr-2"></i>Yes, delete',
+          cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
+          showClass: {
+            popup: 'animate__animated animate__zoomIn animate__faster'
+          },
+          hideClass: {
+            popup: 'animate__animated animate__zoomOut animate__faster'
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Create and submit the delete form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'Students.php';
+            
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'idNum';
+            idInput.value = studentId;
+            
+            const deleteInput = document.createElement('input');
+            deleteInput.type = 'hidden';
+            deleteInput.name = 'deleteStudent';
+            deleteInput.value = '1';
+            
+            form.appendChild(idInput);
+            form.appendChild(deleteInput);
+            document.body.appendChild(form);
+            
+            // Show deletion animation
+            Swal.fire({
+              title: 'Deleting...',
+              html: 'Removing student from the system',
+              timer: 1500,
+              timerProgressBar: true,
+              didOpen: () => {
+                Swal.showLoading();
+              }
+            }).then(() => {
+              form.submit();
+            });
+          }
+        });
+      }
+      
+      // Success message if coming back from a successful operation
+      <?php if (isset($_GET['success']) && $_GET['success'] == 'delete'): ?>
+      Swal.fire({
+        icon: 'success',
+        title: 'Student Deleted',
+        text: 'The student has been successfully removed from the system.',
+        confirmButtonColor: '#0ea5e9',
         showClass: {
-          popup: 'animate__animated animate__zoomIn animate__faster'
-        },
-        hideClass: {
-          popup: 'animate__animated animate__zoomOut animate__faster'
-        }
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // Create and submit the delete form
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = 'Students.php';
-          
-          const idInput = document.createElement('input');
-          idInput.type = 'hidden';
-          idInput.name = 'idNum';
-          idInput.value = studentId;
-          
-          const deleteInput = document.createElement('input');
-          deleteInput.type = 'hidden';
-          deleteInput.name = 'deleteStudent';
-          deleteInput.value = '1';
-          
-          form.appendChild(idInput);
-          form.appendChild(deleteInput);
-          document.body.appendChild(form);
-          
-          // Show deletion animation
-          Swal.fire({
-            title: 'Deleting...',
-            html: 'Removing student from the system',
-            timer: 1500,
-            timerProgressBar: true,
-            didOpen: () => {
-              Swal.showLoading();
-            }
-          }).then(() => {
-            form.submit();
-          });
+          popup: 'animate__animated animate__fadeInDown animate__faster'
         }
       });
-    }
-    
-    // Success message if coming back from a successful operation
-    <?php if (isset($_GET['success']) && $_GET['success'] == 'delete'): ?>
-    Swal.fire({
-      icon: 'success',
-      title: 'Student Deleted',
-      text: 'The student has been successfully removed from the system.',
-      confirmButtonColor: '#0ea5e9',
-      showClass: {
-        popup: 'animate__animated animate__fadeInDown animate__faster'
-      }
+      <?php endif; ?>
     });
-    <?php endif; ?>
   </script>
 </body>
 </html>
