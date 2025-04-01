@@ -220,12 +220,12 @@
             <span>Home</span>
           </a>
           
-          <a href="auth/login.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center">
+          <a href="login.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center">
             <i class="fas fa-sign-in-alt mr-1"></i>
             <span>Login</span>
           </a>
           
-          <a href="auth/register.php" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center">
+          <a href="register.php" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center">
             <i class="fas fa-user-plus mr-2"></i>
             Register
           </a>
