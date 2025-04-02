@@ -215,17 +215,17 @@
 
         <!-- Desktop Navigation Links -->
         <div class="hidden md:flex md:items-center md:space-x-4">
-          <a href="index.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200">
+          <a href="../view/homepage/index.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200">
             <i class="fas fa-home mr-1"></i>
             <span>Home</span>
           </a>
           
-          <a href="login.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center">
+          <a href="../../auth/login.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center">
             <i class="fas fa-sign-in-alt mr-1"></i>
             <span>Login</span>
           </a>
           
-          <a href="register.php" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center">
+          <a href="../../auth/register.php" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center">
             <i class="fas fa-user-plus mr-2"></i>
             Register
           </a>

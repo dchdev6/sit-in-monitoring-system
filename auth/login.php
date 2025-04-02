@@ -35,7 +35,16 @@ require_once '../includes/navbar.php';
         }
         
         .form-input {
-            @apply w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition duration-200;
+                width: 100%;
+                padding: 0.75rem 1rem;
+                border-radius: 0.5rem;
+                border: 1px solid #d1d5db;
+                transition: border-color 0.2s, box-shadow 0.2s;
+                outline: none;
+            }
+            .form-input:focus {
+                border-color: #0ea5e9;
+                box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
             outline: none;
         }
         
@@ -304,15 +313,15 @@ require_once '../includes/navbar.php';
                             
                             <div class="mt-8 pt-8 border-t border-gray-200">
                                 <div class="flex items-center justify-center space-x-4">
-                                    <a href="#" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                                    <a href="../view/index/help.php" class="text-gray-500 hover:text-gray-700 transition duration-200">
                                         <i class="fas fa-question-circle"></i> Help
                                     </a>
                                     <span class="text-gray-300">|</span>
-                                    <a href="#" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                                    <a href="../view/index/privacy.php" class="text-gray-500 hover:text-gray-700 transition duration-200">
                                         <i class="fas fa-shield-alt"></i> Privacy Policy
                                     </a>
                                     <span class="text-gray-300">|</span>
-                                    <a href="#" class="text-gray-500 hover:text-gray-700 transition duration-200">
+                                    <a href="../view/index/terms.php" class="text-gray-500 hover:text-gray-700 transition duration-200">
                                         <i class="fas fa-file-contract"></i> Terms
                                     </a>
                                 </div>
