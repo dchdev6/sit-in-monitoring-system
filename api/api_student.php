@@ -1,31 +1,125 @@
 <?php
 
-include __DIR__ . '../../backend/backend_student.php';
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
+// Log the call to API
+error_log("API Student called at " . date('Y-m-d H:i:s'));
+error_log("POST: " . print_r($_POST, true));
+error_log("FILES: " . print_r($_FILES, true));
 
+// Include backend file
+include __DIR__ . '/../backend/backend_student.php';
+
+// Ensure assets/images directory exists
+$assetsDir = __DIR__ . "/../assets";
+$imagesDir = $assetsDir . "/images";
+
+if (!file_exists($assetsDir)) {
+    mkdir($assetsDir, 0755, true);
+    error_log("Created assets directory");
+}
+
+if (!file_exists($imagesDir)) {
+    mkdir($imagesDir, 0755, true);
+    error_log("Created images directory");
+}
+
+// Handle profile update
 if (isset($_POST["submit"])) {
-    $idNum = $_POST['idNumber'];
-    $last_Name = $_POST['lName'];
-    $first_Name = $_POST['fName'];
-    $middle_Name = $_POST['mName'];
-    $course_Level = $_POST['courseLevel'];
-    $email = $_POST['email'];
-    $course = $_POST['course'];
-    $address = $_POST['address'];
+    error_log("Profile update form submitted");
+    
+    // Get form data
+    $idNum = $_POST['idNumber'] ?? $_SESSION['id_number'] ?? '';
+    $last_Name = $_POST['lName'] ?? '';
+    $first_Name = $_POST['fName'] ?? '';
+    $middle_Name = $_POST['mName'] ?? '';
+    $course_Level = $_POST['courseLevel'] ?? '';
+    $email = $_POST['email'] ?? '';
+    $course = $_POST['course'] ?? '';
+    $address = $_POST['address'] ?? '';
 
-    // ✅ Handle Profile Image Upload
-    $profile_image = $_SESSION["profile_image"];
+    if (empty($idNum)) {
+        error_log("ERROR: Missing ID Number");
+        $_SESSION['error_message'] = "Missing ID Number. Please try again or contact support.";
+        header("Location: ../view/student/profile.php");
+        exit;
+    }
+
+    // Get existing profile image or use default
+    $profile_image = isset($_SESSION["profile_image"]) ? $_SESSION["profile_image"] : "default-profile.jpg";
+    error_log("Current profile image: " . $profile_image);
+    
+    // Handle Profile Image Upload
     if (!empty($_FILES["profile_image"]["name"])) {
-        $uploadStatus = upload_profile_image($_FILES["profile_image"], $idNum);
-        if ($uploadStatus === "Success") {
-            $profile_image = basename($_FILES["profile_image"]["name"]);
-        } else {
-            die("Upload Error: " . $uploadStatus);
+        error_log("Processing profile image upload: " . $_FILES["profile_image"]["name"]);
+        
+        // Make sure the directory exists
+        if (!file_exists($imagesDir)) {
+            if (!mkdir($imagesDir, 0755, true)) {
+                error_log("Failed to create directory: " . $imagesDir);
+                $_SESSION['upload_error'] = "Could not create upload directory";
+            }
+        }
+        
+        // Create a unique filename
+        $fileName = time() . '_' . basename($_FILES["profile_image"]["name"]);
+        $targetFilePath = $imagesDir . "/" . $fileName;
+        
+        error_log("Target file path: " . $targetFilePath);
+        
+        // Check for upload errors
+        if ($_FILES["profile_image"]["error"] > 0) {
+            error_log("Upload error code: " . $_FILES["profile_image"]["error"]);
+            $_SESSION['upload_error'] = "Upload error: " . $_FILES["profile_image"]["error"];
+        } 
+        else if (!getimagesize($_FILES["profile_image"]["tmp_name"])) {
+            error_log("File is not an image");
+            $_SESSION['upload_error'] = "Uploaded file is not an image.";
+        }
+        else if ($_FILES["profile_image"]["size"] > 2097152) {
+            error_log("File is too large");
+            $_SESSION['upload_error'] = "File size too large. Max 2MB.";
+        }
+        else {
+            // Move the uploaded file
+            if (move_uploaded_file($_FILES["profile_image"]["tmp_name"], $targetFilePath)) {
+                error_log("File uploaded successfully to: " . $targetFilePath);
+                $profile_image = $fileName;
+                
+                // Update database with new image
+                $db = Database::getInstance();
+                $con = $db->getConnection();
+                
+                $sql = "UPDATE students SET profile_image = ? WHERE id_number = ?";
+                $stmt = $con->prepare($sql);
+                
+                if ($stmt) {
+                    $stmt->bind_param("ss", $fileName, $idNum);
+                    if ($stmt->execute()) {
+                        error_log("Database updated with new profile image: " . $fileName);
+                    } else {
+                        error_log("Database update failed: " . $stmt->error);
+                        $_SESSION['upload_error'] = "Database update failed: " . $stmt->error;
+                    }
+                } else {
+                    error_log("Failed to prepare statement: " . $con->error);
+                    $_SESSION['upload_error'] = "Database error: " . $con->error;
+                }
+            } else {
+                error_log("Failed to move uploaded file from " . $_FILES["profile_image"]["tmp_name"] . " to " . $targetFilePath);
+                $_SESSION['upload_error'] = "Could not save uploaded file.";
+            }
         }
     }
 
-    // ✅ Update Student Profile
-    if (edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $email, $course, $address, $profile_image)) {
+    // Update Student Profile
+    $updateSuccess = edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $email, $course, $address, $profile_image);
+    
+    if ($updateSuccess) {
+        error_log("Profile updated successfully");
+        
+        // Update session data
         $_SESSION["profile_image"] = $profile_image;
         $_SESSION["lname"] = $last_Name;
         $_SESSION["fname"] = $first_Name;
@@ -36,11 +130,17 @@ if (isset($_POST["submit"])) {
         $_SESSION["address"] = $address;
         $_SESSION['name'] = $first_Name . " " . $middle_Name . " " . $last_Name;
 
-        error_log("Session updated with profile image: " . $_SESSION["profile_image"]);
-        header("Location: ../view/student/homepage.php");
+        // Set success message before redirecting
+        $_SESSION['success_message'] = "Profile updated successfully!";
+        
+        // Redirect to profile page
+        header("Location: ../view/student/profile.php");
         exit;
     } else {
-        die("Profile Update Failed");
+        error_log("Profile update failed");
+        $_SESSION['error_message'] = "Profile update failed";
+        header("Location: ../view/student/profile.php");
+        exit;
     }
 }
 
@@ -58,8 +158,6 @@ if (isset($_POST['submit_feedback'])) {
 }
 
 // Handle Reservation Submission
-
-
 if (isset($_POST['reserve_user'])) {
     echo "Form submitted!<br>"; // Debugging line
 
@@ -107,7 +205,6 @@ if (isset($_POST['reserve_user'])) {
         </script>";
         exit(); // ✅ Make sure the script stops here
     }
-    
 }
 ?>
 

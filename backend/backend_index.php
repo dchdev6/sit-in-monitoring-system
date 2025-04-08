@@ -17,17 +17,32 @@ function student_login($idNum, $password)
 {
     $db = Database::getInstance();
     $con = $db->getConnection();
-
-    $sql = " SELECT students.id_number, students.firstName, students.middleName,
-        students.lastName, students.yearLevel , students.email, students.course, students.address, student_session.session
-         from students inner join student_session on students.id_number 
-         = student_session.id_number WHERE students.id_number = '$idNum' AND students.password = '$password'";
-    $result = mysqli_query($con, $sql);
-    return $user = mysqli_fetch_array($result, MYSQLI_ASSOC);
+    
+    $sql = "SELECT * FROM students WHERE id_number = ? AND password = ?";
+    $stmt = $con->prepare($sql);
+    $stmt->bind_param("ss", $idNum, $password);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        error_log("User found in database with ID: " . $row["id_number"] . ", Profile image: " . $row["profile_image"]);
+        return $row;
+    } else {
+        return [
+            'id_number' => null,
+            'firstName' => '',
+            'middleName' => '',
+            'lastName' => '',
+            'yearLevel' => '',
+            'email' => '',
+            'course' => '',
+            'address' => '',
+            'session' => '',
+            'profile_image' => ''
+        ];
+    }
 }
-
-
-
 function student_register($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $passWord, $course, $email, $address)
 {
     $db = Database::getInstance();

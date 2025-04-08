@@ -3,11 +3,25 @@
 include 'database_connection.php';
 
 function upload_profile_image($file, $idNumber) {
+    // Start session if not already started
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+    
     $db = Database::getInstance();
     $con = $db->getConnection();
 
+    // Make sure directory exists and is writable
     $targetDir = __DIR__ . "/../assets/images/";
-    $fileName = basename($file["name"]);
+    if (!file_exists($targetDir)) {
+        if (!mkdir($targetDir, 0755, true)) {
+            error_log("Failed to create directory: " . $targetDir);
+            return "Error: Could not create upload directory";
+        }
+    }
+    
+    // Create a unique filename to prevent overwriting
+    $fileName = time() . '_' . basename($file["name"]);
     $targetFilePath = $targetDir . $fileName;
     $imageFileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
 
@@ -37,12 +51,7 @@ function upload_profile_image($file, $idNumber) {
         if ($stmt->execute()) {
             // Debugging: Confirm database update
             error_log("Database updated with new profile image: " . $fileName);
-
-            // ✅ Update Session
-            $_SESSION["profile_image"] = $fileName;
-            error_log("Session updated with new profile image: " . $fileName);
-
-            return "Success";
+            return "Success: " . $fileName; // THIS IS CRITICAL - RETURN WITH SUCCESS: PREFIX
         } else {
             return "Database update failed: " . $stmt->error;
         }
@@ -54,32 +63,58 @@ function upload_profile_image($file, $idNumber) {
 // ✅ Edit Student Profile (Now includes Profile Image)
 function edit_student_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $email, $course, $address, $profile_image)
 {
-    $db = Database::getInstance();
-    $con = $db->getConnection();
+    error_log("Edit student function called with: ID=$idNum, Name=$first_Name $last_Name, Image=$profile_image");
+    
+    try {
+        $db = Database::getInstance();
+        $con = $db->getConnection();
 
-    $sql = "UPDATE students SET 
-                lastName = ?, 
-                firstName = ?, 
-                middleName = ?, 
-                yearLevel = ?, 
-                course = ?, 
-                email = ?, 
-                address = ?, 
-                profile_image = ? 
-            WHERE id_number = ?";
+        if (!$con) {
+            error_log("Database connection failed");
+            return false;
+        }
 
-    $stmt = $con->prepare($sql);
-    if (!$stmt) {
-        die("Error preparing SQL: " . $con->error);
-    }
+        $sql = "UPDATE students SET 
+                    lastName = ?, 
+                    firstName = ?, 
+                    middleName = ?, 
+                    yearLevel = ?, 
+                    course = ?, 
+                    email = ?, 
+                    address = ?";
+                    
+        // Only update profile_image if it's set and not empty
+        $params = [$last_Name, $first_Name, $middle_Name, $course_Level, $course, $email, $address];
+        $types = "sssssss";
+        
+        if (!empty($profile_image)) {
+            $sql .= ", profile_image = ?";
+            $params[] = $profile_image;
+            $types .= "s";
+        }
+        
+        $sql .= " WHERE id_number = ?";
+        $params[] = $idNum;
+        $types .= "s";
 
-    $stmt->bind_param("sssssssss", $last_Name, $first_Name, $middle_Name, $course_Level, $course, $email, $address, $profile_image, $idNum);
+        $stmt = $con->prepare($sql);
+        if (!$stmt) {
+            error_log("Error preparing SQL: " . $con->error);
+            return false;
+        }
 
-    if ($stmt->execute()) {
-        echo "Profile updated successfully!<br>";
-        return true;
-    } else {
-        die("Database update failed: " . $stmt->error);
+        $stmt->bind_param($types, ...$params);
+
+        if ($stmt->execute()) {
+            error_log("Profile updated successfully with SQL: $sql");
+            return true;
+        } else {
+            error_log("Database update failed: " . $stmt->error);
+            return false;
+        }
+    } catch (Exception $e) {
+        error_log("Exception in edit_student_student: " . $e->getMessage());
+        return false;
     }
 }
 
