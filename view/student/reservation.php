@@ -4,11 +4,42 @@ ini_set('display_errors', 1);
 
 require_once '../../includes/navbar_student.php';
 
-// Check for success message for sweet alert
+// Check if user is logged in
+if (!isset($_SESSION['id_number'])) {
+    header('Location: ../../Login.php');
+    exit;
+}
+
+// Fetch the latest session data from the database
+$db = Database::getInstance();
+$conn = $db->getConnection();
+$idNumber = $_SESSION['id_number'];
+
+// Query to get the latest session count
+$stmt = $conn->prepare("SELECT session FROM student_session WHERE id_number = ?");
+$stmt->bind_param("s", $idNumber);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($row = $result->fetch_assoc()) {
+    // Update the session variable with the current count
+    $_SESSION['remaining'] = $row['session'];
+} else {
+    $_SESSION['remaining'] = "N/A"; // Default if no record found
+}
+
+// Check for messages for sweet alert
 $successMessage = '';
+$errorMessage = '';
+
 if(isset($_SESSION['success_message'])) {
     $successMessage = $_SESSION['success_message'];
     unset($_SESSION['success_message']);
+}
+
+if(isset($_SESSION['error_message'])) {
+    $errorMessage = $_SESSION['error_message'];
+    unset($_SESSION['error_message']);
 }
 ?>
 
@@ -211,8 +242,24 @@ if(isset($_SESSION['success_message'])) {
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fas fa-hourglass-half text-gray-400"></i>
                             </div>
-                            <input id="remaining" type="text" value="<?php echo $_SESSION['remaining'] ?? ''; ?>" readonly class="form-input pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-4 bg-gray-50 text-gray-700 focus:outline-none">
+                            <input id="remaining" type="text" value="<?php echo isset($_SESSION['remaining']) ? $_SESSION['remaining'] : 'N/A'; ?>" readonly class="form-input pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-4 bg-gray-50 text-gray-700 focus:outline-none">
+                            
+                            <?php if (isset($_SESSION['remaining']) && $_SESSION['remaining'] <= 3): ?>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?php echo $_SESSION['remaining'] > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'; ?>">
+                                    <i class="fas <?php echo $_SESSION['remaining'] > 0 ? 'fa-exclamation-triangle mr-1' : 'fa-times-circle mr-1'; ?>"></i>
+                                    <?php echo $_SESSION['remaining'] > 0 ? 'Low' : 'None'; ?>
+                                </span>
+                            </div>
+                            <?php endif; ?>
                         </div>
+                        <?php if (isset($_SESSION['remaining']) && $_SESSION['remaining'] <= 3): ?>
+                        <p class="mt-1 text-xs text-gray-500 italic">
+                            <?php echo $_SESSION['remaining'] > 0 
+                                ? 'You are low on available sessions.' 
+                                : 'You have no available sessions left.'; ?>
+                        </p>
+                        <?php endif; ?>
                     </div>
 
                     <div class="mt-3">
@@ -267,6 +314,25 @@ if(isset($_SESSION['success_message'])) {
 <script>
     // Page load animation
     document.addEventListener('DOMContentLoaded', function() {
+        // Check if remaining sessions are displayed correctly
+        const remainingField = document.getElementById('remaining');
+        if (!remainingField.value || remainingField.value === 'undefined' || remainingField.value === 'null') {
+            console.log("Session count not available, fetching from server...");
+            
+            // Fetch session count via AJAX
+            fetch('../../includes/get_session_count.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        remainingField.value = data.count;
+                        console.log("Updated remaining sessions to: " + data.count);
+                    } else {
+                        console.error("Error fetching session count:", data.message);
+                    }
+                })
+                .catch(error => console.error("AJAX error:", error));
+        }
+        
         // Fade in the body
         setTimeout(() => {
             document.body.style.opacity = "1";
@@ -283,72 +349,25 @@ if(isset($_SESSION['success_message'])) {
         
         // Form validation and submission with SweetAlert
         document.getElementById('reservationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+            // We don't prevent default form submission anymore
+            // e.preventDefault();
             
-            // Basic validation
+            // Basic validation still happens
             const purpose = document.getElementById('purposes').value;
             const lab = document.getElementById('lab').value;
             const time = document.getElementById('time').value;
             const date = document.getElementById('date').value;
             
             if (!purpose || !lab || !time || !date) {
+                e.preventDefault(); // Only prevent if validation fails
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
                     text: 'Please fill in all required fields!',
-                    confirmButtonColor: '#0284c7',
-                    showClass: {
-                        popup: 'animate__animated animate__fadeInDown'
-                    },
-                    hideClass: {
-                        popup: 'animate__animated animate__fadeOutUp'
-                    }
+                    confirmButtonColor: '#0284c7'
                 });
                 return;
             }
-            
-            // Show confirmation dialog
-            Swal.fire({
-                title: 'Confirm Reservation',
-                html: `
-                    <div class="text-left">
-                        <p class="mb-2"><strong>Programming:</strong> ${purpose}</p>
-                        <p class="mb-2"><strong>Laboratory:</strong> ${lab}</p>
-                        <p class="mb-2"><strong>Date:</strong> ${new Date(date).toLocaleDateString('en-US', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</p>
-                        <p><strong>Time:</strong> ${time}</p>
-                    </div>
-                `,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Confirm Reservation',
-                cancelButtonText: 'Review Details',
-                showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Show loading state
-                    Swal.fire({
-                        title: 'Processing...',
-                        html: 'Creating your reservation...',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        didOpen: () => {
-                            Swal.showLoading()
-                        }
-                    });
-                    
-                    // Submit the form after a brief delay to show the loading state
-                    setTimeout(() => {
-                        this.submit();
-                    }, 800);
-                }
-            });
         });
         
         // Set min date for date input to today
@@ -356,7 +375,7 @@ if(isset($_SESSION['success_message'])) {
         const today = new Date().toISOString().split('T')[0];
         dateInput.min = today;
         
-        // Show success message if available
+        // Show success/error message if available
         <?php if(!empty($successMessage)): ?>
         Swal.fire({
             icon: 'success',
@@ -365,6 +384,21 @@ if(isset($_SESSION['success_message'])) {
             confirmButtonColor: '#10b981',
             timer: 3000,
             timerProgressBar: true,
+            showClass: {
+                popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'
+            }
+        });
+        <?php endif; ?>
+
+        <?php if(!empty($errorMessage)): ?>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '<?php echo $errorMessage; ?>',
+            confirmButtonColor: '#ef4444',
             showClass: {
                 popup: 'animate__animated animate__fadeInDown'
             },

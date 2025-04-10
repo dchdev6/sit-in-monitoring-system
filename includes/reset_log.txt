@@ -1,0 +1,3 @@
+POST request received
+Database connection successful
+Query executed. Result: success

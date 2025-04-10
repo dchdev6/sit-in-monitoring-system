@@ -584,12 +584,9 @@ $listPerson = retrieve_students();
                 <td>
                   <div class="flex justify-center space-x-2">
                     <div class="tooltip-container">
-                      <form action="Admin.php" method="POST" class="inline-block">
-                        <input type="hidden" name="idNum" value="<?php echo $person['id_number']; ?>" />
-                        <button type="submit" name="edit" class="action-btn bg-primary-50 hover:bg-primary-100 text-primary-600">
-                          <i class="fas fa-edit"></i>
-                        </button>
-                      </form>
+                      <button type="button" class="action-btn bg-primary-50 hover:bg-primary-100 text-primary-600 edit-student" data-id="<?php echo $person['id_number']; ?>">
+                        <i class="fas fa-edit"></i>
+                      </button>
                       <div class="tooltip">Edit Student</div>
                     </div>
                     
@@ -636,6 +633,97 @@ $listPerson = retrieve_students();
     </div>
   </div>
 
+  <!-- Edit Student Modal -->
+  <div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content rounded-lg shadow-lg border-0">
+        <div class="modal-header bg-primary-50 border-0">
+          <h5 class="modal-title text-primary-800 font-semibold" id="editStudentModalLabel">
+            <i class="fas fa-user-edit mr-2"></i>Edit Student Information
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        
+        <form id="editStudentForm">
+          <div class="modal-body p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Student ID (Hidden) -->
+              <input type="hidden" id="editStudentId" name="idNumber">
+              
+              <!-- Last Name -->
+              <div class="form-group">
+                <label for="editLastName" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="editLastName" name="lName" required>
+              </div>
+              
+              <!-- First Name -->
+              <div class="form-group">
+                <label for="editFirstName" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="editFirstName" name="fName" required>
+              </div>
+              
+              <!-- Middle Name -->
+              <div class="form-group">
+                <label for="editMiddleName" class="form-label">Middle Name</label>
+                <input type="text" class="form-control" id="editMiddleName" name="mName">
+              </div>
+              
+              <!-- Year Level -->
+              <div class="form-group">
+                <label for="editYearLevel" class="form-label">Year Level</label>
+                <select class="form-select" id="editYearLevel" name="courseLevel" required>
+                  <option value="1">1st Year</option>
+                  <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
+                  <option value="4">4th Year</option>
+                </select>
+              </div>
+              
+              <!-- Email -->
+              <div class="form-group">
+                <label for="editEmail" class="form-label">Email</label>
+                <input type="email" class="form-control" id="editEmail" name="email" required>
+              </div>
+              
+              <!-- Course -->
+              <div class="form-group">
+                <label for="editCourse" class="form-label">Course</label>
+                <select class="form-select" id="editCourse" name="course" required>
+                  <optgroup label="Computing & IT">
+                    <option value="BSIT">BS in Information Technology</option>
+                    <option value="BSCS">BS in Computer Science</option>
+                    <option value="BSIS">BS in Information Systems</option>
+                  </optgroup>
+                  <optgroup label="Business & Management">
+                    <option value="BSA">BS in Accountancy</option>
+                    <option value="BSBA">BS in Business Administration</option>
+                    <option value="BSAIS">BS in Accounting Information System</option>
+                  </optgroup>
+                  <!-- Add more course options as needed -->
+                </select>
+              </div>
+              
+              <!-- Address -->
+              <div class="col-span-1 md:col-span-2">
+                <label for="editAddress" class="form-label">Address</label>
+                <textarea class="form-control" id="editAddress" name="address" rows="3"></textarea>
+              </div>
+            </div>
+          </div>
+          
+          <div class="modal-footer flex justify-end border-0 bg-gray-50 rounded-b-lg">
+            <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition duration-200 flex items-center" data-bs-dismiss="modal">
+              <i class="fas fa-times-circle mr-2"></i>Cancel
+            </button>
+            <button type="submit" id="editStudentSubmitBtn" class="px-4 py-2 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-md transition duration-200 flex items-center shadow-sm">
+              <i class="fas fa-save mr-2"></i>Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- jQuery (required for DataTables) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <!-- DataTables JS -->
@@ -644,6 +732,104 @@ $listPerson = retrieve_students();
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Animate.css JS -->
   <script>
+    // Define the resetStudentSessions function in the global scope so it's accessible from HTML
+    function resetStudentSessions(studentId) {
+      Swal.fire({
+        title: '<div class="flex items-center"><i class="fas fa-sync-alt text-yellow-500 mr-3"></i>Reset Sessions</div>',
+        html: `
+          <div class="text-left">
+            <p class="mb-3">Reset session count for student ID: <strong>${studentId}</strong>?</p>
+            <div class="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm flex items-start">
+              <i class="fas fa-info-circle mr-2 mt-0.5"></i>
+              <span>This will reset the student's session count to 30 sessions. This action cannot be undone.</span>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonColor: '#0ea5e9',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '<i class="fas fa-check mr-2"></i>Yes, reset',
+        cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
+        showClass: {
+          popup: 'animate__animated animate__fadeInDown animate__faster'
+        },
+        hideClass: {
+          popup: 'animate__animated animate__fadeOutUp animate__faster'
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Show loading state
+          Swal.fire({
+            title: 'Processing...',
+            html: `Resetting sessions for student ID: ${studentId}`,
+            timer: 1500,
+            timerProgressBar: true,
+            didOpen: () => {
+              Swal.showLoading();
+              
+              // Send AJAX request to reset sessions for this student
+              $.ajax({
+                url: '../../includes/reset_single_student_session.php',
+                method: 'POST',
+                data: { studentId: studentId },
+                dataType: 'json',
+                timeout: 5000,
+                cache: false,
+                success: function(response) {
+                  if (response.success) {
+                    // Success state
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Reset Complete!',
+                      html: `
+                        <div class="text-left">
+                          <p class="mb-2">Student sessions have been reset successfully.</p>
+                          <div class="bg-green-50 text-green-800 p-3 rounded-lg text-sm flex items-start mt-3">
+                            <i class="fas fa-check-circle mr-2 mt-0.5"></i>
+                            <span>Session count has been set to ${response.defaultValue} sessions.</span>
+                          </div>
+                        </div>
+                      `,
+                      confirmButtonColor: '#0ea5e9',
+                      showClass: {
+                        popup: 'animate__animated animate__fadeInDown animate__faster'
+                      }
+                    }).then(() => {
+                      // Reload the page to refresh the data
+                      window.location.reload();
+                    });
+                  } else {
+                    // Error state
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Reset Failed',
+                      text: 'There was an error resetting the session count: ' + response.message,
+                      confirmButtonColor: '#0ea5e9'
+                    });
+                  }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                  console.error("AJAX Error:", textStatus, errorThrown);
+                  
+                  // Error state for AJAX failure
+                  Swal.fire({
+                    icon: 'error',
+                    title: 'Connection Error',
+                    text: 'Could not connect to the server. Error: ' + textStatus + ' - ' + errorThrown,
+                    confirmButtonColor: '#0ea5e9'
+                  });
+                }
+              });
+            },
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            allowEnterKey: false
+          });
+        }
+      });
+    }
+
     $(document).ready(function() {
       // Initialize animations for page elements
       function animateElements() {
@@ -977,12 +1163,9 @@ $listPerson = retrieve_students();
                   </div>
                 </div>
                 
-                <div class="p-3 flex justify-end">
-                  <button type="button" class="text-primary-600 border border-primary-300 bg-primary-50 hover:bg-primary-100 text-xs font-medium py-1 px-2 rounded transition-all duration-300 flex items-center mr-1" onclick="showEditStudent('${studentId}')">
-                    <i class="fas fa-edit mr-1"></i> Edit
-                  </button>
-                  <button type="button" class="text-red-600 border border-red-300 bg-red-50 hover:bg-red-100 text-xs font-medium py-1 px-2 rounded transition-all duration-300 flex items-center" onclick="showDeleteConfirm('${studentId}')">
-                    <i class="fas fa-trash mr-1"></i> Delete
+                <div class="p-3 flex justify-center">
+                  <button type="button" class="text-yellow-600 border border-yellow-300 bg-yellow-50 hover:bg-yellow-100 text-sm font-medium py-1.5 px-4 rounded-lg transition-all duration-300 flex items-center" onclick="resetStudentSessions('${studentId}')">
+                    <i class="fas fa-sync-alt mr-2"></i> Reset Sessions
                   </button>
                 </div>
               </div>
@@ -1008,84 +1191,99 @@ $listPerson = retrieve_students();
         });
       });
 
-      // Helper functions for the modal actions
-      function showEditStudent(studentId) {
-        // Submit form to navigate to edit page
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = 'Admin.php';
-        
-        const idInput = document.createElement('input');
-        idInput.type = 'hidden';
-        idInput.name = 'idNum';
-        idInput.value = studentId;
-        
-        const editInput = document.createElement('input');
-        editInput.type = 'hidden';
-        editInput.name = 'edit';
-        editInput.value = '1';
-        
-        form.appendChild(idInput);
-        form.appendChild(editInput);
-        document.body.appendChild(form);
-        form.submit();
-      }
-
-      function showDeleteConfirm(studentId) {
+      // Add the reset student sessions function
+      function resetStudentSessions(studentId) {
         Swal.fire({
-          title: '<div class="flex items-center text-red-600"><i class="fas fa-exclamation-triangle mr-3"></i>Delete Student?</div>',
+          title: '<div class="flex items-center"><i class="fas fa-sync-alt text-yellow-500 mr-3"></i>Reset Sessions</div>',
           html: `
             <div class="text-left">
-              <p class="mb-3">You are about to delete student with ID: <strong>${studentId}</strong></p>
-              <div class="bg-red-50 text-red-800 p-3 rounded-lg text-sm flex items-start">
-                <i class="fas fa-trash mr-2 mt-0.5"></i>
-                <span>This action cannot be undone. All student data and session records will be permanently deleted.</span>
+              <p class="mb-3">Reset session count for student ID: <strong>${studentId}</strong>?</p>
+              <div class="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm flex items-start">
+                <i class="fas fa-info-circle mr-2 mt-0.5"></i>
+                <span>This will reset the student's session count to 30 sessions. This action cannot be undone.</span>
               </div>
             </div>
           `,
           showCancelButton: true,
-          confirmButtonColor: '#ef4444',
-          cancelButtonColor: '#64748b',
-          confirmButtonText: '<i class="fas fa-trash-alt mr-2"></i>Yes, delete',
+          confirmButtonColor: '#0ea5e9',
+          cancelButtonColor: '#6b7280',
+          confirmButtonText: '<i class="fas fa-check mr-2"></i>Yes, reset',
           cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
           showClass: {
-            popup: 'animate__animated animate__zoomIn animate__faster'
+            popup: 'animate__animated animate__fadeInDown animate__faster'
           },
           hideClass: {
-            popup: 'animate__animated animate__zoomOut animate__faster'
+            popup: 'animate__animated animate__fadeOutUp animate__faster'
           }
         }).then((result) => {
           if (result.isConfirmed) {
-            // Create and submit the delete form
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'Students.php';
-            
-            const idInput = document.createElement('input');
-            idInput.type = 'hidden';
-            idInput.name = 'idNum';
-            idInput.value = studentId;
-            
-            const deleteInput = document.createElement('input');
-            deleteInput.type = 'hidden';
-            deleteInput.name = 'deleteStudent';
-            deleteInput.value = '1';
-            
-            form.appendChild(idInput);
-            form.appendChild(deleteInput);
-            document.body.appendChild(form);
-            
-            // Show deletion animation
+            // Show loading state
             Swal.fire({
-              title: 'Deleting...',
-              html: 'Removing student from the system',
+              title: 'Processing...',
+              html: `Resetting sessions for student ID: ${studentId}`,
               timer: 1500,
               timerProgressBar: true,
               didOpen: () => {
                 Swal.showLoading();
-              }
-            }).then(() => {
-              form.submit();
+                
+                // Send AJAX request to reset sessions for this student
+                $.ajax({
+                  url: '../../includes/reset_single_student_session.php',
+                  method: 'POST',
+                  data: { studentId: studentId },
+                  dataType: 'json',
+                  timeout: 5000,
+                  cache: false,
+                  success: function(response) {
+                    if (response.success) {
+                      // Success state
+                      Swal.fire({
+                        icon: 'success',
+                        title: 'Reset Complete!',
+                        html: `
+                          <div class="text-left">
+                            <p class="mb-2">Student sessions have been reset successfully.</p>
+                            <div class="bg-green-50 text-green-800 p-3 rounded-lg text-sm flex items-start mt-3">
+                              <i class="fas fa-check-circle mr-2 mt-0.5"></i>
+                              <span>Session count has been set to ${response.defaultValue} sessions.</span>
+                            </div>
+                          </div>
+                        `,
+                        confirmButtonColor: '#0ea5e9',
+                        showClass: {
+                          popup: 'animate__animated animate__fadeInDown animate__faster'
+                        }
+                      }).then(() => {
+                        // Reload the page to refresh the data
+                        window.location.reload();
+                      });
+                    } else {
+                      // Error state
+                      Swal.fire({
+                        icon: 'error',
+                        title: 'Reset Failed',
+                        text: 'There was an error resetting the session count: ' + response.message,
+                        confirmButtonColor: '#0ea5e9'
+                      });
+                    }
+                  },
+                  error: function(xhr, textStatus, errorThrown) {
+                    console.error("AJAX Error:", textStatus, errorThrown);
+                    
+                    // Error state for AJAX failure
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Connection Error',
+                      text: 'Could not connect to the server. Error: ' + textStatus + ' - ' + errorThrown,
+                      confirmButtonColor: '#0ea5e9'
+                    });
+                  }
+                });
+              },
+              showConfirmButton: false,
+              allowOutsideClick: false,
+              allowEscapeKey: false,
+              allowEnterKey: false
             });
           }
         });
@@ -1103,6 +1301,119 @@ $listPerson = retrieve_students();
         }
       });
       <?php endif; ?>
+
+      // Modified action buttons section in the student table to use a modal for editing
+      $('.edit-student').on('click', function(e) {
+        e.preventDefault();
+        const studentId = $(this).data('id');
+        
+        // Add loading spinner to the button
+        $(this).html('<i class="fas fa-spinner fa-spin"></i>');
+        const $button = $(this);
+        
+        // Fetch student data via AJAX
+        $.ajax({
+          url: '../../includes/fetch_student_data.php',
+          method: 'POST',
+          data: { studentId: studentId },
+          dataType: 'json',
+          success: function(student) {
+            // Reset button state
+            $button.html('<i class="fas fa-edit"></i>');
+            
+            // Populate and show the modal
+            $('#editStudentId').val(student.id_number);
+            $('#editLastName').val(student.lastName);
+            $('#editFirstName').val(student.firstName);
+            $('#editMiddleName').val(student.middleName);
+            $('#editYearLevel').val(student.yearLevel);
+            $('#editEmail').val(student.email);
+            $('#editCourse').val(student.course);
+            $('#editAddress').val(student.address);
+            
+            $('#editStudentModal').modal('show');
+          },
+          error: function(xhr, textStatus, errorThrown) {
+            // Reset button state
+            $button.html('<i class="fas fa-edit"></i>');
+            
+            // Show error
+            Swal.fire({
+              icon: 'error',
+              title: 'Error Loading Student Data',
+              text: 'Could not retrieve student information. Please try again.',
+              confirmButtonColor: '#0ea5e9'
+            });
+          }
+        });
+      });
+      
+      // Handle edit student form submission
+      $('#editStudentForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        
+        // Show loading state
+        $('#editStudentSubmitBtn').html('<i class="fas fa-spinner fa-spin mr-2"></i>Saving...');
+        $('#editStudentSubmitBtn').prop('disabled', true);
+        
+        // Submit form via AJAX
+        $.ajax({
+          url: '../../includes/update_student.php',
+          method: 'POST',
+          data: formData,
+          dataType: 'json',
+          success: function(response) {
+            // Hide modal
+            $('#editStudentModal').modal('hide');
+            
+            if (response.success) {
+              // Show success message
+              Swal.fire({
+                icon: 'success',
+                title: 'Student Updated',
+                text: 'The student information has been successfully updated.',
+                confirmButtonColor: '#0ea5e9',
+                showClass: {
+                  popup: 'animate__animated animate__fadeInDown animate__faster'
+                },
+                hideClass: {
+                  popup: 'animate__animated animate__fadeOutUp animate__faster'
+                }
+              }).then(() => {
+                // Reload page to show updated data
+                window.location.reload();
+              });
+            } else {
+              // Show error message
+              Swal.fire({
+                icon: 'error',
+                title: 'Update Failed',
+                text: response.message || 'There was a problem updating the student information.',
+                confirmButtonColor: '#0ea5e9'
+              });
+            }
+          },
+          error: function(xhr, textStatus, errorThrown) {
+            // Hide modal
+            $('#editStudentModal').modal('hide');
+            
+            // Show error message
+            Swal.fire({
+              icon: 'error',
+              title: 'Connection Error',
+              text: 'Could not connect to the server. Please try again later.',
+              confirmButtonColor: '#0ea5e9'
+            });
+          },
+          complete: function() {
+            // Reset button state
+            $('#editStudentSubmitBtn').html('<i class="fas fa-save mr-2"></i>Save Changes');
+            $('#editStudentSubmitBtn').prop('disabled', false);
+          }
+        });
+      });
     });
   </script>
 </body>

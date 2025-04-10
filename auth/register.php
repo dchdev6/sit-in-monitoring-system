@@ -436,9 +436,75 @@ require_once '../api/api_index.php';
                                         <div class="relative" data-aos="fade-left" data-aos-delay="250">
                                             <label for="course" class="form-label">Course</label>
                                             <select name="course" id="course" class="form-select">
-                                                <option value="BSIT">BS in Information Technology</option>
-                                                <option value="BSCS">BS in Computer Science</option>
-                                                <option value="ACT">Associate in Computer Technology</option>
+                                                <option value="">Select your course</option>
+                                                <!-- Computer & IT Related -->
+                                                <optgroup label="Computing & IT">
+                                                    <option value="BSIT">BS in Information Technology</option>
+                                                    <option value="BSCS">BS in Computer Science</option>
+                                                    <option value="BSIS">BS in Information Systems</option>
+                                                    <option value="ACT">Associate in Computer Technology</option>
+                                                    <option value="BSCSW">BS in Computer Science with Specialization in Software Engineering</option>
+                                                    <option value="BSCYB">BS in Cybersecurity</option>
+                                                    <option value="BSEMCDA">BS in Entertainment and Multimedia Computing (Digital Animation)</option>
+                                                </optgroup>
+                                                
+                                                <!-- Business -->
+                                                <optgroup label="Business & Management">
+                                                    <option value="BSA">BS in Accountancy</option>
+                                                    <option value="BSBA">BS in Business Administration</option>
+                                                    <option value="BSMA">BS in Management Accounting</option>
+                                                    <option value="BSAIS">BS in Accounting Information System</option>
+                                                    <option value="BSBA-FM">BS in Business Administration (Financial Management)</option>
+                                                    <option value="BSBA-MM">BS in Business Administration (Marketing Management)</option>
+                                                    <option value="BSBA-HRM">BS in Business Administration (Human Resource Management)</option>
+                                                </optgroup>
+                                                
+                                                <!-- Engineering -->
+                                                <optgroup label="Engineering">
+                                                    <option value="BSCE">BS in Civil Engineering</option>
+                                                    <option value="BSEE">BS in Electrical Engineering</option>
+                                                    <option value="BSME">BS in Mechanical Engineering</option>
+                                                    <option value="BSECE">BS in Electronics Engineering</option>
+                                                    <option value="BSIE">BS in Industrial Engineering</option>
+                                                    <option value="BSCHEMENG">BS in Chemical Engineering</option>
+                                                </optgroup>
+                                                
+                                                <!-- Arts, Humanities & Social Sciences -->
+                                                <optgroup label="Arts, Humanities & Social Sciences">
+                                                    <option value="ABPSYCH">AB in Psychology</option>
+                                                    <option value="BSPSYCH">BS in Psychology</option>
+                                                    <option value="ABENGLIT">AB in English Literature</option>
+                                                    <option value="ABMASSCOM">AB in Mass Communication</option>
+                                                    <option value="BSSOCIO">BS in Sociology</option>
+                                                    <option value="BSPOLS">BS in Political Science</option>
+                                                    <option value="AB-ID">AB in International Studies</option>
+                                                </optgroup>
+                                                
+                                                <!-- Education -->
+                                                <optgroup label="Education">
+                                                    <option value="BEED">Bachelor of Elementary Education</option>
+                                                    <option value="BSED">Bachelor of Secondary Education</option>
+                                                    <option value="BSTVTED">Bachelor of Technical-Vocational Teacher Education</option>
+                                                    <option value="BPED">Bachelor of Physical Education</option>
+                                                    <option value="BSSPED">BS in Special Education</option>
+                                                </optgroup>
+                                                
+                                                <!-- Health Sciences -->
+                                                <optgroup label="Health Sciences">
+                                                    <option value="BSN">BS in Nursing</option>
+                                                    <option value="BSMT">BS in Medical Technology</option>
+                                                    <option value="BSPT">BS in Physical Therapy</option>
+                                                    <option value="BSPHARMA">BS in Pharmacy</option>
+                                                    <option value="BSRT">BS in Respiratory Therapy</option>
+                                                    <option value="BSND">BS in Nutrition and Dietetics</option>
+                                                </optgroup>
+                                                
+                                                <!-- Hospitality & Tourism -->
+                                                <optgroup label="Hospitality & Tourism">
+                                                    <option value="BSHM">BS in Hospitality Management</option>
+                                                    <option value="BSTM">BS in Tourism Management</option>
+                                                    <option value="BSCM">BS in Culinary Management</option>
+                                                </optgroup>
                                             </select>
                                         </div>
                                         

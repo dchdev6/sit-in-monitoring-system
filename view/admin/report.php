@@ -701,7 +701,7 @@ $listPerson = retrieve_current_sit_in();
         }
       });
 
-      // PDF export button
+      // PDF export button with centered logos at the top
       $('#pdfBtn').off('click').on('click', function() {
         // Add visual feedback
         $(this).addClass('animate-pulse');
@@ -715,7 +715,69 @@ $listPerson = retrieve_current_sit_in();
             didOpen: () => {
               Swal.showLoading();
               
-              setTimeout(() => {
+              // First, we need to convert the images to base64 for embedding in PDF
+              const loadImages = function() {
+                return new Promise((resolve, reject) => {
+                  const images = {};
+                  let loadedImages = 0;
+                  const totalImages = 2;
+                  
+                  // Load UC logo
+                  const ucImg = new Image();
+                  ucImg.crossOrigin = "Anonymous";
+                  ucImg.onload = function() {
+                    console.log("UC logo loaded successfully");
+                    // Create canvas to convert image to base64
+                    const canvas = document.createElement('canvas');
+                    canvas.width = ucImg.width;
+                    canvas.height = ucImg.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(ucImg, 0, 0);
+                    
+                    // Get base64 data
+                    images.uc = canvas.toDataURL('image/png');
+                    loadedImages++;
+                    if (loadedImages === totalImages) resolve(images);
+                  };
+                  ucImg.onerror = function(e) {
+                    console.error("Error loading UC logo", e);
+                    images.uc = null;
+                    loadedImages++;
+                    if (loadedImages === totalImages) resolve(images);
+                  };
+                  // CORRECTED PATH
+                  ucImg.src = '../../assets/images/uc.png';
+                  
+                  // Load CCS logo
+                  const ccsImg = new Image();
+                  ccsImg.crossOrigin = "Anonymous";
+                  ccsImg.onload = function() {
+                    console.log("CCS logo loaded successfully");
+                    // Create canvas to convert image to base64
+                    const canvas = document.createElement('canvas');
+                    canvas.width = ccsImg.width;
+                    canvas.height = ccsImg.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(ccsImg, 0, 0);
+                    
+                    // Get base64 data
+                    images.ccs = canvas.toDataURL('image/png');
+                    loadedImages++;
+                    if (loadedImages === totalImages) resolve(images);
+                  };
+                  ccsImg.onerror = function(e) {
+                    console.error("Error loading CCS logo", e);
+                    images.ccs = null;
+                    loadedImages++;
+                    if (loadedImages === totalImages) resolve(images);
+                  };
+                  // CORRECTED PATH
+                  ccsImg.src = '../../assets/images/ccs.png';
+                });
+              };
+              
+              // Load images, then generate PDF
+              loadImages().then((images) => {
                 const tableData = [];
                 const headers = [];
                 
@@ -731,15 +793,40 @@ $listPerson = retrieve_current_sit_in();
                   tableData.push(rowData);
                 });
                 
-                // Create PDF document definition
+                // Create PDF document definition with logos centered at top
                 const docDefinition = {
-                  pageMargins: [20, 60, 20, 40],
+                  pageMargins: [20, 140, 20, 40], // Increased top margin for header
                   header: {
-                    text: 'Sit-in Monitoring System',
-                    alignment: 'center',
-                    margin: [0, 20, 0, 0],
-                    fontSize: 18,
-                    bold: true
+                    stack: [
+                      // Logo row - both logos next to each other, centered
+                      {
+                        columns: [
+                          { width: '*', text: '' },
+                          images.uc ? {
+                            image: images.uc,
+                            width: 60,
+                            alignment: 'right',
+                            margin: [0, 20, 5, 0]
+                          } : { text: '' },
+                          images.ccs ? {
+                            image: images.ccs,
+                            width: 60,
+                            alignment: 'left',
+                            margin: [5, 20, 0, 0]
+                          } : { text: '' },
+                          { width: '*', text: '' },
+                        ]
+                      },
+                      // Text row - below the logos
+                      {
+                        stack: [
+                          { text: 'University of Cebu', alignment: 'center', fontSize: 16, bold: true, margin: [0, 10, 0, 0] },
+                          { text: 'College of Computer Studies', alignment: 'center', fontSize: 14, bold: true },
+                          { text: 'Sit-in Monitoring System', alignment: 'center', fontSize: 12, margin: [0, 5, 0, 0] }
+                        ],
+                        margin: [0, 0, 0, 10]
+                      }
+                    ]
                   },
                   footer: function(currentPage, pageCount) {
                     return { 
@@ -750,6 +837,7 @@ $listPerson = retrieve_current_sit_in();
                     };
                   },
                   content: [
+                    { text: 'Sit-in Records', alignment: 'center', fontSize: 14, bold: true, margin: [0, 0, 0, 8] },
                     { text: 'Generated on: ' + new Date().toLocaleDateString(), alignment: 'center', fontSize: 10, margin: [0, 0, 0, 20] },
                     {
                       table: {
@@ -773,7 +861,14 @@ $listPerson = retrieve_current_sit_in();
                   timer: 2000,
                   showConfirmButton: false
                 });
-              }, 500);
+              }).catch(error => {
+                console.error("Error loading images:", error);
+                Swal.fire({
+                  icon: 'warning',
+                  title: 'Warning',
+                  text: 'PDF generated without logos due to image loading issue.'
+                });
+              });
             }
           });
         } catch(e) {
@@ -871,12 +966,17 @@ $listPerson = retrieve_current_sit_in();
         }
       });
 
-      // Print button
+      // Print button with centered logos at the top
       $('#printBtn').off('click').on('click', function() {
         // Add visual feedback
         $(this).addClass('animate-pulse');
         
         try {
+          // Get absolute URL for images using the correct path
+          const baseUrl = window.location.origin;
+          const ucLogoPath = `${baseUrl}/Sit-in-monitoring-system/assets/images/uc.png`;
+          const ccsLogoPath = `${baseUrl}/Sit-in-monitoring-system/assets/images/ccs.png`;
+          
           let printWindow = window.open('', '_blank');
           let tableHTML = document.getElementById('sitInTable').outerHTML;
           
@@ -886,10 +986,13 @@ $listPerson = retrieve_current_sit_in();
                 <title>Sit-in Records</title>
                 <style>
                   body { font-family: Arial, sans-serif; margin: 20px; }
+                  .header { text-align: center; margin-bottom: 20px; }
+                  .logo-container { display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
+                  .logo { width: 80px; height: auto; margin: 0 10px; }
                   table { border-collapse: collapse; width: 100%; margin-top: 20px; }
                   th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                   th { background-color: #f2f2f2; }
-                  h1, h2 { text-align: center; }
+                  h1, h2, h3 { margin: 5px 0; }
                   @media print {
                     table { page-break-inside: auto; }
                     tr { page-break-inside: avoid; page-break-after: auto; }
@@ -898,20 +1001,31 @@ $listPerson = retrieve_current_sit_in();
                 </style>
               </head>
               <body>
-                <h1>Sit-in Monitoring System</h1>
-                <h2>Sit-in Records - ${new Date().toLocaleDateString()}</h2>
+                <div class="header">
+                  <div class="logo-container">
+                    <img src="${ucLogoPath}" alt="UC Logo" class="logo" onerror="this.style.display='none'">
+                    <img src="${ccsLogoPath}" alt="CCS Logo" class="logo" onerror="this.style.display='none'">
+                  </div>
+                  <h1>University of Cebu</h1>
+                  <h2>College of Computer Studies</h2>
+                  <h3>Sit-in Monitoring System</h3>
+                </div>
+                <h2 style="text-align: center;">Sit-in Records - ${new Date().toLocaleDateString()}</h2>
                 ${tableHTML}
               </body>
             </html>
           `);
           
           printWindow.document.close();
-          printWindow.focus();
-          setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-            $(this).removeClass('animate-pulse');
-          }, 1000);
+          
+          // Wait for images to load before printing
+          printWindow.onload = function() {
+            printWindow.focus();
+            setTimeout(() => {
+              printWindow.print();
+              printWindow.close();
+            }, 1000);
+          };
         } catch(e) {
           console.error("Print failed:", e);
           Swal.fire({
@@ -919,7 +1033,10 @@ $listPerson = retrieve_current_sit_in();
             title: 'Print Failed',
             text: 'Print could not be initiated. ' + e.message
           });
-          $(this).removeClass('animate-pulse');
+        } finally {
+          setTimeout(() => {
+            $(this).removeClass('animate-pulse');
+          }, 1000);
         }
       });
 

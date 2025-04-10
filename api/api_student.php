@@ -3,7 +3,7 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// Log the call to API
+// Log the call to APIx
 error_log("API Student called at " . date('Y-m-d H:i:s'));
 error_log("POST: " . print_r($_POST, true));
 error_log("FILES: " . print_r($_FILES, true));
@@ -159,8 +159,11 @@ if (isset($_POST['submit_feedback'])) {
 
 // Handle Reservation Submission
 if (isset($_POST['reserve_user'])) {
-    echo "Form submitted!<br>"; // Debugging line
-
+    // Start session if not already started
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
     $id_number = $_POST['id_number'];
     $purpose = $_POST['purpose'];
     $lab = $_POST['lab'];
@@ -169,41 +172,55 @@ if (isset($_POST['reserve_user'])) {
 
     // Ensure required fields are not empty
     if (empty($id_number) || empty($purpose) || empty($lab) || empty($time) || empty($date)) {
-        die("Error: Missing required fields.");
+        $_SESSION['error_message'] = "Missing required fields. Please try again.";
+        header("Location: ../view/student/reservation.php");
+        exit;
     }
 
-    echo "All fields are set!<br>"; // Debugging line
-
+    // Generate a random PC number between 1 and 30
+    $pc_number = rand(1, 30);
+    
     // Connect to database
     $db = Database::getInstance();
     $con = $db->getConnection();
 
     if (!$con) {
-        die("Database connection failed: " . mysqli_connect_error());
+        $_SESSION['error_message'] = "Database connection failed. Please try again later.";
+        header("Location: ../view/student/reservation.php");
+        exit;
     }
 
-    echo "Database connected!<br>"; // Debugging line
-
-    // Insert directly into reservation table
-    $sql = "INSERT INTO reservation (reservation_date, reservation_time, lab, purpose, id_number, status) 
-            VALUES (?, ?, ?, ?, ?, 'Pending')";
+    // Insert reservation
+    $sql = "INSERT INTO reservation (reservation_date, reservation_time, pc_number, lab, purpose, id_number, status) 
+            VALUES (?, ?, ?, ?, ?, ?, 'Pending')";
     
     $stmt = $con->prepare($sql);
 
     if (!$stmt) {
-        die("SQL Error: " . $con->error);
+        $_SESSION['error_message'] = "System error. Please try again later.";
+        header("Location: ../view/student/reservation.php");
+        exit;
     }
 
-    echo "SQL Prepared!<br>"; // Debugging line
-
-    $stmt->bind_param("sssss", $date, $time, $lab, $purpose, $id_number);
+    $stmt->bind_param("ssssss", $date, $time, $pc_number, $lab, $purpose, $id_number);
 
     if ($stmt->execute()) {
-        echo "<script>
-            alert('Reservation Submitted Successfully!');
-            window.location.href = '../view/student/homepage.php';
-        </script>";
-        exit(); // ✅ Make sure the script stops here
+        // Success - create notification
+        $notification_message = "Your reservation for $lab lab on " . date('F j, Y', strtotime($date)) . 
+                               " at $time has been submitted and is pending approval.";
+        
+        // Add notification
+        notifications($id_number, $notification_message);
+        
+        // Set success message and redirect
+        $_SESSION['success_message'] = "Your reservation has been submitted successfully! Please wait for admin approval.";
+        header("Location: ../view/student/reservation.php");
+        exit;
+    } else {
+        // Error case
+        $_SESSION['error_message'] = "Failed to submit reservation. Error: " . $stmt->error;
+        header("Location: ../view/student/reservation.php");
+        exit;
     }
 }
 ?>
