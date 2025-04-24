@@ -225,38 +225,74 @@ if (isset($_POST['resetSubmit'])) {
 
 // Register
 if (isset($_POST["submitRegister"])) {
-  $idNum = $_POST['idNumber'];
-  $last_Name = $_POST['lName'];
-  $first_Name = $_POST['fName'];
-  $middle_Name = $_POST['mName'];
-  $course_Level = $_POST['level'];
-  $passWord = $_POST['password'];
-  $email = $_POST['email'];
-  $course = $_POST['course'];
-  $address = $_POST['address'];
-
-
-  if (add_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $passWord, $email, $course, $address)) {
-
-    echo "<script>Swal.fire({
-        title: 'Notification',
-        text: 'Student Added!',
-        icon: 'success',
-        showConfirmButton: false,
-        timer: 1500
-      });</script>";
+  // Enable detailed error reporting for debugging
+  error_reporting(E_ALL);
+  ini_set('display_errors', 1);
+  
+  // Start session if not already started
+  if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+  }
+  
+  // Get and sanitize form data
+  $idNum = isset($_POST['idNumber']) ? trim($_POST['idNumber']) : '';
+  $last_Name = isset($_POST['lName']) ? trim($_POST['lName']) : '';
+  $first_Name = isset($_POST['fName']) ? trim($_POST['fName']) : '';
+  $middle_Name = isset($_POST['mName']) ? trim($_POST['mName']) : '';
+  $course_Level = isset($_POST['level']) ? trim($_POST['level']) : '';
+  $passWord = isset($_POST['password']) ? $_POST['password'] : '';
+  $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+  $course = isset($_POST['course']) ? trim($_POST['course']) : '';
+  $address = isset($_POST['address']) ? trim($_POST['address']) : '';
+  
+  // Check for required fields
+  if (empty($idNum) || empty($last_Name) || empty($first_Name) || 
+      empty($course_Level) || empty($passWord) || empty($course)) {
+    // If AJAX request, return error as JSON
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+      echo json_encode(['success' => false, 'message' => 'Missing required fields']);
+      exit;
+    } else {
+      $_SESSION['registration_error'] = 'All required fields must be filled out.';
+      header('Location: ../view/admin/students.php');
+      exit;
+    }
+  }
+  
+  // Try to add the student
+  $result = add_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $passWord, $email, $course, $address);
+  
+  if ($result === true) {
+    // Success!
+    $_SESSION['registration_success'] = true;
+    
+    // If AJAX request, return success JSON
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+      echo json_encode(['success' => true]);
+      exit;
+    } else {
+      header('Location: ../view/admin/students.php');
+      exit;
+    }
   } else {
-
-
-    echo "<script>Swal.fire({
-        title: 'Notification',
-        text: 'Error! Duplicate ID Number',
-        icon: 'error',
-        showConfirmButton: false,
-        timer: 1500
-      });";
+    // Failed
+    $errorMessage = is_string($result) ? $result : 'Unable to add student. The ID may already be in use.';
+    $_SESSION['registration_error'] = $errorMessage;
+    
+    // If AJAX request, return error as JSON
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+      echo json_encode(['success' => false, 'message' => $errorMessage]);
+      exit;
+    } else {
+      header('Location: ../view/admin/students.php');
+      exit;
+    }
   }
 }
+
 
 if (isset($_POST['reset_password'])) {
   $new_password = $_POST['new_password'];
@@ -638,7 +674,7 @@ if(isset($_POST['deny_reservation'])){
   <script src="https://cdn.datatables.net/2.0.6/js/dataTables.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
   <script src="https://cdn.datatables.net/buttons/3.0.1/js/dataTables.buttons.js"></script>

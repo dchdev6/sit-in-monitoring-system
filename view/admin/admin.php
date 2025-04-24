@@ -181,71 +181,23 @@ if(isset($_SESSION['success_message'])) {
 
 <body class="bg-gray-50 font-sans text-gray-800 opacity-0 transition-opacity duration-500">
     <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <h1 class="text-2xl font-bold text-gray-800 mb-8 flex items-center animate-slide-in-left">
-            <i class="fas fa-gauge-high mr-3 text-primary-600 animate-pulse-slow"></i>
-            Dashboard Overview
-        </h1>
-
-        <!-- Main Stats Row -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 transition duration-300 stat-card hover:border-primary-200 stagger-item relative" role="region" aria-label="Students registered statistics">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-blue-100 p-3 mr-4 shadow-sm animate-float icon-wrapper">
-                        <i class="fas fa-user-graduate text-blue-600" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium" id="students-label">Students Registered</p>
-                        <p class="text-2xl font-bold counter-animate" id="students-count" aria-labelledby="students-label"><?php echo retrieve_students_dashboard(); ?></p>
-                    </div>
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
+                            <i class="fas fa-gauge-high text-primary-600"></i>
+                        </div>
+                        Dashboard Overview
+                    </h1>
+                    <p class="text-gray-500 mt-1 ml-12">Monitor system activities and key metrics</p>
                 </div>
+                
+                <!-- No buttons needed in the dashboard header -->
             </div>
             
-            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 transition duration-300 stat-card hover:border-primary-200 stagger-item">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-green-100 p-3 mr-4 shadow-sm animate-float">
-                        <i class="fas fa-chair text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">Currently Sit-in</p>
-                        <p class="text-2xl font-bold counter-animate"><?php echo retrieve_current_sit_in_dashboard(); ?></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 transition duration-300 stat-card hover:border-primary-200 stagger-item">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-purple-100 p-3 mr-4 shadow-sm animate-float">
-                        <i class="fas fa-chart-line text-purple-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">Total Sit-in</p>
-                        <p class="text-2xl font-bold counter-animate"><?php echo retrieve_total_sit_in_dashboard(); ?></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl shadow-lg p-5 text-white transition duration-300 stat-card stagger-item">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-white/20 p-3 mr-4 shadow-sm animate-float">
-                        <i class="fas fa-code text-white"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-white/90 font-medium">Top Programming Language</p>
-                        <p class="text-2xl font-bold">
-                            <?php
-                            $languages = [
-                                'C#' => retrieve_c_sharp_programming(),
-                                'C' => retrieve_c_programming(),
-                                'Java' => retrieve_java_programming(),
-                                'ASP.Net' => retrieve_asp_programming(),
-                                'PHP' => retrieve_php_programming()
-                            ];
-                            echo array_keys($languages, max($languages))[0];
-                            ?>
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <!-- No breadcrumbs needed for admin dashboard since it's the main page -->
         </div>
 
         <!-- Charts & Announcements Section -->

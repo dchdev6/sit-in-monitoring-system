@@ -254,82 +254,49 @@ $listPerson = retrieve_sit_in();
 <body class="bg-gray-50 font-sans">
 
     <div class="container mx-auto px-4 max-w-7xl animate-fadeIn py-8">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
-            <h1 class="text-primary-600 text-3xl font-semibold mb-4 md:mb-0">
-                <i class="fas fa-desktop mr-2"></i> Current Sit-In Records
-            </h1>
-            
-            <div class="flex items-center space-x-2">
-                <button id="refreshBtn" class="bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-md flex items-center">
-                    <i class="fas fa-sync-alt mr-2"></i> Refresh Data
-                </button>
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
+                            <i class="fas fa-desktop text-primary-600"></i>
+                        </div>
+                        Current Sit-In Records
+                    </h1>
+                    <p class="text-gray-500 mt-1 ml-12">Monitor active laboratory sessions in real-time</p>
+                </div>
                 
-                <a href="javascript:void(0)" class="bg-primary-50 hover:bg-primary-100 text-primary-600 font-medium py-2 px-4 rounded-md transition duration-300 ease-in-out flex items-center" data-bs-toggle="modal" data-bs-target="#helpModal">
-                    <i class="fas fa-question-circle mr-2"></i> Help
-                </a>
-            </div>
-        </div>
-        
-        <!-- Stats overview cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-card hover:shadow-card-hover p-6 transition-all duration-300 transform hover:-translate-y-1">
-                <div class="flex items-center">
-                    <div class="bg-primary-100 p-3 rounded-full">
-                        <i class="fas fa-users text-primary-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-gray-500 text-sm font-medium">Total Active Sessions</h3>
-                        <p class="text-2xl font-semibold text-gray-800" id="totalActiveSessions"><?php echo count($listPerson); ?></p>
-                    </div>
+                <div class="flex items-center space-x-2 mt-4 md:mt-0">
+                    <button id="refreshBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+                        <i class="fas fa-sync-alt mr-2"></i> Refresh Data
+                    </button>
+                    
+                    <a href="javascript:void(0)" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated" data-bs-toggle="modal" data-bs-target="#helpModal">
+                        <i class="fas fa-question-circle mr-2 text-gray-500"></i> Help
+                    </a>
                 </div>
             </div>
             
-            <div class="bg-white rounded-lg shadow-card hover:shadow-card-hover p-6 transition-all duration-300 transform hover:-translate-y-1">
-                <div class="flex items-center">
-                    <div class="bg-green-100 p-3 rounded-full">
-                        <i class="fas fa-laptop-code text-green-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-gray-500 text-sm font-medium">Active Lab Usage</h3>
-                        <p class="text-2xl font-semibold text-gray-800" id="labUsage">
-                            <?php
-                            $labCounts = array();
-                            foreach ($listPerson as $person) {
-                                $lab = $person['sit_lab'];
-                                if (!isset($labCounts[$lab])) $labCounts[$lab] = 0;
-                                $labCounts[$lab]++;
-                            }
-                            echo !empty($labCounts) ? count($labCounts) . ' Labs' : '0 Labs';
-                            ?>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-card hover:shadow-card-hover p-6 transition-all duration-300 transform hover:-translate-y-1">
-                <div class="flex items-center">
-                    <div class="bg-indigo-100 p-3 rounded-full">
-                        <i class="fas fa-chart-line text-indigo-600 text-xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-gray-500 text-sm font-medium">Top Purpose</h3>
-                        <p class="text-2xl font-semibold text-gray-800" id="topPurpose">
-                            <?php
-                            $purposeCounts = array();
-                            foreach ($listPerson as $person) {
-                                $purpose = $person['sit_purpose'];
-                                if (!isset($purposeCounts[$purpose])) $purposeCounts[$purpose] = 0;
-                                $purposeCounts[$purpose]++;
-                            }
-                            arsort($purposeCounts);
-                            echo !empty($purposeCounts) ? array_key_first($purposeCounts) : 'None';
-                            ?>
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <!-- Breadcrumbs -->
+            <nav class="flex mb-6" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
+                    <li class="inline-flex items-center">
+                        <a href="Admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                            <i class="fas fa-home mr-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="text-gray-400 mx-2">/</span>
+                            <span class="text-primary-600 font-medium">Current Sit-In</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
         </div>
-        
+
         <!-- Main data table container -->
         <div class="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
             <!-- Table loader placeholder -->

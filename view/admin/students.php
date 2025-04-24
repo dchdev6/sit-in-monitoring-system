@@ -1,14 +1,170 @@
 <?php
+// Debug mode - set to true to see detailed errors
+$debug = true;
+
+if ($debug) {
+    ini_set('display_errors', 1);
+    error_reporting(E_ALL);
+    
+    // Log the POST data if coming from a form submission
+    if (!empty($_POST)) {
+        error_log("POST data in students.php: " . print_r($_POST, true));
+    }
+}
+
+// If this is an AJAX request handling a student registration
+if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+    strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest' && 
+    isset($_POST['submitRegister'])) {
+    
+    // Start session if not already started
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    // Process registration
+    $idNum = isset($_POST['idNumber']) ? trim($_POST['idNumber']) : '';
+    $last_Name = isset($_POST['lName']) ? trim($_POST['lName']) : '';
+    $first_Name = isset($_POST['fName']) ? trim($_POST['fName']) : '';
+    $middle_Name = isset($_POST['mName']) ? trim($_POST['mName']) : '';
+    $course_Level = isset($_POST['level']) ? trim($_POST['level']) : '';
+    $passWord = isset($_POST['password']) ? $_POST['password'] : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $course = isset($_POST['course']) ? trim($_POST['course']) : '';
+    $address = isset($_POST['address']) ? trim($_POST['address']) : '';
+    
+    // For debugging
+    error_log("Processing AJAX student registration: ID=$idNum, Name=$first_Name $last_Name");
+    
+    // Validate required fields
+    if (empty($idNum) || empty($last_Name) || empty($first_Name) || 
+        empty($course_Level) || empty($passWord) || empty($course)) {
+        echo json_encode(['success' => false, 'message' => 'All required fields must be completed.']);
+        exit;
+    }
+    
+    // Make sure the backend file is included
+    require_once '../../backend/backend_admin.php';
+    
+    // Call the add_student function with detailed error handling
+    try {
+        error_log("Calling add_student function with: ID=$idNum");
+        $result = add_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $passWord, $email, $course, $address);
+        error_log("add_student result: " . ($result === true ? "success" : (is_string($result) ? $result : "unknown error")));
+        
+        if ($result === true) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => is_string($result) ? $result : 'Unable to add student. The ID may already be in use.']);
+        }
+    } catch (Exception $e) {
+        error_log("Exception in add_student: " . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    }
+    
+    exit; // Make sure to exit after sending the response
+}
+
+// Handle student registration
+if(isset($_POST['submitRegister'])) {
+    // Start session if not started already
+    if (session_status() == PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    // Process the registration here
+    $idNum = isset($_POST['idNumber']) ? trim($_POST['idNumber']) : '';
+    $last_Name = isset($_POST['lName']) ? trim($_POST['lName']) : '';
+    $first_Name = isset($_POST['fName']) ? trim($_POST['fName']) : '';
+    $middle_Name = isset($_POST['mName']) ? trim($_POST['mName']) : '';
+    $course_Level = isset($_POST['level']) ? trim($_POST['level']) : '';
+    $passWord = isset($_POST['password']) ? $_POST['password'] : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $course = isset($_POST['course']) ? trim($_POST['course']) : '';
+    $address = isset($_POST['address']) ? trim($_POST['address']) : '';
+    
+    // For debugging - log the form data
+    error_log("Form data: ID=$idNum, Name=$first_Name $last_Name, Email=$email, Course=$course");
+    
+    // Validate required fields
+    if (empty($idNum) || empty($last_Name) || empty($first_Name) || 
+        empty($course_Level) || empty($passWord) || empty($course)) {
+        $registrationError = 'All required fields must be completed.';
+        $_SESSION['registration_error'] = $registrationError;
+        
+        // For AJAX requests
+        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            echo json_encode(['success' => false, 'message' => $registrationError]);
+            exit;
+        }
+    } else {
+        // Make sure the backend file is included
+        require_once '../../backend/backend_admin.php';
+        
+        // Call the add_student function - with detailed error logging
+        error_log("Calling add_student function with: ID=$idNum");
+        $result = add_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $passWord, $email, $course, $address);
+        error_log("add_student result: " . ($result === true ? "success" : $result));
+        
+        if($result === true) {
+            $_SESSION['registration_success'] = true;
+            error_log("Registration successful for ID: $idNum");
+            
+            // For AJAX requests
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                echo json_encode(['success' => true]);
+                exit;
+            }
+            
+            // For direct form submissions, set localStorage and redirect
+            echo "<script>
+                localStorage.setItem('registration_success', 'true');
+                window.location.href = 'students.php?refresh=" . time() . "';
+            </script>";
+            exit;
+        } else {
+            $registrationError = is_string($result) ? $result : 'Unable to add student. The ID may already be in use.';
+            $_SESSION['registration_error'] = $registrationError;
+            
+            // Log the error for debugging
+            error_log("Registration failed: $registrationError");
+            
+            // For AJAX requests
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                echo json_encode(['success' => false, 'message' => $registrationError]);
+                exit;
+            }
+            
+            // For direct form submissions, set localStorage and reload
+            echo "<script>
+                localStorage.setItem('registration_error', '" . addslashes($registrationError) . "');
+                window.location.href = 'students.php';
+            </script>";
+            exit;
+        }
+    }
+}
+
 include '../../includes/navbar_admin.php';
 
 $listPerson = retrieve_students();
+
+// Check for registration errors
+$registrationError = '';
+if(isset($_SESSION['registration_error'])) {
+    $registrationError = $_SESSION['registration_error'];
+    unset($_SESSION['registration_error']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" width="device-width, initial-scale=1.0">
   <title>Student Information</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -369,6 +525,77 @@ $listPerson = retrieve_students();
       visibility: visible;
       transform: translateX(-50%) translateY(0);
     }
+
+    /* Form styling for add student modal */
+    .form-control, .form-select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        outline: none;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+    }
+    
+    .form-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    /* Password toggle button */
+    .password-toggle {
+        cursor: pointer;
+    }
+    
+    /* Modal animations */
+    .modal-content {
+        transition: transform 0.3s ease;
+    }
+
+    /* Add this to your existing style section */
+    .input-icon {
+        transition: opacity 0.3s ease;
+    }
+    
+    input:focus + .input-icon,
+    input:not(:placeholder-shown) + .input-icon,
+    select:focus + .input-icon,
+    select:not([value=""]) + .input-icon,
+    textarea:focus + .input-icon,
+    textarea:not(:placeholder-shown) + .input-icon {
+        opacity: 0;
+    }
+    
+    /* Password strength indicator */
+    #passwordStrength {
+        transition: width 0.3s, background-color 0.3s;
+    }
+    
+    .password-weak {
+        width: 33% !important;
+        background-color: #ef4444 !important;
+    }
+    
+    .password-medium {
+        width: 66% !important;
+        background-color: #f59e0b !important;
+    }
+    
+    .password-strong {
+        width: 100% !important;
+        background-color: #10b981 !important;
+    }
   </style>
 </head>
 
@@ -387,10 +614,10 @@ $listPerson = retrieve_students();
           <p class="text-gray-500 mt-1 ml-12">Manage student records and laboratory sessions</p>
         </div>
         <div class="flex space-x-3 mt-4 md:mt-0">
-          <a href="Add.php" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+          <button id="addStudentBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
             <i class="fas fa-plus mr-2"></i>
             Add Student
-          </a>
+          </button>
           <button id="resetButton" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
             <i class="fas fa-sync-alt mr-2 text-gray-500"></i>
             Reset Sessions
@@ -415,89 +642,6 @@ $listPerson = retrieve_students();
           </li>
         </ol>
       </nav>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 stat-card animate__animated animate__fadeInUp animate__faster" style="animation-delay: 0.1s">
-        <div class="flex items-center">
-          <div class="rounded-full bg-blue-100 p-3 mr-4 icon-container">
-            <i class="fas fa-users text-blue-600"></i>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500 font-medium">Total Students</p>
-            <div class="flex items-end">
-              <p class="text-2xl font-bold counter" data-target="<?php echo count($listPerson); ?>">0</p>
-              <span class="text-xs text-blue-600 ml-1.5 font-medium">students</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 stat-card animate__animated animate__fadeInUp animate__faster" style="animation-delay: 0.2s">
-        <div class="flex items-center">
-          <div class="rounded-full bg-green-100 p-3 mr-4 icon-container">
-            <i class="fas fa-user-check text-green-600"></i>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500 font-medium">Active Students</p>
-            <div class="flex items-end">
-              <p class="text-2xl font-bold counter" data-target="<?php 
-                  $activeCount = 0;
-                  foreach($listPerson as $person) {
-                    if($person['session'] > 0) $activeCount++;
-                  }
-                  echo $activeCount;
-                ?>">0</p>
-              <span class="text-xs text-green-600 ml-1.5 font-medium">with sessions</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 stat-card animate__animated animate__fadeInUp animate__faster" style="animation-delay: 0.3s">
-        <div class="flex items-center">
-          <div class="rounded-full bg-yellow-100 p-3 mr-4 icon-container">
-            <i class="fas fa-clock text-yellow-600"></i>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500 font-medium">Avg. Sessions</p>
-            <div class="flex items-end">
-              <p class="text-2xl font-bold counter-decimal" data-target="<?php 
-                  $totalSessions = 0;
-                  foreach($listPerson as $person) {
-                    $totalSessions += $person['session'];
-                  }
-                  echo count($listPerson) > 0 ? round($totalSessions / count($listPerson), 1) : 0;
-                ?>">0</p>
-              <span class="text-xs text-yellow-600 ml-1.5 font-medium">per student</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 stat-card animate__animated animate__fadeInUp animate__faster" style="animation-delay: 0.4s">
-        <div class="flex items-center">
-          <div class="rounded-full bg-purple-100 p-3 mr-4 icon-container">
-            <i class="fas fa-graduation-cap text-purple-600"></i>
-          </div>
-          <div>
-            <p class="text-sm text-gray-500 font-medium">Programs</p>
-            <div class="flex items-end">
-              <p class="text-2xl font-bold counter" data-target="<?php 
-                  $courses = array();
-                  foreach($listPerson as $person) {
-                    if(!in_array($person['course'], $courses)) {
-                      $courses[] = $person['course'];
-                    }
-                  }
-                  echo count($courses);
-                ?>">0</p>
-              <span class="text-xs text-purple-600 ml-1.5 font-medium">course types</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Table Card -->
@@ -724,6 +868,167 @@ $listPerson = retrieve_students();
     </div>
   </div>
 
+  <!-- Add Student Modal -->
+  <div class="modal fade" id="addStudentModal" tabindex="-1" aria-labelledby="addStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-lg shadow-lg border-0">
+            <div class="modal-header bg-primary-50 border-0">
+                <h5 class="modal-title text-primary-800 font-semibold" id="addStudentModalLabel">
+                    <i class="fas fa-user-plus mr-2"></i>Add New Student
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <form id="addStudentForm" method="POST" action="students.php" onsubmit="return validateStudentForm();">
+                <div class="modal-body p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- ID Number -->
+                        <div class="form-group">
+                            <label for="idNumber" class="form-label">ID Number <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none input-icon">
+                                    <i class="fas fa-id-card text-gray-400"></i>
+                                </span>
+                                <input type="text" class="form-control pl-10" id="idNumber" name="idNumber" placeholder="Enter student ID" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Last Name -->
+                        <div class="form-group">
+                            <label for="lName" class="form-label">Last Name <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none input-icon">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </span>
+                                <input type="text" class="form-control pl-10" id="lName" name="lName" placeholder="Enter last name" required>
+                            </div>
+                        </div>
+                        
+                        <!-- First Name -->
+                        <div class="form-group">
+                            <label for="fName" class="form-label">First Name <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none input-icon">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </span>
+                                <input type="text" class="form-control pl-10" id="fName" name="fName" placeholder="Enter first name" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Middle Name -->
+                        <div class="form-group">
+                            <label for="mName" class="form-label">Middle Name</label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none input-icon">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </span>
+                                <input type="text" class="form-control pl-10" id="mName" name="mName" placeholder="Enter middle name (optional)">
+                            </div>
+                        </div>
+                        
+                        <!-- Year Level -->
+                        <div class="form-group">
+                            <label for="level" class="form-label">Year Level <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none input-icon">
+                                    <i class="fas fa-layer-group text-gray-400"></i>
+                                </span>
+                                <select name="level" id="level" class="form-select pl-10" required>
+                                    <option value="">Select year level</option>
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                    <option value="3">3rd Year</option>
+                                    <option value="4">4th Year</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label for="email" class="form-label">Email <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none input-icon">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </span>
+                                <input type="email" class="form-control pl-10" id="email" name="email" placeholder="Enter email address" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Password -->
+                        <div class="form-group">
+                            <label for="password" class="form-label">Password <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none input-icon">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </span>
+                                <input type="password" class="form-control pl-10 pr-10" id="password" name="password" placeholder="Enter password" required>
+                                <button type="button" id="togglePassword" class="password-toggle absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 focus:outline-none">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="mt-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div id="passwordStrength" class="h-1.5 bg-gray-500 w-0 transition-all duration-300"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Course -->
+                        <div class="form-group">
+                            <label for="course" class="form-label">Course <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none input-icon">
+                                    <i class="fas fa-graduation-cap text-gray-400"></i>
+                                </span>
+                                <select name="course" id="course" class="form-select pl-10" required>
+                                    <option value="">Select course</option>
+                                    <optgroup label="College of Computer Studies">
+                                        <option value="BSIT">BS in Information Technology</option>
+                                        <option value="BSCS">BS in Computer Science</option>
+                                        <option value="BSIS">BS in Information Systems</option>
+                                        <option value="MIT">Master in Information Technology</option>
+                                    </optgroup>
+                                    <optgroup label="College of Engineering">
+                                        <option value="BSCE">BS in Civil Engineering</option>
+                                        <option value="BSEE">BS in Electrical Engineering</option>
+                                        <option value="BSME">BS in Mechanical Engineering</option>
+                                        <option value="BSCPE">BS in Computer Engineering</option>
+                                    </optgroup>
+                                    <optgroup label="College of Business">
+                                        <option value="BSBA">BS in Business Administration</option>
+                                        <option value="BSA">BS in Accountancy</option>
+                                        <option value="BSAIS">BS in Accounting Information System</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Address -->
+                        <div class="col-span-1 md:col-span-2">
+                            <label for="address" class="form-label">Address <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none input-icon">
+                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                </span>
+                                <textarea class="form-control pl-10" id="address" name="address" rows="3" placeholder="Enter address" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="submitRegister" value="1">
+                
+                <div class="modal-footer flex justify-end border-0 bg-gray-50 rounded-b-lg">
+                    <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition duration-200 flex items-center" data-bs-dismiss="modal">
+                        <i class="fas fa-times-circle mr-2"></i>Cancel
+                    </button>
+                    <button type="submit" id="addStudentSubmitBtn" class="px-4 py-2 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-md transition duration-200 flex items-center shadow-sm">
+                        <i class="fas fa-user-plus mr-2"></i>Add Student
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
   <!-- jQuery (required for DataTables) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <!-- DataTables JS -->
@@ -732,6 +1037,51 @@ $listPerson = retrieve_students();
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Animate.css JS -->
   <script>
+    // Additional validation function to call before form submission
+    function validateStudentForm() {
+        let isValid = true;
+        const requiredFields = {
+            'idNumber': 'ID Number',
+            'lName': 'Last Name',
+            'fName': 'First Name',
+            'level': 'Year Level',
+            'password': 'Password',
+            'email': 'Email',
+            'course': 'Course',
+            'address': 'Address'
+        };
+        
+        const missingFields = [];
+        
+        // Check all required fields
+        Object.keys(requiredFields).forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (!field || !field.value.trim()) {
+                isValid = false;
+                missingFields.push(requiredFields[fieldId]);
+                
+                // Highlight the field
+                if (field) {
+                    field.classList.add('border-red-500');
+                }
+            } else if (field) {
+                field.classList.remove('border-red-500');
+            }
+        });
+        
+        // If validation fails, show error
+        if (!isValid) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Missing Information',
+                html: `Please complete the following required fields:<br><strong>${missingFields.join(', ')}</strong>`,
+                confirmButtonColor: '#0ea5e9'
+            });
+        }
+        
+        return isValid;
+    }
+
     // Define the resetStudentSessions function in the global scope so it's accessible from HTML
     function resetStudentSessions(studentId) {
       Swal.fire({
@@ -1414,7 +1764,261 @@ $listPerson = retrieve_students();
           }
         });
       });
+
+      // Update the Add Student button to open the modal instead of redirecting
+      $('a[href="Add.php"]').on('click', function(e) {
+          e.preventDefault();
+          $('#addStudentModal').modal('show');
+      });
+      
+      // Password toggle functionality
+      $('#togglePassword').on('click', function() {
+          const passwordInput = $('#password');
+          const icon = $(this).find('i');
+          
+          if (passwordInput.attr('type') === 'password') {
+              passwordInput.attr('type', 'text');
+              icon.removeClass('fa-eye').addClass('fa-eye-slash');
+          } else {
+              passwordInput.attr('type', 'password');
+              icon.removeClass('fa-eye-slash').addClass('fa-eye');
+          }
+      });
+      
+      // Password strength indicator
+      $('#password').on('input', function() {
+          const password = $(this).val();
+          const strengthBar = $('#passwordStrength');
+          
+          if (password.length === 0) {
+              strengthBar.removeClass('password-weak password-medium password-strong').css('width', '0');
+              return;
+          }
+          
+          // Simple strength check (you can make this more complex)
+          if (password.length < 6) {
+              strengthBar.removeClass('password-medium password-strong').addClass('password-weak');
+          } else if (password.length < 10 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+              strengthBar.removeClass('password-weak password-strong').addClass('password-medium');
+          } else {
+              strengthBar.removeClass('password-weak password-medium').addClass('password-strong');
+          }
+      });
+      
+      // Hide input icons on focus/typing
+      $('input, select, textarea').on('focus', function() {
+          $(this).siblings('.input-icon').css('opacity', '0');
+      }).on('blur', function() {
+          if ($(this).val() === '') {
+              $(this).siblings('.input-icon').css('opacity', '1');
+          }
+      });
+      
+      // Check if input already has value on page load
+      $('input, select, textarea').each(function() {
+          if ($(this).val() !== '') {
+              $(this).siblings('.input-icon').css('opacity', '0');
+          }
+      });
+      
+      // For select elements, handle change events separately
+      $('select').on('change', function() {
+          if ($(this).val() !== '') {
+              $(this).siblings('.input-icon').css('opacity', '0');
+          } else {
+              $(this).siblings('.input-icon').css('opacity', '1');
+          }
+      });
+      
+      // Add Student Form Submission
+      $('#addStudentForm').on('submit', function(e) {
+          e.preventDefault();
+          
+          // Perform client-side validation
+          if (!validateStudentForm()) {
+              return false;
+          }
+          
+          // Show loading state
+          const $submitBtn = $('#addStudentSubmitBtn');
+          $submitBtn.prop('disabled', true)
+                   .html('<i class="fas fa-spinner fa-spin mr-2"></i>Adding...');
+          
+          // Create a FormData object
+          const formData = new FormData(this);
+          
+          // Convert FormData to URL-encoded string
+          const urlEncodedData = new URLSearchParams(formData).toString();
+          
+          // Log the data being sent for debugging
+          console.log("Submitting form data:", Object.fromEntries(formData));
+          
+          // Make the AJAX request
+          $.ajax({
+              url: 'students.php',
+              type: 'POST',
+              data: urlEncodedData,
+              processData: false, // Don't process the data further
+              contentType: 'application/x-www-form-urlencoded', // Set proper content type
+              headers: {
+                  'X-Requested-With': 'XMLHttpRequest' // Indicate this is an AJAX request
+              },
+              success: function(response) {
+                  console.log("Raw response:", response);
+                  
+                  // Try to parse the response as JSON
+                  let jsonResponse;
+                  try {
+                      // If the response is already a JS object, use it directly
+                      if (typeof response === 'object') {
+                          jsonResponse = response;
+                      } else {
+                          // Otherwise try to parse it as JSON
+                          jsonResponse = JSON.parse(response);
+                      }
+                      
+                      console.log("Parsed response:", jsonResponse);
+                      
+                      if (jsonResponse.success) {
+                          // Close the modal
+                          $('#addStudentModal').modal('hide');
+                          
+                          // Show success message
+                          Swal.fire({
+                              icon: 'success',
+                              title: 'Success!',
+                              text: 'Student added successfully to the system.',
+                              confirmButtonColor: '#0ea5e9'
+                          }).then(() => {
+                              // Reload the page to show the updated list
+                              location.reload();
+                          });
+                      } else {
+                          // Show error message
+                          Swal.fire({
+                              icon: 'error',
+                              title: 'Registration Failed',
+                              text: jsonResponse.message || 'Failed to add student. Please try again.',
+                              confirmButtonColor: '#0ea5e9'
+                          });
+                      }
+                  } catch (e) {
+                      console.error("Failed to parse response as JSON:", e);
+                      
+                      // Check for success indicators in the raw response
+                      if (response.includes('success') || response.includes('registration_success')) {
+                          // Close modal and show success message
+                          $('#addStudentModal').modal('hide');
+                          
+                          Swal.fire({
+                              icon: 'success',
+                              title: 'Success!',
+                              text: 'Student added successfully to the system.',
+                              confirmButtonColor: '#0ea5e9'
+                          }).then(() => {
+                              // Reload the page to show the updated list
+                              location.reload();
+                          });
+                      } else {
+                          // Show error message
+                          Swal.fire({
+                              icon: 'error',
+                              title: 'Registration Failed',
+                              text: 'Failed to add student. Please try again.',
+                              confirmButtonColor: '#0ea5e9'
+                          });
+                      }
+                  }
+              },
+              error: function(xhr, status, error) {
+                  console.error("AJAX Error:", status, error);
+                  console.log("Response text:", xhr.responseText);
+                  
+                  // Show error message
+                  Swal.fire({
+                      icon: 'error',
+                      title: 'Connection Error',
+                      text: 'Failed to connect to the server. Please try again.',
+                      confirmButtonColor: '#0ea5e9'
+                  });
+              },
+              complete: function() {
+                  // Reset button state
+                  $submitBtn.prop('disabled', false)
+                          .html('<i class="fas fa-user-plus mr-2"></i>Add Student');
+              }
+          });
+      });
+      
+      // Add animation when modal appears
+      $('#addStudentModal').on('show.bs.modal', function () {
+          const modalContent = $(this).find('.modal-content');
+          modalContent.addClass('animate__animated animate__fadeInDown animate__faster');
+      });
+      
+      $('#addStudentModal').on('hidden.bs.modal', function () {
+          const modalContent = $(this).find('.modal-content');
+          modalContent.removeClass('animate__animated animate__fadeInDown animate__faster');
+          
+          $('#addStudentForm')[0].reset();
+          $('#passwordStrength').css('width', '0');
+      });
+      
+      <?php if (isset($_SESSION['registration_success']) && $_SESSION['registration_success']): ?>
+      Swal.fire({
+          icon: 'success',
+          title: 'Student Added',
+          text: 'The new student has been successfully registered.',
+          confirmButtonColor: '#0ea5e9',
+          showClass: {
+              popup: 'animate__animated animate__fadeInDown animate__faster'
+          }
+      });
+      <?php 
+      $_SESSION['registration_success'] = false;
+      endif; 
+      ?>
+
+      <?php if (isset($registrationError) && !empty($registrationError)): ?>
+      Swal.fire({
+          icon: 'error',
+          title: 'Registration Failed',
+          text: '<?php echo $registrationError; ?>',
+          confirmButtonColor: '#0ea5e9'
+      });
+      <?php endif; ?>
+
+      $('#addStudentBtn').on('click', function() {
+          $('#addStudentModal').modal('show');
+      });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      if (localStorage.getItem('registration_error')) {
+        const errorMsg = localStorage.getItem('registration_error');
+        
+        Swal.fire({
+          icon: 'error',
+          title: 'Registration Failed',
+          text: errorMsg,
+          confirmButtonColor: '#0ea5e9'
+        });
+        
+        localStorage.removeItem('registration_error');
+      }
+      
+      if (localStorage.getItem('registration_success') === 'true') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Student Added Successfully',
+          text: 'The new student has been registered in the system.',
+          confirmButtonColor: '#0ea5e9'
+        });
+        
+        localStorage.removeItem('registration_success');
+      }
     });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

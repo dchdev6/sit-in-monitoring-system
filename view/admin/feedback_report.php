@@ -258,105 +258,50 @@ $listPerson = retrieve_current_sit_in();
 <body class="bg-gray-50 font-sans text-gray-800">
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Page Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                    <i class="fas fa-users mr-3 text-primary-600"></i>
-                    Sit In Records
-                </h1>
-                <p class="text-gray-500 mt-1">Comprehensive view of all laboratory users</p>
-            </div>
-            
-            <div class="flex space-x-3 mt-4 md:mt-0">
-                <button id="refreshBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-sync-alt mr-2"></i>
-                    Refresh
-                </button>
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
+                            <i class="fas fa-comment-alt text-primary-600"></i>
+                        </div>
+                        Feedback Reports
+                    </h1>
+                    <p class="text-gray-500 mt-1 ml-12">Review and analyze user feedback submissions</p>
+                </div>
                 
-                <button id="exportBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-download mr-2 text-gray-500"></i>
-                    Export
-                </button>
+                <div class="flex space-x-3 mt-4 md:mt-0">
+                    <button id="refreshBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Refresh
+                    </button>
+                    
+                    <button id="exportBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+                        <i class="fas fa-download mr-2 text-gray-500"></i>
+                        Export
+                    </button>
+                </div>
             </div>
+            
+            <!-- Breadcrumbs -->
+            <nav class="flex mb-6" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
+                    <li class="inline-flex items-center">
+                        <a href="Admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                            <i class="fas fa-home mr-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="text-gray-400 mx-2">/</span>
+                            <span class="text-primary-600 font-medium">Feedback Reports</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
         </div>
-        
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-6">
-            <!-- Total Users Card -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 stat-card" data-aos="fade-up" data-aos-delay="100">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-blue-100 p-3 mr-4 icon-container">
-                        <i class="fas fa-users text-blue-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">Total Users</p>
-                        <p class="text-2xl font-bold counter" data-target="<?php echo count($listPerson); ?>">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Lab Utilization Card -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 stat-card" data-aos="fade-up" data-aos-delay="200">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-green-100 p-3 mr-4 icon-container">
-                        <i class="fas fa-desktop text-green-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">Lab Utilization</p>
-                        <p class="text-2xl font-bold counter" data-target="<?php 
-                            // Get count of unique labs
-                            $uniqueLabs = array();
-                            if (!empty($listPerson)) {
-                                foreach ($listPerson as $person) {
-                                    if (isset($person['sit_lab']) && !in_array($person['sit_lab'], $uniqueLabs)) {
-                                        $uniqueLabs[] = $person['sit_lab'];
-                                    }
-                                }
-                            }
-                            echo count($uniqueLabs);
-                        ?>">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Active Users Card -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 stat-card" data-aos="fade-up" data-aos-delay="300">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-purple-100 p-3 mr-4 icon-container">
-                        <i class="fas fa-clock text-purple-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">Active Users</p>
-                        <p class="text-2xl font-bold counter" data-target="<?php 
-                            // Count users with no logout time
-                            $activeUsers = 0;
-                            if (!empty($listPerson)) {
-                                foreach ($listPerson as $person) {
-                                    if (empty($person['sit_logout']) || $person['sit_logout'] == 'N/A') {
-                                        $activeUsers++;
-                                    }
-                                }
-                            }
-                            echo $activeUsers;
-                        ?>">0</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Today's Date Card -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 stat-card" data-aos="fade-up" data-aos-delay="400">
-                <div class="flex items-center">
-                    <div class="rounded-full bg-yellow-100 p-3 mr-4 icon-container">
-                        <i class="fas fa-calendar-day text-yellow-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 font-medium">Today's Date</p>
-                        <p class="text-lg font-bold"><?php echo date("M d, Y"); ?></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
+
         <!-- Table Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
             <div class="p-6">

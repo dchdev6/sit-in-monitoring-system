@@ -284,18 +284,116 @@ error_log("Current profile session data: " . print_r($_SESSION, true));
                                 <select name="course" id="course" 
                                     class="border border-gray-300 text-gray-700 rounded-lg block w-full pl-10 p-2.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" 
                                     required>
-                                    <option value="BSCS" <?php echo ($_SESSION["course"] == 'BSCS') ? 'selected' : ''; ?>>Bachelor of Science in Computer Science</option>
-                                    <option value="BSIT" <?php echo ($_SESSION["course"] == 'BSIT') ? 'selected' : ''; ?>>Bachelor of Science in Information Technology</option>
-                                    <option value="BSIS" <?php echo ($_SESSION["course"] == 'BSIS') ? 'selected' : ''; ?>>Bachelor of Science in Information System</option>
-                                    <option value="BSP" <?php echo ($_SESSION["course"] == 'BSP') ? 'selected' : ''; ?>>Bachelor of Science in Psychology</option>
-                                    <option value="BSBA" <?php echo ($_SESSION["course"] == 'BSBA') ? 'selected' : ''; ?>>Bachelor of Science in Business Administration</option>
-                                    <option value="BSN" <?php echo ($_SESSION["course"] == 'BSN') ? 'selected' : ''; ?>>Bachelor of Science in Nursing</option>
-                                    <option value="BSM" <?php echo ($_SESSION["course"] == 'BSM') ? 'selected' : ''; ?>>Bachelor of Science in Midwifery</option>
-                                    <option value="BAB" <?php echo ($_SESSION["course"] == 'BAB') ? 'selected' : ''; ?>>Bachelor of Arts in Broadcasting</option>
-                                    <option value="BAC" <?php echo ($_SESSION["course"] == 'BAC') ? 'selected' : ''; ?>>Bachelor of Arts in Communication</option>
-                                    <option value="BADC" <?php echo ($_SESSION["course"] == 'BADC') ? 'selected' : ''; ?>>Bachelor of Arts in Development Communication</option>
-                                    <option value="BAJ" <?php echo ($_SESSION["course"] == 'BAJ') ? 'selected' : ''; ?>>Bachelor of Arts in Journalism</option>
-                                    <option value="BAMC" <?php echo ($_SESSION["course"] == 'BAMC') ? 'selected' : ''; ?>>Bachelor of Arts in Mass Communication</option>
+                                    
+                                    <optgroup label="College of Computer Studies">
+                                        <option value="BSIT" <?php echo ($_SESSION["course"] == 'BSIT') ? 'selected' : ''; ?>>BS in Information Technology</option>
+                                        <option value="BSCS" <?php echo ($_SESSION["course"] == 'BSCS') ? 'selected' : ''; ?>>BS in Computer Science</option>
+                                        <option value="BSIS" <?php echo ($_SESSION["course"] == 'BSIS') ? 'selected' : ''; ?>>BS in Information Systems</option>
+                                        <option value="MIT" <?php echo ($_SESSION["course"] == 'MIT') ? 'selected' : ''; ?>>Master in Information Technology</option>
+                                        <option value="MSCS" <?php echo ($_SESSION["course"] == 'MSCS') ? 'selected' : ''; ?>>MS in Computer Science</option>
+                                        <option value="DIT" <?php echo ($_SESSION["course"] == 'DIT') ? 'selected' : ''; ?>>Doctor in Information Technology</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="College of Engineering">
+                                        <option value="BSCE" <?php echo ($_SESSION["course"] == 'BSCE') ? 'selected' : ''; ?>>BS in Civil Engineering</option>
+                                        <option value="BSEE" <?php echo ($_SESSION["course"] == 'BSEE') ? 'selected' : ''; ?>>BS in Electrical Engineering</option>
+                                        <option value="BSME" <?php echo ($_SESSION["course"] == 'BSME') ? 'selected' : ''; ?>>BS in Mechanical Engineering</option>
+                                        <option value="BSECE" <?php echo ($_SESSION["course"] == 'BSECE') ? 'selected' : ''; ?>>BS in Electronics & Communications Engineering</option>
+                                        <option value="BSCPE" <?php echo ($_SESSION["course"] == 'BSCPE') ? 'selected' : ''; ?>>BS in Computer Engineering</option>
+                                        <option value="BSIE" <?php echo ($_SESSION["course"] == 'BSIE') ? 'selected' : ''; ?>>BS in Industrial Engineering</option>
+                                        <option value="BSCHE" <?php echo ($_SESSION["course"] == 'BSCHE') ? 'selected' : ''; ?>>BS in Chemical Engineering</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="College of Business Administration">
+                                        <option value="BSBA-FM" <?php echo ($_SESSION["course"] == 'BSBA-FM') ? 'selected' : ''; ?>>BSBA in Financial Management</option>
+                                        <option value="BSBA-HRM" <?php echo ($_SESSION["course"] == 'BSBA-HRM') ? 'selected' : ''; ?>>BSBA in Human Resource Management</option>
+                                        <option value="BSBA-MM" <?php echo ($_SESSION["course"] == 'BSBA-MM') ? 'selected' : ''; ?>>BSBA in Marketing Management</option>
+                                        <option value="BSBA-OM" <?php echo ($_SESSION["course"] == 'BSBA-OM') ? 'selected' : ''; ?>>BSBA in Operations Management</option>
+                                        <option value="BSBA-BEM" <?php echo ($_SESSION["course"] == 'BSBA-BEM') ? 'selected' : ''; ?>>BSBA in Business Economics Management</option>
+                                        <option value="BSA" <?php echo ($_SESSION["course"] == 'BSA') ? 'selected' : ''; ?>>BS in Accountancy</option>
+                                        <option value="BSMA" <?php echo ($_SESSION["course"] == 'BSMA') ? 'selected' : ''; ?>>BS in Management Accounting</option>
+                                        <option value="BSE" <?php echo ($_SESSION["course"] == 'BSE') ? 'selected' : ''; ?>>BS in Economics</option>
+                                        <option value="BSREM" <?php echo ($_SESSION["course"] == 'BSREM') ? 'selected' : ''; ?>>BS in Real Estate Management</option>
+                                        <option value="MBA" <?php echo ($_SESSION["course"] == 'MBA') ? 'selected' : ''; ?>>Master in Business Administration</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="College of Education">
+                                        <option value="BEED" <?php echo ($_SESSION["course"] == 'BEED') ? 'selected' : ''; ?>>Bachelor of Elementary Education</option>
+                                        <option value="BSED-ENG" <?php echo ($_SESSION["course"] == 'BSED-ENG') ? 'selected' : ''; ?>>BS in Secondary Education - English</option>
+                                        <option value="BSED-FIL" <?php echo ($_SESSION["course"] == 'BSED-FIL') ? 'selected' : ''; ?>>BS in Secondary Education - Filipino</option>
+                                        <option value="BSED-MATH" <?php echo ($_SESSION["course"] == 'BSED-MATH') ? 'selected' : ''; ?>>BS in Secondary Education - Mathematics</option>
+                                        <option value="BSED-SCI" <?php echo ($_SESSION["course"] == 'BSED-SCI') ? 'selected' : ''; ?>>BS in Secondary Education - Science</option>
+                                        <option value="BSED-SS" <?php echo ($_SESSION["course"] == 'BSED-SS') ? 'selected' : ''; ?>>BS in Secondary Education - Social Studies</option>
+                                        <option value="BPE" <?php echo ($_SESSION["course"] == 'BPE') ? 'selected' : ''; ?>>Bachelor of Physical Education</option>
+                                        <option value="BECE" <?php echo ($_SESSION["course"] == 'BECE') ? 'selected' : ''; ?>>Bachelor of Early Childhood Education</option>
+                                        <option value="BSED-MAPEH" <?php echo ($_SESSION["course"] == 'BSED-MAPEH') ? 'selected' : ''; ?>>BS in Secondary Education - MAPEH</option>
+                                        <option value="MAEd" <?php echo ($_SESSION["course"] == 'MAEd') ? 'selected' : ''; ?>>Master of Arts in Education</option>
+                                        <option value="PhD-Ed" <?php echo ($_SESSION["course"] == 'PhD-Ed') ? 'selected' : ''; ?>>Doctor of Philosophy in Education</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="College of Arts and Sciences">
+                                        <option value="BAC" <?php echo ($_SESSION["course"] == 'BAC') ? 'selected' : ''; ?>>BA in Communication</option>
+                                        <option value="BAMC" <?php echo ($_SESSION["course"] == 'BAMC') ? 'selected' : ''; ?>>BA in Mass Communication</option>
+                                        <option value="BAJ" <?php echo ($_SESSION["course"] == 'BAJ') ? 'selected' : ''; ?>>BA in Journalism</option>
+                                        <option value="BAE" <?php echo ($_SESSION["course"] == 'BAE') ? 'selected' : ''; ?>>BA in English</option>
+                                        <option value="BAL" <?php echo ($_SESSION["course"] == 'BAL') ? 'selected' : ''; ?>>BA in Literature</option>
+                                        <option value="BAPsych" <?php echo ($_SESSION["course"] == 'BAPsych') ? 'selected' : ''; ?>>BA in Psychology</option>
+                                        <option value="BSPsych" <?php echo ($_SESSION["course"] == 'BSPsych') ? 'selected' : ''; ?>>BS in Psychology</option>
+                                        <option value="BSBio" <?php echo ($_SESSION["course"] == 'BSBio') ? 'selected' : ''; ?>>BS in Biology</option>
+                                        <option value="BSChem" <?php echo ($_SESSION["course"] == 'BSChem') ? 'selected' : ''; ?>>BS in Chemistry</option>
+                                        <option value="BSMath" <?php echo ($_SESSION["course"] == 'BSMath') ? 'selected' : ''; ?>>BS in Mathematics</option>
+                                        <option value="BSPhys" <?php echo ($_SESSION["course"] == 'BSPhys') ? 'selected' : ''; ?>>BS in Physics</option>
+                                        <option value="BSND" <?php echo ($_SESSION["course"] == 'BSND') ? 'selected' : ''; ?>>BS in Nutrition and Dietetics</option>
+                                        <option value="BSFT" <?php echo ($_SESSION["course"] == 'BSFT') ? 'selected' : ''; ?>>BS in Food Technology</option>
+                                        <option value="BSS" <?php echo ($_SESSION["course"] == 'BSS') ? 'selected' : ''; ?>>BS in Statistics</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="College of Health Sciences">
+                                        <option value="BSN" <?php echo ($_SESSION["course"] == 'BSN') ? 'selected' : ''; ?>>BS in Nursing</option>
+                                        <option value="BSPH" <?php echo ($_SESSION["course"] == 'BSPH') ? 'selected' : ''; ?>>BS in Public Health</option>
+                                        <option value="BSMLS" <?php echo ($_SESSION["course"] == 'BSMLS') ? 'selected' : ''; ?>>BS in Medical Laboratory Science</option>
+                                        <option value="BSPharma" <?php echo ($_SESSION["course"] == 'BSPharma') ? 'selected' : ''; ?>>BS in Pharmacy</option>
+                                        <option value="BSOT" <?php echo ($_SESSION["course"] == 'BSOT') ? 'selected' : ''; ?>>BS in Occupational Therapy</option>
+                                        <option value="BSPT" <?php echo ($_SESSION["course"] == 'BSPT') ? 'selected' : ''; ?>>BS in Physical Therapy</option>
+                                        <option value="BSRT" <?php echo ($_SESSION["course"] == 'BSRT') ? 'selected' : ''; ?>>BS in Respiratory Therapy</option>
+                                        <option value="BSSLP" <?php echo ($_SESSION["course"] == 'BSSLP') ? 'selected' : ''; ?>>BS in Speech-Language Pathology</option>
+                                        <option value="BSM" <?php echo ($_SESSION["course"] == 'BSM') ? 'selected' : ''; ?>>BS in Midwifery</option>
+                                        <option value="BSND" <?php echo ($_SESSION["course"] == 'BSND') ? 'selected' : ''; ?>>BS in Nutrition and Dietetics</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="College of Tourism and Hospitality Management">
+                                        <option value="BSHM" <?php echo ($_SESSION["course"] == 'BSHM') ? 'selected' : ''; ?>>BS in Hospitality Management</option>
+                                        <option value="BSTM" <?php echo ($_SESSION["course"] == 'BSTM') ? 'selected' : ''; ?>>BS in Tourism Management</option>
+                                        <option value="BSCA" <?php echo ($_SESSION["course"] == 'BSCA') ? 'selected' : ''; ?>>BS in Culinary Arts</option>
+                                        <option value="BSFB" <?php echo ($_SESSION["course"] == 'BSFB') ? 'selected' : ''; ?>>BS in Food and Beverage Management</option>
+                                        <option value="BSIHRM" <?php echo ($_SESSION["course"] == 'BSIHRM') ? 'selected' : ''; ?>>BS in International Hospitality and Restaurant Management</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="College of Architecture and Fine Arts">
+                                        <option value="BSArch" <?php echo ($_SESSION["course"] == 'BSArch') ? 'selected' : ''; ?>>BS in Architecture</option>
+                                        <option value="BSID" <?php echo ($_SESSION["course"] == 'BSID') ? 'selected' : ''; ?>>BS in Interior Design</option>
+                                        <option value="BFA-GD" <?php echo ($_SESSION["course"] == 'BFA-GD') ? 'selected' : ''; ?>>BFA in Graphic Design</option>
+                                        <option value="BFA-ID" <?php echo ($_SESSION["course"] == 'BFA-ID') ? 'selected' : ''; ?>>BFA in Industrial Design</option>
+                                        <option value="BFA-FA" <?php echo ($_SESSION["course"] == 'BFA-FA') ? 'selected' : ''; ?>>BFA in Fine Arts</option>
+                                        <option value="BFA-PA" <?php echo ($_SESSION["course"] == 'BFA-PA') ? 'selected' : ''; ?>>BFA in Performing Arts</option>
+                                        <option value="BFA-VA" <?php echo ($_SESSION["course"] == 'BFA-VA') ? 'selected' : ''; ?>>BFA in Visual Arts</option>
+                                        <option value="BLA" <?php echo ($_SESSION["course"] == 'BLA') ? 'selected' : ''; ?>>Bachelor of Landscape Architecture</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="College of Law">
+                                        <option value="JD" <?php echo ($_SESSION["course"] == 'JD') ? 'selected' : ''; ?>>Juris Doctor</option>
+                                        <option value="LLB" <?php echo ($_SESSION["course"] == 'LLB') ? 'selected' : ''; ?>>Bachelor of Laws</option>
+                                        <option value="LLM" <?php echo ($_SESSION["course"] == 'LLM') ? 'selected' : ''; ?>>Master of Laws</option>
+                                    </optgroup>
+                                    
+                                    <optgroup label="College of Agriculture">
+                                        <option value="BSA" <?php echo ($_SESSION["course"] == 'BSA') ? 'selected' : ''; ?>>BS in Agriculture</option>
+                                        <option value="BSABE" <?php echo ($_SESSION["course"] == 'BSABE') ? 'selected' : ''; ?>>BS in Agricultural and Biosystems Engineering</option>
+                                        <option value="BSAHT" <?php echo ($_SESSION["course"] == 'BSAHT') ? 'selected' : ''; ?>>BS in Agricultural and Horticultural Technology</option>
+                                        <option value="BSF" <?php echo ($_SESSION["course"] == 'BSF') ? 'selected' : ''; ?>>BS in Forestry</option>
+                                        <option value="BSFT" <?php echo ($_SESSION["course"] == 'BSFT') ? 'selected' : ''; ?>>BS in Food Technology</option>
+                                        <option value="BSAT" <?php echo ($_SESSION["course"] == 'BSAT') ? 'selected' : ''; ?>>BS in Agricultural Technology</option>
+                                    </optgroup>
                                 </select>
                             </div>
                         </div>

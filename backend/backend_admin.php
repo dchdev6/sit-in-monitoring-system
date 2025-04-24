@@ -80,24 +80,34 @@ function delete_student($idNum)
     }
 }
 
+// Make sure this function is working properly
 function retrieve_students()
 {
     $db = Database::getInstance();
     $con = $db->getConnection();
-
-    $sql = " SELECT students.id_number, students.firstName,
-        students.middleName, students.lastName , students.yearLevel,
-        students.course, student_session.session from students
-        inner join student_session on student_session.id_number = students.id_number where students.status = 'TRUE'";
-
-    $result = mysqli_query($con, $sql);
-    if (mysqli_num_rows($result) > 0) {
-        $listPerson = [];
-        while ($row = mysqli_fetch_array($result)) {
-            $listPerson[] = $row;
-        }
+    
+    // Add debugging
+    error_log("Retrieving all students from database");
+    
+    $sql = "SELECT s.id_number, s.lastName, s.firstName, s.middleName, s.yearLevel, s.email, s.course, s.address, ss.session 
+            FROM students s
+            LEFT JOIN student_session ss ON s.id_number = ss.id_number
+            ORDER BY s.id_number";
+            
+    $result = $con->query($sql);
+    
+    if (!$result) {
+        error_log("SQL error in retrieve_students: " . $con->error);
+        return [];
     }
-    return $listPerson;
+    
+    $students = [];
+    while ($row = $result->fetch_assoc()) {
+        $students[] = $row;
+    }
+    
+    error_log("Retrieved " . count($students) . " students");
+    return $students;
 }
 
 function search_student($search)
@@ -272,19 +282,104 @@ function get_date_report($sql)
 
 function add_student($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $passWord, $email, $course, $address)
 {
+    error_log("add_student function called with ID: $idNum, Name: $first_Name $last_Name");
+    
     $db = Database::getInstance();
     $con = $db->getConnection();
-
-
-    $sqlStudents = "INSERT INTO `students` (`id_number`, `lastName`, `firstName`, `middleName`, `yearLevel`, `password`, `course`, `email`, `address`, `status`)
-        VALUES ('$idNum', '$last_Name', '$first_Name', '$middle_Name', '$course_Level', '$passWord', '$course', '$email', '$address', 'TRUE')";
-
-    $sqlSession = "INSERT INTO `student_session` (`id_number` , `session`) VALUES ('$idNum', 30)";
-
-    if (mysqli_query($con, $sqlStudents) && mysqli_query($con, $sqlSession)) {
+    
+    if (!$con) {
+        error_log("Database connection failed in add_student");
+        return "Database connection failed";
+    }
+    
+    // First check if the ID already exists
+    $check_sql = "SELECT id_number FROM students WHERE id_number = ?";
+    $check_stmt = $con->prepare($check_sql);
+    
+    if (!$check_stmt) {
+        error_log("Prepare check statement failed: " . $con->error);
+        return "Database error: " . $con->error;
+    }
+    
+    $check_stmt->bind_param("s", $idNum);
+    $check_stmt->execute();
+    $result = $check_stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        // ID already exists
+        error_log("ID $idNum already exists in database");
+        $check_stmt->close();
+        return "Student ID already exists";
+    }
+    
+    $check_stmt->close();
+    error_log("ID $idNum is available for registration");
+    
+    // Using prepared statements for security
+    $sql1 = "INSERT INTO `students` (`id_number`, `lastName`, `firstName`, `middleName`, `yearLevel`, `password`, `course`, `email`, `address`, `status`) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'TRUE')";
+    $stmt1 = $con->prepare($sql1);
+    
+    if (!$stmt1) {
+        error_log("Prepare statement 1 failed: " . $con->error);
+        return "Database error: " . $con->error;
+    }
+    
+    $stmt1->bind_param("ssssissss", $idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $passWord, $course, $email, $address);
+    
+    $sql2 = "INSERT INTO `student_session` (`id_number`, `session`) VALUES (?, 30)";
+    $stmt2 = $con->prepare($sql2);
+    
+    if (!$stmt2) {
+        error_log("Prepare statement 2 failed: " . $con->error);
+        $stmt1->close();
+        return "Database error: " . $con->error;
+    }
+    
+    $stmt2->bind_param("s", $idNum);
+    
+    // Start transaction
+    $con->begin_transaction();
+    error_log("Starting database transaction for registration");
+    
+    try {
+        // Execute first query
+        if (!$stmt1->execute()) {
+            error_log("First statement execution failed: " . $stmt1->error);
+            $con->rollback();
+            $stmt1->close();
+            $stmt2->close();
+            return "Failed to register student: " . $stmt1->error;
+        }
+        error_log("Successfully inserted student record");
+        
+        // Execute second query
+        if (!$stmt2->execute()) {
+            error_log("Second statement execution failed: " . $stmt2->error);
+            $con->rollback();
+            $stmt1->close();
+            $stmt2->close();
+            return "Failed to set student sessions: " . $stmt2->error;
+        }
+        error_log("Successfully inserted student session");
+        
+        // If both queries succeeded, commit the transaction
+        $con->commit();
+        error_log("Transaction committed successfully");
+        
+        $stmt1->close();
+        $stmt2->close();
+        
         return true;
-    } else {
-        return false;
+    } catch (Exception $e) {
+        error_log("Exception in add_student transaction: " . $e->getMessage());
+        
+        // Roll back the transaction in case of an error
+        $con->rollback();
+        $stmt1->close();
+        $stmt2->close();
+        
+        return "An error occurred: " . $e->getMessage();
     }
 }
 function reset_password($new_password,$id){

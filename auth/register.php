@@ -2,9 +2,60 @@
 // Start the session at the very beginning of the file
 session_start();
 
+// Enable error reporting for debugging
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// Output to error log to confirm script is running
+error_log("Register.php script started at " . date('Y-m-d H:i:s'));
+
 // Now include your other required files
+require_once '../backend/backend_index.php';
 require_once '../includes/navbar.php';
-require_once '../api/api_index.php';
+
+// Initialize variables to avoid undefined errors
+$registrationSuccess = false;
+$registrationError = null;
+
+// Process registration form submission
+if(isset($_POST["submitRegister"])){
+    error_log("Registration form submitted in register.php");
+    error_log("POST data: " . print_r($_POST, true));
+    
+    // Get and validate all form values
+    $idNum = isset($_POST['idNumber']) ? trim($_POST['idNumber']) : '';
+    $last_Name = isset($_POST['lName']) ? trim($_POST['lName']) : '';
+    $first_Name = isset($_POST['fName']) ? trim($_POST['fName']) : '';
+    $middle_Name = isset($_POST['mName']) ? trim($_POST['mName']) : '';
+    $course_Level = isset($_POST['level']) ? trim($_POST['level']) : '';
+    $passWord = isset($_POST['password']) ? $_POST['password'] : '';
+    $confirmPassword = isset($_POST['confirmPassword']) ? $_POST['confirmPassword'] : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $course = isset($_POST['course']) ? trim($_POST['course']) : '';
+    $address = isset($_POST['address']) ? trim($_POST['address']) : '';
+    
+    // Basic validation
+    if(empty($idNum) || empty($last_Name) || empty($first_Name) || 
+       empty($course_Level) || empty($passWord) || empty($email) || empty($course)) {
+        $registrationError = "Please fill all required fields";
+    }
+    else if($passWord !== $confirmPassword) {
+        $registrationError = "Passwords do not match";
+    }
+    else {
+        // Call the student_register function
+        error_log("About to call student_register with: ID=$idNum, Name=$first_Name $last_Name");
+        $result = student_register($idNum, $last_Name, $first_Name, $middle_Name, $course_Level, $passWord, $course, $email, $address);
+        error_log("student_register result: " . ($result ? "true" : "false"));
+        
+        if($result === true) {
+            // Use JavaScript redirection instead of PHP header
+            $registrationSuccess = true;
+        } else {
+            $registrationError = "This ID number is already registered in our system.";
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -54,27 +105,37 @@ require_once '../api/api_index.php';
             font-family: 'Inter', sans-serif;
         }
         
-        /* Replace @apply directives with explicit Tailwind classes */
+        .register-container {
+            min-height: calc(100vh - 64px);
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        
+        .register-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .register-card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            transform: translateY(-5px);
+        }
+        
         .form-control {
             width: 100%;
             padding: 0.75rem 1rem;
             border-radius: 0.5rem;
             border: 1px solid #d1d5db;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
         }
         
         .form-control:focus {
             border-color: #0ea5e9;
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-            outline: none;
-        }
-        
-        .form-label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 0.25rem;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
         }
         
         .form-select {
@@ -82,274 +143,91 @@ require_once '../api/api_index.php';
             padding: 0.75rem 1rem;
             border-radius: 0.5rem;
             border: 1px solid #d1d5db;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.5rem center;
             background-repeat: no-repeat;
             background-size: 1.5em 1.5em;
-            padding-right: 2.5rem;
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
+            padding-left: 2.5rem !important; /* Ensure consistent padding regardless of icon visibility */
         }
         
         .form-select:focus {
             border-color: #0ea5e9;
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-            outline: none;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
         }
         
         .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-        }
-        
-        .btn:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
         }
         
         .btn-primary {
-            background-color: #0284c7;
+            background: linear-gradient(to right, #0284c7, #0ea5e9);
             color: white;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
         .btn-primary:hover {
-            background-color: #0369a1;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        
-        .btn-danger {
-            background-color: #dc2626;
-            color: white;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-        
-        .btn-danger:hover {
-            background-color: #b91c1c;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        
-        .floating-anim {
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
-            100% { transform: translateY(0px); }
-        }
-        
-        .pulse-anim {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        
-        .slide-in {
-            animation: slideIn 0.8s ease-out forwards;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateY(50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            background: linear-gradient(to right, #0369a1, #0284c7);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         
         .password-strength {
-            height: 5px;
-            transition: all 0.3s ease;
+            height: 4px;
+            transition: width 0.3s, background-color 0.3s;
         }
         
-        .password-toggle:hover {
-            color: #0ea5e9;
+        .password-toggle {
+            cursor: pointer;
         }
         
-        /* Add these classes to fix the illustration panel */
+        .floating-animation {
+            animation: floating 4s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
         .info-panel {
-            background: linear-gradient(135deg, #0284c7 0%, #075985 100%);
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .info-panel-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.1;
-        }
-        
-        .info-panel-content {
-            position: relative;
-            z-index: 10;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        
-        .info-icon {
-            width: 10rem;
-            height: 10rem;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .circle-decoration {
-            position: absolute;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* SVG animations for information panel - FIXED VERSION */
-        .moving-dot {
-            animation: moveDot 8s infinite ease-in-out;
-        }
-
-        /* Fix nth-child selectors for SVG dots */
-        .moving-dot:nth-of-type(1) {
-            animation-delay: 0s;
-        }
-
-        .moving-dot:nth-of-type(2) {
-            animation-delay: 2s;
-        }
-
-        .moving-dot:nth-of-type(3) {
-            animation-delay: 4s;
-        }
-
-        .moving-dot:nth-of-type(4) {
-            animation-delay: 6s;
-        }
-
-        @keyframes moveDot {
-            0%, 100% { 
-                opacity: 0.8;
-                /* Remove r attribute change as it causes issues */
-                transform: scale(1);
-            }
-            50% { 
-                opacity: 0.3;
-                transform: scale(1.5);
-            }
-        }
-
-        /* Enhanced floating animation for SVG shield - FIXED */
-        .floating-anim svg {
-            animation: floatSvg 6s infinite ease-in-out;
-        }
-
-        @keyframes floatSvg {
-            0%, 100% { 
-                transform: translateY(0px); 
-            }
-            50% { 
-                transform: translateY(-15px); 
-            }
-        }
-
-        /* Pulse animation for shield inner circle - FIXED */
-        .pulse-anim-svg {
-            animation: pulseSvg 3s infinite ease-in-out;
-        }
-
-        @keyframes pulseSvg {
-            0%, 100% { 
-                opacity: 0.8;
-                fill-opacity: 0.2;
-            }
-            50% { 
-                opacity: 1;
-                fill-opacity: 0.4;
-            }
-        }
-
-        /* Text color fix for information panel */
-        .info-panel-content p,
-        .info-panel-content h3 {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
             color: white;
         }
 
-        /* Fix for SVG text issues */
-        .info-feature-text {
-            color: white !important;
-            font-size: 0.875rem;
-            font-weight: normal;
+        .input-icon {
+            transition: opacity 0.3s ease;
+            pointer-events: none; /* Ensures the icon doesn't interfere with clicks */
         }
-
-        /* Fix for security message */
-        .security-message {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 0.5rem;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-
-        .security-message p {
-            color: white !important;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin: 0;
-        }
-
-        .security-message svg {
-            margin-right: 0.5rem;
-        }
-
-        /* Icon container styling - FIXED */
-        .info-panel-content .flex-shrink-0 {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            transition: all 0.3s ease;
-        }
-
-        .info-panel-content .flex-shrink-0:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
-        }
-
-        /* Icon styling - FIXED */
-        .info-panel-content .flex-shrink-0 i {
-            font-size: 1.25rem;
-            color: white;
-        }
-
-        /* Feature text styling - FIXED */
-        .info-feature-text {
-            color: white;
-            font-size: 0.875rem;
-            font-weight: normal;
+        
+        .has-value .input-icon {
+            opacity: 0;
         }
     </style>
 </head>
 
 <body class="bg-gray-50">
-    <div class="min-h-screen flex flex-col">
-        <main class="flex-grow">
-            <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+    <main class="register-container">
+        <div class="container mx-auto px-4 py-8">
+            <div class="max-w-7xl mx-auto">
                 <!-- Page Header -->
                 <div class="text-center mb-10" data-aos="fade-down" data-aos-duration="800">
                     <h1 class="text-3xl font-bold text-gray-900 sm:text-4xl">Create Your Account</h1>
@@ -359,45 +237,69 @@ require_once '../api/api_index.php';
                 </div>
                 
                 <!-- Registration Card -->
-                <div class="bg-white rounded-2xl shadow-xl overflow-hidden" data-aos="fade-up" data-aos-duration="1000">
+                <div class="register-card bg-white rounded-2xl shadow-lg overflow-hidden">
                     <div class="md:flex">
                         <!-- Form Section -->
-                        <div class="md:w-2/3 p-6 md:p-10">
-                            <form action="register.php" method="POST" id="registerForm" class="space-y-6">
+                        <div class="md:w-7/12 p-8">
+                            <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" id="registerForm" class="space-y-6">
                                 <div class="grid md:grid-cols-2 gap-6">
                                     <!-- Left Column -->
                                     <div class="space-y-4">
                                         <div class="relative" data-aos="fade-right" data-aos-delay="100">
                                             <label for="idNumber" class="form-label">ID Number</label>
-                                            <input type="text" id="idNumber" class="form-control" name="idNumber" required>
-                                            <p class="mt-1 text-xs text-gray-500">Enter your university ID number</p>
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                                    <i class="fas fa-id-card"></i>
+                                                </span>
+                                                <input type="text" id="idNumber" class="form-control pl-10" name="idNumber" required>
+                                            </div>
                                         </div>
                                         
                                         <div class="relative" data-aos="fade-right" data-aos-delay="150">
                                             <label for="lName" class="form-label">Last Name</label>
-                                            <input type="text" id="lName" class="form-control" name="lName" required>
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                                    <i class="fas fa-user"></i>
+                                                </span>
+                                                <input type="text" id="lName" class="form-control pl-10" name="lName" required>
+                                            </div>
                                         </div>
                                         
                                         <div class="relative" data-aos="fade-right" data-aos-delay="200">
                                             <label for="fName" class="form-label">First Name</label>
-                                            <input type="text" id="fName" class="form-control" name="fName" required>
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                                    <i class="fas fa-user"></i>
+                                                </span>
+                                                <input type="text" id="fName" class="form-control pl-10" name="fName" required>
+                                            </div>
                                         </div>
                                         
                                         <div class="relative" data-aos="fade-right" data-aos-delay="250">
                                             <label for="mName" class="form-label">Middle Name</label>
-                                            <input type="text" id="mName" class="form-control" name="mName">
-                                            <p class="mt-1 text-xs text-gray-500">Optional</p>
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                                    <i class="fas fa-user"></i>
+                                                </span>
+                                                <input type="text" id="mName" class="form-control pl-10" name="mName">
+                                            </div>
                                         </div>
                                         
                                         <div class="relative" data-aos="fade-right" data-aos-delay="300">
                                             <label for="level" class="form-label">Course Level</label>
-                                            <select name="level" id="level" class="form-select">
-                                                <option value="1">1st Year</option>
-                                                <option value="2">2nd Year</option>
-                                                <option value="3">3rd Year</option>
-                                                <option value="4">4th Year</option>
-                                            </select>
-                                        </div>
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 input-icon">
+                                                    <i class="fas fa-layer-group"></i>
+                                                </span>
+                                                <select name="level" id="level" class="form-select pl-10" required>
+                                                    <option value="">Select your year level</option>
+                                                    <option value="1">1st Year</option>
+                                                    <option value="2">2nd Year</option>
+                                                    <option value="3">3rd Year</option>
+                                                    <option value="4">4th Year</option>
+                                                </select>
+                                            </div>
+                                        </div> 
                                     </div>
                                     
                                     <!-- Right Column -->
@@ -405,21 +307,23 @@ require_once '../api/api_index.php';
                                         <div class="relative" data-aos="fade-left" data-aos-delay="100">
                                             <label for="password" class="form-label">Password</label>
                                             <div class="relative">
-                                                <input type="password" id="password" class="form-control pr-10" name="password" required>
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                                    <i class="fas fa-lock"></i>
+                                                </span>
+                                                <input type="password" id="password" class="form-control pl-10 pr-10" name="password" required>
                                                 <button type="button" id="togglePassword" class="password-toggle absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 focus:outline-none">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                             </div>
-                                            <div class="mt-2 bg-gray-200 rounded-full overflow-hidden">
-                                                <div id="passwordStrength" class="password-strength bg-gray-500 w-0"></div>
-                                            </div>
-                                            <p id="passwordStrengthText" class="mt-1 text-xs text-gray-500">Password strength indicator</p>
                                         </div>
                                         
                                         <div class="relative" data-aos="fade-left" data-aos-delay="150">
                                             <label for="confirmPassword" class="form-label">Confirm Password</label>
                                             <div class="relative">
-                                                <input type="password" id="confirmPassword" class="form-control pr-10" name="confirmPassword" required>
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                                    <i class="fas fa-lock"></i>
+                                                </span>
+                                                <input type="password" id="confirmPassword" class="form-control pl-10 pr-10" name="confirmPassword" required>
                                                 <button type="button" id="toggleConfirmPassword" class="password-toggle absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 focus:outline-none">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
@@ -429,88 +333,145 @@ require_once '../api/api_index.php';
                                         
                                         <div class="relative" data-aos="fade-left" data-aos-delay="200">
                                             <label for="email" class="form-label">Email Address</label>
-                                            <input type="email" id="email" class="form-control" name="email" required>
-                                            <p class="mt-1 text-xs text-gray-500">We'll send verification details to this email</p>
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                                    <i class="fas fa-envelope"></i>
+                                                </span>
+                                                <input type="email" id="email" class="form-control pl-10" name="email" required>
+                                            </div>
                                         </div>
                                         
+                                        <!-- Replace your current course select dropdown with this comprehensive version -->
                                         <div class="relative" data-aos="fade-left" data-aos-delay="250">
                                             <label for="course" class="form-label">Course</label>
-                                            <select name="course" id="course" class="form-select">
-                                                <option value="">Select your course</option>
-                                                <!-- Computer & IT Related -->
-                                                <optgroup label="Computing & IT">
-                                                    <option value="BSIT">BS in Information Technology</option>
-                                                    <option value="BSCS">BS in Computer Science</option>
-                                                    <option value="BSIS">BS in Information Systems</option>
-                                                    <option value="ACT">Associate in Computer Technology</option>
-                                                    <option value="BSCSW">BS in Computer Science with Specialization in Software Engineering</option>
-                                                    <option value="BSCYB">BS in Cybersecurity</option>
-                                                    <option value="BSEMCDA">BS in Entertainment and Multimedia Computing (Digital Animation)</option>
-                                                </optgroup>
-                                                
-                                                <!-- Business -->
-                                                <optgroup label="Business & Management">
-                                                    <option value="BSA">BS in Accountancy</option>
-                                                    <option value="BSBA">BS in Business Administration</option>
-                                                    <option value="BSMA">BS in Management Accounting</option>
-                                                    <option value="BSAIS">BS in Accounting Information System</option>
-                                                    <option value="BSBA-FM">BS in Business Administration (Financial Management)</option>
-                                                    <option value="BSBA-MM">BS in Business Administration (Marketing Management)</option>
-                                                    <option value="BSBA-HRM">BS in Business Administration (Human Resource Management)</option>
-                                                </optgroup>
-                                                
-                                                <!-- Engineering -->
-                                                <optgroup label="Engineering">
-                                                    <option value="BSCE">BS in Civil Engineering</option>
-                                                    <option value="BSEE">BS in Electrical Engineering</option>
-                                                    <option value="BSME">BS in Mechanical Engineering</option>
-                                                    <option value="BSECE">BS in Electronics Engineering</option>
-                                                    <option value="BSIE">BS in Industrial Engineering</option>
-                                                    <option value="BSCHEMENG">BS in Chemical Engineering</option>
-                                                </optgroup>
-                                                
-                                                <!-- Arts, Humanities & Social Sciences -->
-                                                <optgroup label="Arts, Humanities & Social Sciences">
-                                                    <option value="ABPSYCH">AB in Psychology</option>
-                                                    <option value="BSPSYCH">BS in Psychology</option>
-                                                    <option value="ABENGLIT">AB in English Literature</option>
-                                                    <option value="ABMASSCOM">AB in Mass Communication</option>
-                                                    <option value="BSSOCIO">BS in Sociology</option>
-                                                    <option value="BSPOLS">BS in Political Science</option>
-                                                    <option value="AB-ID">AB in International Studies</option>
-                                                </optgroup>
-                                                
-                                                <!-- Education -->
-                                                <optgroup label="Education">
-                                                    <option value="BEED">Bachelor of Elementary Education</option>
-                                                    <option value="BSED">Bachelor of Secondary Education</option>
-                                                    <option value="BSTVTED">Bachelor of Technical-Vocational Teacher Education</option>
-                                                    <option value="BPED">Bachelor of Physical Education</option>
-                                                    <option value="BSSPED">BS in Special Education</option>
-                                                </optgroup>
-                                                
-                                                <!-- Health Sciences -->
-                                                <optgroup label="Health Sciences">
-                                                    <option value="BSN">BS in Nursing</option>
-                                                    <option value="BSMT">BS in Medical Technology</option>
-                                                    <option value="BSPT">BS in Physical Therapy</option>
-                                                    <option value="BSPHARMA">BS in Pharmacy</option>
-                                                    <option value="BSRT">BS in Respiratory Therapy</option>
-                                                    <option value="BSND">BS in Nutrition and Dietetics</option>
-                                                </optgroup>
-                                                
-                                                <!-- Hospitality & Tourism -->
-                                                <optgroup label="Hospitality & Tourism">
-                                                    <option value="BSHM">BS in Hospitality Management</option>
-                                                    <option value="BSTM">BS in Tourism Management</option>
-                                                    <option value="BSCM">BS in Culinary Management</option>
-                                                </optgroup>
-                                            </select>
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 input-icon">
+                                                    <i class="fas fa-graduation-cap"></i>
+                                                </span>
+                                                <select name="course" id="course" class="form-select pl-10" required>
+                                                    <option value="">Select your course</option>
+                                                    
+                                                    <optgroup label="College of Computer Studies">
+                                                        <option value="BSIT">BS in Information Technology</option>
+                                                        <option value="BSCS">BS in Computer Science</option>
+                                                        <option value="BSIS">BS in Information Systems</option>
+                                                        <option value="MIT">Master in Information Technology</option>
+                                                        <option value="MSCS">MS in Computer Science</option>
+                                                        <option value="DIT">Doctor in Information Technology</option>
+                                                    </optgroup>
+                                                    
+                                                    <optgroup label="College of Engineering">
+                                                        <option value="BSCE">BS in Civil Engineering</option>
+                                                        <option value="BSEE">BS in Electrical Engineering</option>
+                                                        <option value="BSME">BS in Mechanical Engineering</option>
+                                                        <option value="BSECE">BS in Electronics & Communications Engineering</option>
+                                                        <option value="BSCPE">BS in Computer Engineering</option>
+                                                        <option value="BSIE">BS in Industrial Engineering</option>
+                                                        <option value="BSCHE">BS in Chemical Engineering</option>
+                                                    </optgroup>
+                                                    
+                                                    <optgroup label="College of Business Administration">
+                                                        <option value="BSBA-FM">BSBA in Financial Management</option>
+                                                        <option value="BSBA-HRM">BSBA in Human Resource Management</option>
+                                                        <option value="BSBA-MM">BSBA in Marketing Management</option>
+                                                        <option value="BSBA-OM">BSBA in Operations Management</option>
+                                                        <option value="BSBA-BEM">BSBA in Business Economics Management</option>
+                                                        <option value="BSA">BS in Accountancy</option>
+                                                        <option value="BSMA">BS in Management Accounting</option>
+                                                        <option value="BSE">BS in Economics</option>
+                                                        <option value="BSREM">BS in Real Estate Management</option>
+                                                        <option value="MBA">Master in Business Administration</option>
+                                                    </optgroup>
+                                                    
+                                                    <optgroup label="College of Education">
+                                                        <option value="BEED">Bachelor of Elementary Education</option>
+                                                        <option value="BSED-ENG">BS in Secondary Education - English</option>
+                                                        <option value="BSED-FIL">BS in Secondary Education - Filipino</option>
+                                                        <option value="BSED-MATH">BS in Secondary Education - Mathematics</option>
+                                                        <option value="BSED-SCI">BS in Secondary Education - Science</option>
+                                                        <option value="BSED-SS">BS in Secondary Education - Social Studies</option>
+                                                        <option value="BPE">Bachelor of Physical Education</option>
+                                                        <option value="BECE">Bachelor of Early Childhood Education</option>
+                                                        <option value="BSED-MAPEH">BS in Secondary Education - MAPEH</option>
+                                                        <option value="MAEd">Master of Arts in Education</option>
+                                                        <option value="PhD-Ed">Doctor of Philosophy in Education</option>
+                                                    </optgroup>
+                                                    
+                                                    <optgroup label="College of Arts and Sciences">
+                                                        <option value="BAC">BA in Communication</option>
+                                                        <option value="BAMC">BA in Mass Communication</option>
+                                                        <option value="BAJ">BA in Journalism</option>
+                                                        <option value="BAE">BA in English</option>
+                                                        <option value="BAL">BA in Literature</option>
+                                                        <option value="BAPsych">BA in Psychology</option>
+                                                        <option value="BSPsych">BS in Psychology</option>
+                                                        <option value="BSBio">BS in Biology</option>
+                                                        <option value="BSChem">BS in Chemistry</option>
+                                                        <option value="BSMath">BS in Mathematics</option>
+                                                        <option value="BSPhys">BS in Physics</option>
+                                                        <option value="BSND">BS in Nutrition and Dietetics</option>
+                                                        <option value="BSFT">BS in Food Technology</option>
+                                                        <option value="BSS">BS in Statistics</option>
+                                                    </optgroup>
+                                                    
+                                                    <optgroup label="College of Health Sciences">
+                                                        <option value="BSN">BS in Nursing</option>
+                                                        <option value="BSPH">BS in Public Health</option>
+                                                        <option value="BSMLS">BS in Medical Laboratory Science</option>
+                                                        <option value="BSPharma">BS in Pharmacy</option>
+                                                        <option value="BSOT">BS in Occupational Therapy</option>
+                                                        <option value="BSPT">BS in Physical Therapy</option>
+                                                        <option value="BSRT">BS in Respiratory Therapy</option>
+                                                        <option value="BSSLP">BS in Speech-Language Pathology</option>
+                                                        <option value="BSM">BS in Midwifery</option>
+                                                        <option value="BSND">BS in Nutrition and Dietetics</option>
+                                                    </optgroup>
+                                                    
+                                                    <optgroup label="College of Tourism and Hospitality Management">
+                                                        <option value="BSHM">BS in Hospitality Management</option>
+                                                        <option value="BSTM">BS in Tourism Management</option>
+                                                        <option value="BSCA">BS in Culinary Arts</option>
+                                                        <option value="BSFB">BS in Food and Beverage Management</option>
+                                                        <option value="BSIHRM">BS in International Hospitality and Restaurant Management</option>
+                                                    </optgroup>
+                                                    
+                                                    <optgroup label="College of Architecture and Fine Arts">
+                                                        <option value="BSArch">BS in Architecture</option>
+                                                        <option value="BSID">BS in Interior Design</option>
+                                                        <option value="BFA-GD">BFA in Graphic Design</option>
+                                                        <option value="BFA-ID">BFA in Industrial Design</option>
+                                                        <option value="BFA-FA">BFA in Fine Arts</option>
+                                                        <option value="BFA-PA">BFA in Performing Arts</option>
+                                                        <option value="BFA-VA">BFA in Visual Arts</option>
+                                                        <option value="BLA">Bachelor of Landscape Architecture</option>
+                                                    </optgroup>
+                                                    
+                                                    <optgroup label="College of Law">
+                                                        <option value="JD">Juris Doctor</option>
+                                                        <option value="LLB">Bachelor of Laws</option>
+                                                        <option value="LLM">Master of Laws</option>
+                                                    </optgroup>
+                                                    
+                                                    <optgroup label="College of Agriculture">
+                                                        <option value="BSA">BS in Agriculture</option>
+                                                        <option value="BSABE">BS in Agricultural and Biosystems Engineering</option>
+                                                        <option value="BSAHT">BS in Agricultural and Horticultural Technology</option>
+                                                        <option value="BSF">BS in Forestry</option>
+                                                        <option value="BSFT">BS in Food Technology</option>
+                                                        <option value="BSAT">BS in Agricultural Technology</option>
+                                                    </optgroup>
+                                                </select>
+                                            </div>
                                         </div>
                                         
                                         <div class="relative" data-aos="fade-left" data-aos-delay="300">
                                             <label for="address" class="form-label">Address</label>
-                                            <input type="text" id="address" class="form-control" name="address" required>
+                                            <div class="relative">
+                                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                                                    <i class="fas fa-map-marker-alt"></i>
+                                                </span>
+                                                <input type="text" id="address" class="form-control pl-10" name="address" required>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -532,99 +493,63 @@ require_once '../api/api_index.php';
                                     <a href="../auth/login.php" class="flex items-center text-gray-600 hover:text-primary-600 transition-colors duration-200">
                                         <i class="fas fa-arrow-left mr-2"></i> Back to Login
                                     </a>
-                                    <button type="submit" name="submitRegister" class="btn btn-primary flex items-center" id="registerBtn">
+                                    <button type="submit" name="submitRegister" class="btn btn-primary flex items-center" id="directSubmit" onclick="return true;">
                                         <i class="fas fa-user-plus mr-2"></i> Create Account
                                     </button>
                                 </div>
                             </form>
                         </div>
-                        
-                        <!-- Illustration/Information Section -->
-                        <div class="md:w-1/3 info-panel p-8 relative hidden md:block">
-                            <!-- SVG Background Elements -->
-                            <svg class="absolute top-0 left-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" fill="none">
-                                <!-- Abstract shapes -->
-                                <circle cx="50" cy="100" r="40" fill="white" fill-opacity="0.1" />
-                                <circle cx="350" cy="500" r="50" fill="white" fill-opacity="0.1" />
-                                <circle cx="320" cy="250" r="30" fill="white" fill-opacity="0.1" />
-                                <circle cx="80" cy="400" r="25" fill="white" fill-opacity="0.08" />
-                                
-                                <!-- Connecting lines -->
-                                <path d="M50 100 L320 250" stroke="white" stroke-opacity="0.05" stroke-width="2" />
-                                <path d="M320 250 L350 500" stroke="white" stroke-opacity="0.05" stroke-width="2" />
-                                <path d="M80 400 L350 500" stroke="white" stroke-opacity="0.05" stroke-width="2" />
-                                
-                                <!-- Animated dots (will be animated with CSS) -->
-                                <circle class="moving-dot" cx="50" cy="100" r="3" fill="white" fill-opacity="0.5" />
-                                <circle class="moving-dot" cx="320" cy="250" r="3" fill="white" fill-opacity="0.5" />
-                                <circle class="moving-dot" cx="350" cy="500" r="3" fill="white" fill-opacity="0.5" />
-                                <circle class="moving-dot" cx="80" cy="400" r="3" fill="white" fill-opacity="0.5" />
-                                
-                                <!-- Abstract wave pattern -->
-                                <path d="M0 550 C100 500, 200 600, 400 520" stroke="white" stroke-opacity="0.1" stroke-width="3" />
-                            </svg>
                             
-                            <div class="info-panel-content">
-                                <div class="text-center mb-10">
-                                    <!-- Replace icon with SVG shield -->
-                                    <div class="inline-block mb-6">
-                                        <svg class="w-24 h-24 floating-anim" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M12 2L4 5V11.09C4 16.14 7.41 20.85 12 22C16.59 20.85 20 16.14 20 11.09V5L12 2Z" fill="white" fill-opacity="0.2" stroke="white" stroke-width="1.5"/>
-                                            <path class="pulse-anim-svg" d="M12 17.25C14.8995 17.25 17.25 14.8995 17.25 12C17.25 9.10051 14.8995 6.75 12 6.75C9.10051 6.75 6.75 9.10051 6.75 12C6.75 14.8995 9.10051 17.25 12 17.25Z" fill="white" fill-opacity="0.2" stroke="white" stroke-width="1.5"/>
-                                            <path d="M12 13.75C12.9665 13.75 13.75 12.9665 13.75 12C13.75 11.0335 12.9665 10.25 12 10.25C11.0335 10.25 10.25 11.0335 10.25 12C10.25 12.9665 11.0335 13.75 12 13.75Z" fill="white"/>
-                                        </svg>
-                                    </div>
-                                    <h3 class="text-2xl font-bold mb-3">Join Our Community</h3>
-                                    <p class="text-blue-100">Become part of the College of Computer Studies</p>
-                                </div>
-                                
-                                <!-- Replace the feature section in your information panel with this fixed version -->
-                                <div class="space-y-8">
-                                    <div class="flex items-center space-x-4">
-                                        <!-- Fixed Laptop Code Icon -->
-                                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-transparent flex items-center justify-center">
-                                            <i class="fas fa-laptop-code text-white text-2xl"></i>
+                        <!-- Illustration/Information Section -->
+                        <div class="md:w-5/12 info-panel p-8 relative hidden md:flex flex-col justify-center items-center">
+                            <div class="text-center mb-8">
+                                <h2 class="text-2xl font-bold mb-3">Welcome to Our Community</h2>
+                                <p class="text-white/80 max-w-md mx-auto">
+                                    Create your account to access the Sit-in Monitoring System and join our educational community.
+                                </p>
+                            </div>
+                            
+                            <!-- Shield Logo -->
+                            <div class="relative w-full max-w-xs floating-animation mb-8">
+                                <div class="bg-white/10 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-center">
+                                    <!-- Shield Logo created with CSS/SVG -->
+                                    <div class="shield-logo relative mb-4">
+                                        <div class="shield-outer">
+                                            <svg width="140" height="160" viewBox="0 0 180 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M90 0L180 40V90C180 146.5 142 180 90 200C38 180 0 146.5 0 90V40L90 0Z" fill="url(#shield-gradient)"/>
+                                                <defs>
+                                                    <linearGradient id="shield-gradient" x1="0" y1="0" x2="180" y2="200" gradientUnits="userSpaceOnUse">
+                                                        <stop offset="0%" stop-color="#ffffff"/>
+                                                        <stop offset="100%" stop-color="#e0f2fe"/>
+                                                    </linearGradient>
+                                                </defs>
+                                            </svg>
+                                            <div class="shield-inner absolute inset-0 flex items-center justify-center">
+                                                <div class="text-primary-600 flex flex-col items-center p-4">
+                                                    <i class="fas fa-university text-3xl mb-2"></i>
+                                                    <span class="font-bold text-lg">UC</span>
+                                                    <div class="w-12 h-0.5 bg-primary-500 opacity-70 rounded-full my-2"></div>
+                                                    <i class="fas fa-laptop-code text-2xl mb-1"></i>
+                                                    <span class="font-bold">CCS</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <p class="info-feature-text">Access our comprehensive sit-in monitoring tools</p>
-                                    </div>
-                                    
-                                    <div class="flex items-center space-x-4">
-                                        <!-- Fixed Chart Line Icon -->
-                                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-transparent flex items-center justify-center">
-                                            <i class="fas fa-chart-line text-white text-2xl"></i>
-                                        </div>
-                                        <p class="info-feature-text">Track educational progress with real-time analytics</p>
-                                    </div>
-                                    
-                                    <div class="flex items-center space-x-4">
-                                        <!-- Fixed Bell Icon -->
-                                        <div class="flex-shrink-0 w-12 h-12 rounded-full bg-transparent flex items-center justify-center">
-                                            <i class="fas fa-bell text-white text-2xl"></i>
-                                        </div>
-                                        <p class="info-feature-text">Receive notifications about important events</p>
                                     </div>
                                 </div>
-                                
-                                <div class="mt-12 mb-4">
-                                    <div class="security-message">
-                                        <i class="fas fa-shield-alt text-white mr-2"></i>
-                                        <p>Your data is secure with us</p>
-                                    </div>
-                                </div>
+                            </div>
+                            
+                            
+                            <div class="absolute bottom-4 left-0 right-0 text-center">
+                                <p class="text-sm text-white/60">
+                                    &copy; <?php echo date('Y'); ?> University of Cebu
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Footer -->
-                <div class="mt-8 text-center" data-aos="fade-up" data-aos-delay="500">
-                    <p class="text-sm text-gray-500">
-                        &copy; <?php echo date('Y'); ?> College of Computer Studies, University of Cebu. All rights reserved.
-                    </p>
-                </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
@@ -664,55 +589,6 @@ require_once '../api/api_index.php';
                 icon.classList.toggle('fa-eye-slash');
             });
             
-            // Password strength indicator
-            const passwordStrength = document.getElementById('passwordStrength');
-            const passwordStrengthText = document.getElementById('passwordStrengthText');
-            
-            password.addEventListener('input', function() {
-                const value = this.value;
-                let strength = 0;
-                
-                // Check for length
-                if (value.length >= 8) strength += 1;
-                
-                // Check for mixed case
-                if (value.match(/[a-z]/) && value.match(/[A-Z]/)) strength += 1;
-                
-                // Check for numbers
-                if (value.match(/\d/)) strength += 1;
-                
-                // Check for special characters
-                if (value.match(/[^a-zA-Z0-9]/)) strength += 1;
-                
-                // Update UI based on strength
-                switch (strength) {
-                    case 0:
-                        passwordStrength.className = 'password-strength bg-gray-400 w-0';
-                        passwordStrengthText.textContent = 'Password strength indicator';
-                        passwordStrengthText.className = 'mt-1 text-xs text-gray-500';
-                        break;
-                    case 1:
-                        passwordStrength.className = 'password-strength bg-red-500 w-1/4';
-                        passwordStrengthText.textContent = 'Weak';
-                        passwordStrengthText.className = 'mt-1 text-xs text-red-500';
-                        break;
-                    case 2:
-                        passwordStrength.className = 'password-strength bg-yellow-500 w-2/4';
-                        passwordStrengthText.textContent = 'Fair';
-                        passwordStrengthText.className = 'mt-1 text-xs text-yellow-500';
-                        break;
-                    case 3:
-                        passwordStrength.className = 'password-strength bg-blue-500 w-3/4';
-                        passwordStrengthText.textContent = 'Good';
-                        passwordStrengthText.className = 'mt-1 text-xs text-blue-500';
-                        break;
-                    case 4:
-                        passwordStrength.className = 'password-strength bg-green-500 w-full';
-                        passwordStrengthText.textContent = 'Strong';
-                        passwordStrengthText.className = 'mt-1 text-xs text-green-500';
-                        break;
-                }
-            });
             
             // Password match validation
             const passwordMatch = document.getElementById('passwordMatch');
@@ -734,73 +610,114 @@ require_once '../api/api_index.php';
             
             // Form submission handling
             const form = document.getElementById('registerForm');
-            const registerBtn = document.getElementById('registerBtn');
+            const oldForm = form.cloneNode(true);
+            form.parentNode.replaceChild(oldForm, form);
             
-            form.addEventListener('submit', function(e) {
-                // Perform client-side validation
-                if (password.value !== confirmPassword.value) {
-                    e.preventDefault();
-                    
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Passwords Do Not Match',
-                        text: 'Please make sure your passwords match before submitting.',
-                        confirmButtonColor: '#0284c7'
-                    });
-                    
-                    return false;
-                }
-                
-                // Check if terms are accepted
-                if (!document.getElementById('terms').checked) {
-                    e.preventDefault();
-                    
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Terms & Conditions',
-                        text: 'Please agree to our Terms and Privacy Policy to continue.',
-                        confirmButtonColor: '#0284c7'
-                    });
-                    
-                    return false;
-                }
-                
-                // Show loading state for button
-                registerBtn.disabled = true;
-                registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
-                
-                // Form will submit if all validations pass
+            document.getElementById('registerForm').addEventListener('submit', function() {
+                document.getElementById('registerBtn').disabled = true;
+                document.getElementById('registerBtn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
             });
             
-            // Apply subtle animations to form inputs
-            const formInputs = document.querySelectorAll('.form-control, .form-select');
-            
-            formInputs.forEach(input => {
+            // Input animation on focus
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
                 input.addEventListener('focus', function() {
-                    this.classList.add('ring', 'ring-primary-200', 'ring-opacity-50');
-                    this.parentElement.classList.add('transform', 'scale-[1.01]');
-                    this.parentElement.style.transition = 'transform 0.2s ease';
+                    this.parentElement.classList.add('scale-105');
+                    this.parentElement.style.transition = 'transform 0.3s ease';
                 });
                 
                 input.addEventListener('blur', function() {
-                    this.parentElement.classList.remove('transform', 'scale-[1.01]');
+                    this.parentElement.classList.remove('scale-105');
                 });
             });
+
+            // Hide icons when typing/focusing on inputs
+            const inputContainers = document.querySelectorAll('.relative');
+            
+            inputContainers.forEach(container => {
+                const input = container.querySelector('input, select');
+                const iconSpan = container.querySelector('span');
+                
+                if (input && iconSpan) {
+                    input.addEventListener('focus', function() {
+                        iconSpan.style.opacity = '0';
+                        iconSpan.style.transition = 'opacity 0.3s ease';
+                    });
+                    
+                    input.addEventListener('blur', function() {
+                        if (this.value === '') {
+                            iconSpan.style.opacity = '1';
+                        }
+                    });
+                    
+                    // Check if the field already has a value
+                    if (input.value !== '') {
+                        iconSpan.style.opacity = '0';
+                    }
+                }
+            });
+
+            // Fix for select fields with icons
+            const selectFields = document.querySelectorAll('select.form-select');
+            selectFields.forEach(select => {
+                // Initial check
+                updateSelectIconVisibility(select);
+                
+                // Add event listeners
+                select.addEventListener('change', function() {
+                    updateSelectIconVisibility(this);
+                });
+                
+                select.addEventListener('focus', function() {
+                    const iconSpan = this.parentElement.querySelector('.input-icon');
+                    if (iconSpan) {
+                        iconSpan.style.opacity = '0';
+                    }
+                });
+            });
+            
+            function updateSelectIconVisibility(selectElement) {
+                const container = selectElement.parentElement;
+                const iconSpan = container.querySelector('span');
+                
+                if (selectElement.value) {
+                    container.classList.add('has-value');
+                    if (iconSpan) iconSpan.style.opacity = '0';
+                } else {
+                    container.classList.remove('has-value');
+                    if (iconSpan) iconSpan.style.opacity = '1';
+                }
+            }
         });
     </script>
 
     <?php
-    // Handle form submission response
-    if(isset($_GET['num']) && $_GET['num'] == 2) {
+    // Display SweetAlert for any errors that happened during form processing
+    if(isset($registrationError) && $registrationError) {
         echo "<script>
             Swal.fire({
                 icon: 'error',
                 title: 'Registration Failed',
-                text: 'This ID number is already registered in our system.',
+                text: '" . addslashes($registrationError) . "',
                 confirmButtonColor: '#0284c7'
             });
         </script>";
     }
     ?>
+
+    <!-- Add this just before </body> -->
+    <?php if(isset($registrationSuccess) && $registrationSuccess === true): ?>
+    <script>
+        // Show success message then redirect
+        Swal.fire({
+            icon: 'success',
+            title: 'Registration Successful!',
+            text: 'You can now log in with your credentials.',
+            confirmButtonColor: '#0284c7'
+        }).then(() => {
+            window.location.href = 'login.php?num=1';
+        });
+    </script>
+    <?php endif; ?>
 </body>
 </html>
