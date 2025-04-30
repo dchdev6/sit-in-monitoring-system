@@ -394,18 +394,29 @@ function reset_password($new_password,$id){
     }
 }
 
- function post_announcement($message,$admin_name,$date){
+function post_announcement($message, $admin_name, $date) {
     $db = Database::getInstance();
     $con = $db->getConnection();
 
-    $sql = "INSERT INTO announce (`admin_name`,`date`,`message`) VALUE ('$admin_name','$date','$message')";
-    if (mysqli_query($con, $sql)) {
-        return true;
-    } else {
-        // Log or display MySQL errors
-        echo "Error: " . $sql . "<br>" . mysqli_error($con);
-        return false;
+    // Check if the same announcement already exists
+    $sql = "SELECT COUNT(*) FROM announce WHERE message = ? AND admin_name = ? AND date = ?";
+    $stmt = $con->prepare($sql);
+    $stmt->bind_param("sss", $message, $admin_name, $date);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($count > 0) {
+        return false; // Announcement already exists
     }
+
+    // Insert the new announcement
+    $sql = "INSERT INTO announce (message, admin_name, date) VALUES (?, ?, ?)";
+    $stmt = $con->prepare($sql);
+    $stmt->bind_param("sss", $message, $admin_name, $date);
+
+    return $stmt->execute();
 }
 
 function view_announcement(){
@@ -814,3 +825,4 @@ function reset_all_student_sessions($defaultValue = 30) {
         return false;
     }
 }
+

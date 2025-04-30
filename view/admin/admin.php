@@ -229,7 +229,7 @@ if(isset($_SESSION['success_message'])) {
                 
                 <!-- New Announcement Form (Initially Hidden) -->
                 <div id="announcementForm" class="hidden p-5 bg-gray-50 border-b border-gray-100 animate-fade-in">
-                    <form action="Admin.php" method="POST" class="space-y-4" id="announcement-form">
+                    <form action="admin.php" method="POST" class="space-y-4" id="announcement-form">
                         <div>
                             <label for="an" class="block text-sm font-medium text-gray-700 mb-1">Announcement Message</label>
                             <textarea name="announcement_text" id="an" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent" rows="3" placeholder="Type your announcement here..."></textarea>
@@ -244,7 +244,7 @@ if(isset($_SESSION['success_message'])) {
                 <!-- Announcements List -->
                 <div class="p-5">
                     <div class="max-h-96 overflow-y-auto pr-2 space-y-4 scrollbar-thin announcement-container">
-                        <?php if(empty($announce)): ?>
+                        <?php if (empty($announce)): ?>
                             <div class="text-center py-8 text-gray-500">
                                 <div class="bg-gray-100 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
                                     <i class="fas fa-bullhorn text-gray-300 text-3xl animate-bounce-subtle"></i>
@@ -253,11 +253,11 @@ if(isset($_SESSION['success_message'])) {
                                 <p class="text-sm text-gray-400 mt-1">Create your first announcement to keep everyone informed</p>
                             </div>
                         <?php else: ?>
-                            <?php foreach ($announce as $index => $row) : ?>
+                            <?php foreach ($announce as $index => $row): ?>
                                 <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all duration-300 announcement-item relative group" style="transition-delay: <?php echo $index * 100; ?>ms">
-                                    <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div class="absolute top-3 right-3 transition-opacity">
                                         <button type="button" class="text-gray-400 hover:text-red-500 transition-colors p-1" 
-                                               onclick="confirmDeleteAnnouncement(<?php echo $row['announcement_id']; ?>)">
+                                                onclick="confirmDeleteAnnouncement(<?php echo $row['announcement_id']; ?>)">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
@@ -368,6 +368,161 @@ if(isset($_SESSION['success_message'])) {
                     console.error(countUp.error);
                 }
             });
+
+            // Programming Languages Chart
+            const programmingLanguagesCtx = document.getElementById('programmingLanguagesChart');
+            if (programmingLanguagesCtx) {
+                const programmingLanguagesChart = new Chart(programmingLanguagesCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['C#', 'C', 'Java', 'ASP.Net', 'PHP'],
+                        datasets: [{
+                            label: 'Programming Languages',
+                            data: [
+                                <?php echo retrieve_c_sharp_programming(); ?>,
+                                <?php echo retrieve_c_programming(); ?>,
+                                <?php echo retrieve_java_programming(); ?>,
+                                <?php echo retrieve_asp_programming(); ?>,
+                                <?php echo retrieve_php_programming(); ?>
+                            ],
+                            backgroundColor: [
+                                '#3b82f6',
+                                '#10b981',
+                                '#f59e0b',
+                                '#6366f1',
+                                '#ec4899'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: {
+                                    size: 14
+                                },
+                                bodyFont: {
+                                    size: 13
+                                },
+                                displayColors: true,
+                                boxPadding: 8,
+                                callbacks: {
+                                    label: function (context) {
+                                        const label = context.label || '';
+                                        const value = context.formattedValue;
+                                        const total = context.chart.data.datasets[0].data.reduce((sum, val) => sum + val, 0);
+                                        const percentage = Math.round((context.raw / total) * 100);
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true,
+                            duration: 2000,
+                            easing: 'easeOutBounce'
+                        }
+                    }
+                });
+            }
+
+            // Students by Year Level Chart
+            const studentYearLevelCtx = document.getElementById('studentYearLevelChart');
+            if (studentYearLevelCtx) {
+                const studentYearLevelChart = new Chart(studentYearLevelCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Freshmen', 'Sophomore', 'Junior', 'Senior'],
+                        datasets: [{
+                            label: 'Number of Students',
+                            data: [
+                                <?php echo retrieve_first(); ?>,
+                                <?php echo retrieve_second(); ?>,
+                                <?php echo retrieve_third(); ?>,
+                                <?php echo retrieve_fourth(); ?>
+                            ],
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(16, 185, 129, 0.7)',
+                                'rgba(245, 158, 11, 0.7)',
+                                'rgba(99, 102, 241, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgb(59, 130, 246)',
+                                'rgb(16, 185, 129)',
+                                'rgb(245, 158, 11)',
+                                'rgb(99, 102, 241)'
+                            ],
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            maxBarThickness: 70
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    display: true,
+                                    drawBorder: false,
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    precision: 0
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: {
+                                    size: 14
+                                },
+                                bodyFont: {
+                                    size: 13
+                                },
+                                displayColors: true,
+                                callbacks: {
+                                    label: function (context) {
+                                        return `Students: ${context.raw}`;
+                                    }
+                                }
+                            }
+                        },
+                        animation: {
+                            delay: function (context) {
+                                return context.dataIndex * 200;
+                            },
+                            duration: 1500,
+                            easing: 'easeOutQuart'
+                        }
+                    }
+                });
+            }
         });
         
         // Show success alerts with SweetAlert2
@@ -388,12 +543,12 @@ if(isset($_SESSION['success_message'])) {
         });
         <?php endif; ?>
         
-        // Form submission with SweetAlert confirmation
+        // Form submission without SweetAlert confirmation
         document.getElementById('announcement-form').addEventListener('submit', function(e) {
-            e.preventDefault();
             const textarea = document.getElementById('an');
             
             if (textarea.value.trim() === '') {
+                e.preventDefault(); // Prevent form submission
                 Swal.fire({
                     icon: 'error',
                     title: 'Oops...',
@@ -406,46 +561,14 @@ if(isset($_SESSION['success_message'])) {
                         popup: 'animate__animated animate__fadeOutUp'
                     }
                 });
-                return;
             }
-            
-            Swal.fire({
-                title: 'Post Announcement?',
-                text: 'This will be visible to all users',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#0284c7',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Yes, post it!',
-                showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                },
-                hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Posting...',
-                        html: 'Please wait while we process your request',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        didOpen: () => {
-                            Swal.showLoading()
-                        }
-                    });
-                    setTimeout(() => {
-                        this.submit();
-                    }, 800); // Small delay to show the loading indicator
-                }
-            });
         });
         
         // Function to confirm deletion of announcement
         function confirmDeleteAnnouncement(id) {
             Swal.fire({
                 title: 'Delete Announcement?',
-                text: 'This action cannot be undone',
+                text: 'This action cannot be undone.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
@@ -459,18 +582,8 @@ if(isset($_SESSION['success_message'])) {
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Deleting...',
-                        html: 'Please wait while we process your request',
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        didOpen: () => {
-                            Swal.showLoading()
-                        }
-                    });
-                    setTimeout(() => {
-                        window.location.href = `delete_announcement.php?id=${id}`;
-                    }, 800); // Small delay to show the loading indicator
+                    // Redirect to the deletion script
+                    window.location.href = `delete_announcement.php?id=${id}`;
                 }
             });
         }
@@ -501,160 +614,6 @@ if(isset($_SESSION['success_message'])) {
             }, 500);
         });
     
-        // Chart initialization with animations
-        setTimeout(() => {
-            // Programming Languages Chart
-            const programmingLanguagesCtx = document.getElementById('programmingLanguagesChart');
-            const programmingLanguagesChart = new Chart(programmingLanguagesCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['C#', 'C', 'Java', 'ASP.Net', 'PHP'],
-                    datasets: [{
-                        label: 'Programming Languages',
-                        data: [
-                            <?php echo retrieve_c_sharp_programming(); ?>, 
-                            <?php echo retrieve_c_programming(); ?>, 
-                            <?php echo retrieve_java_programming(); ?>, 
-                            <?php echo retrieve_asp_programming(); ?>, 
-                            <?php echo retrieve_php_programming(); ?>
-                        ],
-                        backgroundColor: [
-                            '#3b82f6',
-                            '#10b981',
-                            '#f59e0b',
-                            '#6366f1', 
-                            '#ec4899'
-                        ],
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    cutout: '70%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 15,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12,
-                            titleFont: {
-                                size: 14
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
-                            displayColors: true,
-                            boxPadding: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.formattedValue;
-                                    const total = context.chart.data.datasets[0].data.reduce((sum, val) => sum + val, 0);
-                                    const percentage = Math.round((context.raw / total) * 100);
-                                    return `${label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    },
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true,
-                        duration: 2000,
-                        easing: 'easeOutBounce'
-                    }
-                }
-            });
-
-            // Students by Year Level Chart with animation
-            const studentYearLevelCtx = document.getElementById('studentYearLevelChart');
-            const studentYearLevelChart = new Chart(studentYearLevelCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Freshmen', 'Sophomore', 'Junior', 'Senior'],
-                    datasets: [{
-                        label: 'Number of Students',
-                        data: [
-                            <?php echo retrieve_first(); ?>, 
-                            <?php echo retrieve_second(); ?>, 
-                            <?php echo retrieve_third(); ?>, 
-                            <?php echo retrieve_fourth(); ?>
-                        ],
-                        backgroundColor: [
-                            'rgba(59, 130, 246, 0.7)',
-                            'rgba(16, 185, 129, 0.7)',
-                            'rgba(245, 158, 11, 0.7)',
-                            'rgba(99, 102, 241, 0.7)'
-                        ],
-                        borderColor: [
-                            'rgb(59, 130, 246)',
-                            'rgb(16, 185, 129)',
-                            'rgb(245, 158, 11)',
-                            'rgb(99, 102, 241)'
-                        ],
-                        borderWidth: 1,
-                        borderRadius: 8,
-                        maxBarThickness: 70
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                display: true,
-                                drawBorder: false,
-                                color: 'rgba(0, 0, 0, 0.05)'
-                            },
-                            ticks: {
-                                precision: 0
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12,
-                            titleFont: {
-                                size: 14
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
-                            displayColors: true,
-                            callbacks: {
-                                label: function(context) {
-                                    return `Students: ${context.raw}`;
-                                }
-                            }
-                        }
-                    },
-                    animation: {
-                        delay: function(context) {
-                            return context.dataIndex * 200;
-                        },
-                        duration: 1500,
-                        easing: 'easeOutQuart'
-                    }
-                }
-            });
-        }, 800);
-
         // Add notification system for demo purposes
         setTimeout(() => {
             const toastTypes = [

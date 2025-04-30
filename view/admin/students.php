@@ -596,6 +596,34 @@ if(isset($_SESSION['registration_error'])) {
         width: 100% !important;
         background-color: #10b981 !important;
     }
+
+    /* Ensure input icons and placeholders don't overlap */
+    .input-icon {
+        position: absolute;
+        left: 0.75rem; /* Adjust spacing to align with input padding */
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #9ca3af; /* Neutral gray color for icons */
+    }
+
+    .form-control {
+        padding-left: 3.5rem; /* Add enough padding to prevent overlap with icons */
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0ea5e9; /* Tailwind primary color */
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2); /* Add focus effect */
+    }
+
+    .form-select {
+        padding-left: 3.5rem; /* Add padding for select elements as well */
+    }
+
+    textarea.form-control {
+        padding-left: 3.5rem; /* Add padding for textareas */
+    }
   </style>
 </head>
 
