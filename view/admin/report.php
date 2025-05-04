@@ -6,6 +6,32 @@ require_once '../../backend/backend_admin.php';
 require_once '../../backend/database_connection.php';
 
 $listPerson = retrieve_current_sit_in();
+
+// Format time function to convert database timestamps to hours:minutes AM/PM
+function formatTime($timeString) {
+  if (empty($timeString) || $timeString == 'N/A') {
+    return $timeString;
+  }
+  
+  // Parse the timestamp
+  $timestamp = strtotime($timeString);
+  
+  // Format to hours and minutes with AM/PM
+  return date('h:i A', $timestamp);
+}
+
+// Format date function to ensure two-digit day format
+function formatDate($dateString) {
+  if (empty($dateString)) {
+    return '';
+  }
+  
+  // Parse the date
+  $timestamp = strtotime($dateString);
+  
+  // Format to ensure two-digit day
+  return date('m/d/Y', $timestamp);
+}
 ?>
 
 <!DOCTYPE html>
@@ -81,6 +107,7 @@ $listPerson = retrieve_current_sit_in();
   <style>
     body {
       font-family: 'Inter', sans-serif;
+      background-color: #f9fafb;
     }
     
     /* DataTables Custom Styling */
@@ -126,56 +153,98 @@ $listPerson = retrieve_current_sit_in();
       color: #4b5563;
     }
     
-    .dataTables_paginate {
-      margin-top: 1rem;
+    /* Modern pagination styling */
+    .modern-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0.5rem 0;
+      margin-top: 0.5rem;
     }
     
-    .dataTables_paginate .paginate_button {
-      padding: 0.5rem 0.75rem;
-      margin: 0 0.25rem;
+    .modern-pagination .paginate_button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.25rem;
+      height: 2.25rem;
+      margin: 0 0.125rem;
+      padding: 0 0.5rem;
       border-radius: 0.375rem;
-      border: 1px solid #e5e7eb;
-      background-color: #fff;
-      color: #374151;
-      transition: all 0.2s;
-    }
-    
-    .dataTables_paginate .paginate_button.current {
-      background-color: #0284c7 !important;
-      border-color: #0284c7 !important;
-      color: white !important;
       font-weight: 500;
+      font-size: 0.875rem;
+      color: #4b5563 !important;
+      background: transparent !important;
+      border: none !important;
+      transition: all 0.2s ease-in-out;
+      cursor: pointer;
+      overflow: hidden;
     }
     
-    .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
-      background-color: #f3f4f6 !important;
-      color: #111827 !important;
-      border-color: #e5e7eb !important;
+    .modern-pagination .paginate_button.current {
+      background: #0284c7 !important;
+      color: white !important;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3);
     }
     
-    .dataTables_paginate .paginate_button.disabled {
-      opacity: 0.5;
+    .modern-pagination .paginate_button:not(.current):not(.disabled):hover {
+      background: rgba(14, 165, 233, 0.1) !important;
+      color: #0284c7 !important;
+    }
+    
+    .modern-pagination .paginate_button.disabled {
+      opacity: 0.35;
       cursor: not-allowed;
     }
     
+    .modern-pagination .ellipsis {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 2.25rem;
+      color: #6b7280;
+      margin: 0 0.25rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    
+    /* Active page highlight glow */
+    .modern-pagination .paginate_button.current::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      width: 20px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 3px;
+      transform: translateX(-50%);
+    }
+    
+    /* Enhanced table styling */
     table.dataTable {
       border-collapse: separate;
       border-spacing: 0;
       width: 100%;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
     }
     
     table.dataTable thead th {
-      background: #f9fafb;
-      color: #374151;
+      background: #0284c7;
+      color: white;
       font-weight: 600;
-      padding: 1rem;
+      padding: 0.75rem 1rem;
       text-align: left;
-      border-bottom: 2px solid #e5e7eb;
       white-space: nowrap;
+      border: none;
     }
     
     table.dataTable tbody tr {
       transition: all 0.3s ease;
+      background-color: transparent;
     }
     
     table.dataTable tbody tr:hover {
@@ -185,7 +254,7 @@ $listPerson = retrieve_current_sit_in();
     }
     
     table.dataTable tbody td {
-      padding: 1rem;
+      padding: 0.75rem 1rem;
       border-bottom: 1px solid #e5e7eb;
       vertical-align: middle;
       transition: all 0.2s ease;
@@ -212,79 +281,10 @@ $listPerson = retrieve_current_sit_in();
       color: #0369a1;
     }
     
-    /* Button Animations */
-    .btn-animated {
-      position: relative;
-      overflow: hidden;
-      transform: translateZ(0);
-    }
-    
-    .btn-animated::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 300%;
-      height: 300%;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      transition: transform 0.6s ease-out;
-    }
-    
-    .btn-animated:hover::before {
-      transform: translate(-50%, -50%) scale(1);
-    }
-    
-    /* Card hover effects */
-    .stat-card {
-      transition: all 0.3s ease;
-    }
-    
-    .stat-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-    
-    .stat-card:hover .icon-container {
-      transform: scale(1.1);
-    }
-    
-    .icon-container {
-      transition: transform 0.3s ease;
-    }
-    
-    /* Shimmer effect */
-    .shimmer {
-      background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
-      background-size: 1000px 100%;
-      animation: shimmer 2s infinite linear;
-    }
-    
-    /* Counter Animation */
-    .counter-value {
-      display: inline-block;
-      transition: all 0.5s ease;
-    }
-    
-    /* Custom table row animations */
-    .row-enter {
+    /* Row animations */
+    .row-animation {
       opacity: 0;
       transform: translateY(10px);
-    }
-    
-    .row-enter-active {
-      opacity: 1;
-      transform: translateY(0px);
-      transition: opacity 0.3s, transform 0.3s;
-    }
-
-    /* Hidden button styling */
-    .hidden-button {
-      position: absolute;
-      left: -9999px;
-      top: -9999px;
-      visibility: hidden;
     }
   </style>
 </head>
@@ -309,24 +309,9 @@ $listPerson = retrieve_current_sit_in();
                     Refresh
                 </button>
                 
-                <button id="excelBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-file-excel mr-2"></i>
-                    Excel
-                </button>
-                
-                <button id="pdfBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-file-pdf mr-2"></i>
-                    PDF
-                </button>
-                
-                <button id="csvBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-file-csv mr-2"></i>
-                    CSV
-                </button>
-                
-                <button id="printBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-print mr-2"></i>
-                    Print
+                <button id="exportBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+                    <i class="fas fa-download mr-2 text-gray-500"></i>
+                    Export
                 </button>
             </div>
         </div>
@@ -353,41 +338,45 @@ $listPerson = retrieve_current_sit_in();
     <!-- Table Card -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
       <div class="p-6">
-        <table id="sitInTable" class="w-full">
+        <table id="sitInTable" class="w-full table-auto border-collapse text-sm text-gray-700">
           <thead>
             <tr>
-              <th>Sit-in ID</th>
-              <th>ID Number</th>
-              <th>Name</th>
-              <th>Purpose</th>
-              <th>Lab</th>
-              <th>Login</th>
-              <th>Logout</th>
-              <th>Date</th>
+              <th class="px-4 py-3 text-left">Sit-in ID</th>
+              <th class="px-4 py-3 text-left">ID Number</th>
+              <th class="px-4 py-3 text-left">Name</th>
+              <th class="px-4 py-3 text-left">Purpose</th>
+              <th class="px-4 py-3 text-left">Lab</th>
+              <th class="px-4 py-3 text-left">Time in</th>
+              <th class="px-4 py-3 text-left">Time out</th>
+              <th class="px-4 py-3 text-left">Date</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-gray-200">
             <?php if (!empty($listPerson)) : ?>
               <?php foreach ($listPerson as $person) : ?>
                 <tr class="row-animation">
-                  <td class="font-medium"><?php echo htmlspecialchars($person['sit_id']); ?></td>
-                  <td><?php echo htmlspecialchars($person['id_number']); ?></td>
-                  <td><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
-                  <td><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
-                  <td class="text-center">
+                  <td class="px-4 py-3 font-medium"><?php echo htmlspecialchars($person['sit_id']); ?></td>
+                  <td class="px-4 py-3"><?php echo htmlspecialchars($person['id_number']); ?></td>
+                  <td class="px-4 py-3"><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
+                  <td class="px-4 py-3"><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
+                  <td class="px-4 py-3 text-center">
                     <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
                       <?php echo htmlspecialchars($person['sit_lab']); ?>
                     </span>
                   </td>
-                  <td><?php echo htmlspecialchars($person['sit_login']); ?></td>
-                  <td>
+                  <td class="px-4 py-3">
+                    <span class="status-badge completed">
+                      <?php echo formatTime($person['sit_login']); ?>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3">
                     <?php if (empty($person['sit_logout']) || $person['sit_logout'] == 'N/A'): ?>
                       <span class="status-badge active">Active</span>
                     <?php else: ?>
-                      <span class="status-badge completed"><?php echo htmlspecialchars($person['sit_logout']); ?></span>
+                      <span class="status-badge completed"><?php echo formatTime($person['sit_logout']); ?></span>
                     <?php endif; ?>
                   </td>
-                  <td><?php echo htmlspecialchars($person['sit_date']); ?></td>
+                  <td class="px-4 py-3"><?php echo formatDate($person['sit_date']); ?></td>
                 </tr>
               <?php endforeach; ?>
             <?php endif; ?>
@@ -435,42 +424,6 @@ $listPerson = retrieve_current_sit_in();
         once: true
       });
       
-      // Animate counter numbers
-      function animateCounter() {
-        $('.counter').each(function() {
-          const $this = $(this);
-          const target = parseInt($this.attr('data-target'));
-          
-          $({ Counter: 0 }).animate({
-            Counter: target
-          }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function() {
-              $this.text(Math.ceil(this.Counter));
-            }
-          });
-        });
-        
-        $('.counter-decimal').each(function() {
-          const $this = $(this);
-          const target = parseFloat($this.attr('data-target'));
-          
-          $({ Counter: 0 }).animate({
-            Counter: target
-          }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function() {
-              $this.text(this.Counter.toFixed(1));
-            }
-          });
-        });
-      }
-      
-      // Call counter animation after a short delay
-      setTimeout(animateCounter, 500);
-      
       // Initialize DataTable with row animation
       const table = $('#sitInTable').DataTable({
         responsive: true,
@@ -478,14 +431,17 @@ $listPerson = retrieve_current_sit_in();
           search: "_INPUT_",
           searchPlaceholder: "Search records...",
           paginate: {
-            first: '<i class="fas fa-angle-double-left"></i>',
-            previous: '<i class="fas fa-angle-left"></i>',
-            next: '<i class="fas fa-angle-right"></i>',
-            last: '<i class="fas fa-angle-double-right"></i>'
-          }
+            first: '«',
+            previous: '‹',
+            next: '›',
+            last: '»'
+          },
+          info: "",
+          infoEmpty: "",
+          infoFiltered: ""
         },
         order: [[0, 'desc']],
-        dom: '<"flex justify-between items-center mb-4"lf>rt<"flex justify-between items-center mt-4"ip>',
+        dom: 'rt<"flex justify-end bg-white px-6 py-4 border-t border-gray-100"<"modern-pagination"p>>',
         buttons: [
           {
             extend: 'excel',
@@ -563,6 +519,9 @@ $listPerson = retrieve_current_sit_in();
               });
             }, 50 * i); // Stagger the animations
           });
+          
+          // Style the ellipsis
+          $('.ellipsis').html('•••');
         }
       });
 
@@ -577,423 +536,67 @@ $listPerson = retrieve_current_sit_in();
         }, 500);
       });
 
-      // Debug info
-      console.log('Table object:', table);
-      console.log('Table buttons object:', table.buttons);
-
-      // Excel export button
-      $('#excelBtn').off('click').on('click', function() {
-        // Add visual feedback
+      // Export button functionality
+      $('#exportBtn').on('click', function() {
         $(this).addClass('animate-pulse');
         
-        try {
-          // Show loading
-          Swal.fire({
-            title: 'Exporting to Excel',
-            text: 'Please wait...',
-            timerProgressBar: true,
-            didOpen: () => {
-              Swal.showLoading();
-              
-              setTimeout(() => {
-                // Manual Excel Export
-                const tableData = [];
-                const headers = [];
-                
-                $('#sitInTable thead th').each(function() {
-                  headers.push($(this).text());
-                });
-                tableData.push(headers);
-                
-                $('#sitInTable tbody tr').each(function() {
-                  const rowData = [];
-                  $(this).find('td').each(function() {
-                    rowData.push($(this).text().trim());
-                  });
-                  tableData.push(rowData);
-                });
-                
-                // Create workbook
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.aoa_to_sheet(tableData);
-                XLSX.utils.book_append_sheet(wb, ws, "Sit-in Records");
-                
-                // Save file
-                XLSX.writeFile(wb, 'Sit-in_Records_' + new Date().toLocaleDateString().replace(/\//g, '-') + '.xlsx');
-                
-                Swal.close();
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Success!',
-                  text: 'Excel file has been generated and downloaded.',
-                  timer: 2000,
-                  showConfirmButton: false
-                });
-              }, 500); // Short delay to ensure UI responsiveness
-            }
-          });
-        } catch(e) {
-          console.error("Excel export failed:", e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'Excel export could not be completed. ' + e.message
-          });
-        } finally {
-          setTimeout(() => {
-            $(this).removeClass('animate-pulse');
-          }, 1000);
-        }
-      });
-
-      // PDF export button with centered logos at the top
-      $('#pdfBtn').off('click').on('click', function() {
-        // Add visual feedback
-        $(this).addClass('animate-pulse');
-        
-        try {
-          // Show loading
-          Swal.fire({
-            title: 'Generating PDF',
-            text: 'Please wait...',
-            timerProgressBar: true,
-            didOpen: () => {
-              Swal.showLoading();
-              
-              // First, we need to convert the images to base64 for embedding in PDF
-              const loadImages = function() {
-                return new Promise((resolve, reject) => {
-                  const images = {};
-                  let loadedImages = 0;
-                  const totalImages = 2;
-                  
-                  // Load UC logo
-                  const ucImg = new Image();
-                  ucImg.crossOrigin = "Anonymous";
-                  ucImg.onload = function() {
-                    console.log("UC logo loaded successfully");
-                    // Create canvas to convert image to base64
-                    const canvas = document.createElement('canvas');
-                    canvas.width = ucImg.width;
-                    canvas.height = ucImg.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(ucImg, 0, 0);
-                    
-                    // Get base64 data
-                    images.uc = canvas.toDataURL('image/png');
-                    loadedImages++;
-                    if (loadedImages === totalImages) resolve(images);
-                  };
-                  ucImg.onerror = function(e) {
-                    console.error("Error loading UC logo", e);
-                    images.uc = null;
-                    loadedImages++;
-                    if (loadedImages === totalImages) resolve(images);
-                  };
-                  // CORRECTED PATH
-                  ucImg.src = '../../assets/images/uc.png';
-                  
-                  // Load CCS logo
-                  const ccsImg = new Image();
-                  ccsImg.crossOrigin = "Anonymous";
-                  ccsImg.onload = function() {
-                    console.log("CCS logo loaded successfully");
-                    // Create canvas to convert image to base64
-                    const canvas = document.createElement('canvas');
-                    canvas.width = ccsImg.width;
-                    canvas.height = ccsImg.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(ccsImg, 0, 0);
-                    
-                    // Get base64 data
-                    images.ccs = canvas.toDataURL('image/png');
-                    loadedImages++;
-                    if (loadedImages === totalImages) resolve(images);
-                  };
-                  ccsImg.onerror = function(e) {
-                    console.error("Error loading CCS logo", e);
-                    images.ccs = null;
-                    loadedImages++;
-                    if (loadedImages === totalImages) resolve(images);
-                  };
-                  // CORRECTED PATH
-                  ccsImg.src = '../../assets/images/ccs.png';
-                });
-              };
-              
-              // Load images, then generate PDF
-              loadImages().then((images) => {
-                const tableData = [];
-                const headers = [];
-                
-                $('#sitInTable thead th').each(function() {
-                  headers.push($(this).text());
-                });
-                
-                $('#sitInTable tbody tr').each(function() {
-                  const rowData = [];
-                  $(this).find('td').each(function() {
-                    rowData.push($(this).text().trim());
-                  });
-                  tableData.push(rowData);
-                });
-                
-                // Create PDF document definition with logos centered at top
-                const docDefinition = {
-                  pageMargins: [20, 140, 20, 40], // Increased top margin for header
-                  header: {
-                    stack: [
-                      // Logo row - both logos next to each other, centered
-                      {
-                        columns: [
-                          { width: '*', text: '' },
-                          images.uc ? {
-                            image: images.uc,
-                            width: 60,
-                            alignment: 'right',
-                            margin: [0, 20, 5, 0]
-                          } : { text: '' },
-                          images.ccs ? {
-                            image: images.ccs,
-                            width: 60,
-                            alignment: 'left',
-                            margin: [5, 20, 0, 0]
-                          } : { text: '' },
-                          { width: '*', text: '' },
-                        ]
-                      },
-                      // Text row - below the logos
-                      {
-                        stack: [
-                          { text: 'University of Cebu', alignment: 'center', fontSize: 16, bold: true, margin: [0, 10, 0, 0] },
-                          { text: 'College of Computer Studies', alignment: 'center', fontSize: 14, bold: true },
-                          { text: 'Sit-in Monitoring System', alignment: 'center', fontSize: 12, margin: [0, 5, 0, 0] }
-                        ],
-                        margin: [0, 0, 0, 10]
-                      }
-                    ]
-                  },
-                  footer: function(currentPage, pageCount) {
-                    return { 
-                      text: currentPage.toString() + ' of ' + pageCount,
-                      alignment: 'center', 
-                      fontSize: 8,
-                      margin: [0, 10, 0, 0]
-                    };
-                  },
-                  content: [
-                    { text: 'Sit-in Records', alignment: 'center', fontSize: 14, bold: true, margin: [0, 0, 0, 8] },
-                    { text: 'Generated on: ' + new Date().toLocaleDateString(), alignment: 'center', fontSize: 10, margin: [0, 0, 0, 20] },
-                    {
-                      table: {
-                        headerRows: 1,
-                        widths: Array(headers.length).fill('*'),
-                        body: [headers, ...tableData]
-                      },
-                      layout: 'lightHorizontalLines'
-                    }
-                  ]
-                };
-                
-                // Generate PDF
-                pdfMake.createPdf(docDefinition).download('Sit-in_Records_' + new Date().toLocaleDateString().replace(/\//g, '-') + '.pdf');
-                
-                Swal.close();
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Success!',
-                  text: 'PDF has been generated and downloaded.',
-                  timer: 2000,
-                  showConfirmButton: false
-                });
-              }).catch(error => {
-                console.error("Error loading images:", error);
-                Swal.fire({
-                  icon: 'warning',
-                  title: 'Warning',
-                  text: 'PDF generated without logos due to image loading issue.'
-                });
-              });
-            }
-          });
-        } catch(e) {
-          console.error("PDF export failed:", e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'PDF export could not be completed. ' + e.message
-          });
-        } finally {
-          setTimeout(() => {
-            $(this).removeClass('animate-pulse');
-          }, 1000);
-        }
-      });
-
-      // CSV export button
-      $('#csvBtn').off('click').on('click', function() {
-        // Add visual feedback
-        $(this).addClass('animate-pulse');
-        
-        try {
-          // Show loading
-          Swal.fire({
-            title: 'Generating CSV',
-            text: 'Please wait...',
-            timerProgressBar: true,
-            didOpen: () => {
-              Swal.showLoading();
-              
-              setTimeout(() => {
-                // Get table data
-                const tableData = [];
-                const headers = [];
-                
-                $('#sitInTable thead th').each(function() {
-                  headers.push($(this).text());
-                });
-                
-                // Add headers as first row
-                tableData.push(headers.join(','));
-                
-                // Add data rows
-                $('#sitInTable tbody tr').each(function() {
-                  const rowData = [];
-                  $(this).find('td').each(function() {
-                    // Escape commas in the cell data
-                    let cellData = $(this).text().trim();
-                    // If cell contains commas, wrap in quotes
-                    if (cellData.includes(',')) {
-                      cellData = '"' + cellData + '"';
-                    }
-                    rowData.push(cellData);
-                  });
-                  tableData.push(rowData.join(','));
-                });
-                
-                // Join with newlines
-                const csvContent = tableData.join('\n');
-                
-                // Download directly without FileSaver dependency
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                
-                link.setAttribute('href', url);
-                link.setAttribute('download', 'Sit-in_Records_' + new Date().toLocaleDateString().replace(/\//g, '-') + '.csv');
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                Swal.close();
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Success!',
-                  text: 'CSV file has been generated and downloaded.',
-                  timer: 2000,
-                  showConfirmButton: false
-                });
-              }, 500);
-            }
-          });
-        } catch(e) {
-          console.error("CSV export failed:", e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'CSV export could not be completed. ' + e.message
-          });
-        } finally {
-          setTimeout(() => {
-            $(this).removeClass('animate-pulse');
-          }, 1000);
-        }
-      });
-
-      // Print button with centered logos at the top
-      $('#printBtn').off('click').on('click', function() {
-        // Add visual feedback
-        $(this).addClass('animate-pulse');
-        
-        try {
-          // Get absolute URL for images using the correct path
-          const baseUrl = window.location.origin;
-          const ucLogoPath = `${baseUrl}/Sit-in-monitoring-system/assets/images/uc.png`;
-          const ccsLogoPath = `${baseUrl}/Sit-in-monitoring-system/assets/images/ccs.png`;
-          
-          let printWindow = window.open('', '_blank');
-          let tableHTML = document.getElementById('sitInTable').outerHTML;
-          
-          printWindow.document.write(`
-            <html>
-              <head>
-                <title>Sit-in Records</title>
-                <style>
-                  body { font-family: Arial, sans-serif; margin: 20px; }
-                  .header { text-align: center; margin-bottom: 20px; }
-                  .logo-container { display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
-                  .logo { width: 80px; height: auto; margin: 0 10px; }
-                  table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-                  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                  th { background-color: #f2f2f2; }
-                  h1, h2, h3 { margin: 5px 0; }
-                  @media print {
-                    table { page-break-inside: auto; }
-                    tr { page-break-inside: avoid; page-break-after: auto; }
-                    thead { display: table-header-group; }
-                  }
-                </style>
-              </head>
-              <body>
-                <div class="header">
-                  <div class="logo-container">
-                    <img src="${ucLogoPath}" alt="UC Logo" class="logo" onerror="this.style.display='none'">
-                    <img src="${ccsLogoPath}" alt="CCS Logo" class="logo" onerror="this.style.display='none'">
-                  </div>
-                  <h1>University of Cebu</h1>
-                  <h2>College of Computer Studies</h2>
-                  <h3>Sit-in Monitoring System</h3>
-                </div>
-                <h2 style="text-align: center;">Sit-in Records - ${new Date().toLocaleDateString()}</h2>
-                ${tableHTML}
-              </body>
-            </html>
-          `);
-          
-          printWindow.document.close();
-          
-          // Wait for images to load before printing
-          printWindow.onload = function() {
-            printWindow.focus();
-            setTimeout(() => {
-              printWindow.print();
-              printWindow.close();
-            }, 1000);
-          };
-        } catch(e) {
-          console.error("Print failed:", e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Print Failed',
-            text: 'Print could not be initiated. ' + e.message
-          });
-        } finally {
-          setTimeout(() => {
-            $(this).removeClass('animate-pulse');
-          }, 1000);
-        }
+        Swal.fire({
+          title: 'Export Options',
+          html: `
+            <div class="grid grid-cols-1 gap-3 mt-4">
+              <button id="btnExcelExport" class="bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                <i class="fas fa-file-excel mr-2"></i> Export to Excel
+              </button>
+              <button id="btnPdfExport" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                <i class="fas fa-file-pdf mr-2"></i> Export to PDF
+              </button>
+              <button id="btnPrintExport" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                <i class="fas fa-print mr-2"></i> Print Table
+              </button>
+              <button id="btnCsvExport" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                <i class="fas fa-file-csv mr-2"></i> Export to CSV
+              </button>
+            </div>
+          `,
+          showConfirmButton: false,
+          showCloseButton: true,
+          showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+          },
+          hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+          },
+          didOpen: () => {
+            $('#btnExcelExport').on('click', function() {
+              table.button(0).trigger();
+              Swal.close();
+            });
+            
+            $('#btnPdfExport').on('click', function() {
+              table.button(1).trigger();
+              Swal.close();
+            });
+            
+            $('#btnPrintExport').on('click', function() {
+              table.button(2).trigger();
+              Swal.close();
+            });
+            
+            $('#btnCsvExport').on('click', function() {
+              table.button(3).trigger();
+              Swal.close();
+            });
+          }
+        }).then(() => {
+          $(this).removeClass('animate-pulse');
+        });
       });
 
       // Refresh button functionality with animation
       $('#refreshBtn').on('click', function() {
         const $icon = $(this).find('i');
-        const $button = $(this);
-        
-        // Disable button to prevent multiple clicks
-        $button.prop('disabled', true);
         $icon.addClass('fa-spin');
-        $button.addClass('animate-pulse');
+        $(this).addClass('animate-pulse');
         
         // Show loading message with SweetAlert2
         Swal.fire({
@@ -1002,14 +605,13 @@ $listPerson = retrieve_current_sit_in();
           timerProgressBar: true,
           didOpen: () => {
             Swal.showLoading();
-          },
-          allowOutsideClick: false
+          }
         });
         
-        // Simple refresh after a brief timeout to show the loading animation
+        // Simulate refresh with animation
         setTimeout(function() {
-          window.location.reload();
-        }, 1000);
+          location.reload();
+        }, 800);
       });
     });
   </script>

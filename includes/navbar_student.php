@@ -1,5 +1,6 @@
 <?php
 include '../../api/api_student.php';
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -275,39 +276,14 @@ include '../../api/api_student.php';
           </a>
           
           <!-- Notifications -->
-          <div class="relative dropdown-wrapper">
-            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover rounded-md inline-flex items-center transition duration-200">
-              <i class="fas fa-bell mr-1"></i>
-              <span>Notifications</span>
-              <?php $notifications = retrieve_notification($_SESSION['id_number']); 
-              if (count($notifications) > 0): ?>
-                <span class="notification-badge"><?php echo count($notifications); ?></span>
-              <?php endif; ?>
-              <svg class="ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-            </button>
-            <div class="dropdown-menu notification-dropdown">
-              <div class="p-3">
-                <h3 class="text-sm font-semibold text-gray-900 mb-2">Notifications</h3>
-                <hr class="mb-2">
-                <?php if (count($notifications) > 0): ?>
-                  <div class="space-y-2">
-                    <?php foreach($notifications as $row) : ?>
-                      <div class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                        <p class="text-sm text-gray-700"><?php echo $row['message']; ?></p>
-                        <p class="text-xs text-gray-500 mt-1"><?php echo isset($row['created_at']) ? date('M d, Y h:i A', strtotime($row['created_at'])) : ''; ?></p>
-                      </div>
-                    <?php endforeach; ?>
-                  </div>
-                <?php else: ?>
-                  <div class="text-center py-4">
-                    <p class="text-sm text-gray-500">No new notifications</p>
-                  </div>
-                <?php endif; ?>
-              </div>
-            </div>
-          </div>
+          <?php
+          // Keep the function call to avoid breaking dependencies
+          $notifications = retrieve_notification($_SESSION['id_number']);
+          ?>
+          <a href="../../view/student/notification.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'notification.php' ? 'nav-link-active' : ''; ?>">
+            <i class="fas fa-bell mr-1"></i>
+            <span>Notifications</span>
+          </a>
           
           <!-- Logout Button -->
           <a href="../../auth/logout.php" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center" onclick="handleLogout(event)" aria-label="Logout from student dashboard">
@@ -412,6 +388,5 @@ include '../../api/api_student.php';
         }
       });
     }
-  </script>
 </body>
 </html>

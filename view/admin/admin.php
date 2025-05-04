@@ -257,7 +257,7 @@ if(isset($_SESSION['success_message'])) {
                                 <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-all duration-300 announcement-item relative group" style="transition-delay: <?php echo $index * 100; ?>ms">
                                     <div class="absolute top-3 right-3 transition-opacity">
                                         <button type="button" class="text-gray-400 hover:text-red-500 transition-colors p-1" 
-                                                onclick="confirmDeleteAnnouncement(<?php echo $row['announcement_id']; ?>)">
+                                                onclick="confirmDeleteAnnouncement(<?php echo $row['announce_id']; ?>)">
                                             <i class="fas fa-trash-alt"></i>
                                         </button>
                                     </div>
@@ -301,15 +301,15 @@ if(isset($_SESSION['success_message'])) {
         
         <!-- Quick Actions Menu -->
         <div id="quickActionMenu" class="absolute bottom-16 right-0 bg-white rounded-lg shadow-xl border border-gray-200 w-48 py-2 opacity-0 invisible transition-all duration-300 transform translate-y-2" role="menu">
-            <a href="manage_students.php" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
+            <a href="students.php" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
                 <i class="fas fa-user-graduate mr-3 text-primary-500 w-5"></i>
                 Manage Students
             </a>
-            <a href="sit_in_records.php" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
+            <a href="viewrecords.php" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
                 <i class="fas fa-clipboard-list mr-3 text-primary-500 w-5"></i>
                 View Records
             </a>
-            <a href="generate_reports.php" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
+            <a href="report.php" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-primary-50 transition-colors" role="menuitem">
                 <i class="fas fa-chart-bar mr-3 text-primary-500 w-5"></i>
                 Generate Reports
             </a>
@@ -582,8 +582,8 @@ if(isset($_SESSION['success_message'])) {
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Redirect to the deletion script
-                    window.location.href = `delete_announcement.php?id=${id}`;
+                    // Redirect to delete script with ID in URL
+                    window.location.href = 'delete_announcement.php?id=' + id;
                 }
             });
         }

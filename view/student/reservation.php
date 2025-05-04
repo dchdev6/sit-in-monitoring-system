@@ -132,11 +132,14 @@ if(isset($_SESSION['error_message'])) {
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 opacity-0 transition-opacity duration-500">
 
+<div class="container mx-auto px-4 pt-8 max-w-5xl">
+    <h1 class="text-2xl font-bold text-gray-800 flex items-center animate-slide-in-left">
+        <i class="fas fa-calendar-check mr-3 text-primary-600 animate-float"></i>
+        Reservation Form
+    </h1>
+</div>
+
 <div class="container mx-auto px-4 py-8 max-w-4xl">
-    <div class="flex items-center justify-center mb-6 animate-slide-in-up">
-        <div class="bg-primary-600 h-10 w-1 rounded mr-3"></div>
-        <h1 class="text-2xl font-bold text-gray-800">Reservation Form</h1>
-    </div>
     
     <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 mb-8 form-card animate-fade-in">
         <div class="border-b border-gray-100 pb-4 mb-6">
@@ -179,12 +182,19 @@ if(isset($_SESSION['error_message'])) {
                                 <i class="fas fa-code text-gray-400"></i>
                             </div>
                             <select name="purpose" id="purposes" class="form-input pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-4 text-gray-700 focus:outline-none appearance-none" required>
-                                <option value="" disabled selected>Select programming language</option>
+                                <option value="" disabled selected>Select purpose</option>
                                 <option value="C Programming">C Programming</option>
-                                <option value="Java Programming">Java Programming</option>
-                                <option value="C# Programming">C# Programming</option>
-                                <option value="Php Programming">PHP Programming</option>
-                                <option value="ASP.Net Programming">ASP.NET Programming</option>
+                                <option value="C#">C#</option>
+                                <option value="Java">Java</option>
+                                <option value="PHP">PHP</option>
+                                <option value="Database">Database</option>
+                                <option value="Digital Logic & Design">Digital Logic & Design</option>
+                                <option value="Embedded System & IoT">Embedded System & IoT</option>
+                                <option value="Python Programming">Python Programming</option>
+                                <option value="System Integration & Architecture">System Integration & Architecture</option>
+                                <option value="Computer Application">Computer Application</option>
+                                <option value="Web Design & Development">Web Design & Development</option>
+                                <option value="Project Management">Project Management</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <i class="fas fa-chevron-down text-gray-400"></i>
@@ -200,12 +210,13 @@ if(isset($_SESSION['error_message'])) {
                             </div>
                             <select name="lab" id="lab" class="form-input pl-10 w-full border border-gray-300 rounded-lg py-2.5 px-4 text-gray-700 focus:outline-none appearance-none" required>
                                 <option value="" disabled selected>Select laboratory</option>
-                                <option value="524">524</option>
-                                <option value="526">526</option>
-                                <option value="528">528</option>
-                                <option value="530">530</option>
-                                <option value="542">542</option>
-                                <option value="Mac">Mac Laboratory</option>
+                                <option value="517">Lab 517</option>
+                                    <option value="524">Lab 524</option>
+                                    <option value="526">Lab 526</option>
+                                    <option value="528">Lab 528</option>
+                                    <option value="530">Lab 530</option>
+                                    <option value="542">Lab 542</option>
+                                    <option value="544">Lab 544</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <i class="fas fa-chevron-down text-gray-400"></i>

@@ -145,16 +145,34 @@ if (isset($_POST["submit"])) {
 }
 
 // Handle Feedback Submission
-if (isset($_POST['submit_feedback'])) {
-    $message = $_POST['feedback_text'];
-    $id = $_SESSION['id_number'];
-    $lab = $_POST['sit_lab'];
-    $date = date("Y-m-d");
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_feedback'])) {
+    require_once '../backend/database_connection.php'; // Ensure the database connection is included
 
-    if (submit_feedback($id, $lab, $message)) {
-        echo "<script>Swal.fire({title: 'Success', text: 'Feedback Submitted', icon: 'success', timer: 2000});</script>";
-        notifications($id, "Feedback Confirmed! | $date\nYou have successfully submitted a feedback.");
+    $idNumber = $_POST['id_number'] ?? '';
+    $lab = $_POST['sit_lab'] ?? '';
+    $feedback = $_POST['feedback_text'] ?? '';
+
+    if (empty($idNumber) || empty($lab) || empty($feedback)) {
+        echo json_encode(['success' => false, 'message' => 'All fields are required.']);
+        exit();
     }
+
+    // Save feedback to the database
+    $stmt = $conn->prepare("INSERT INTO feedback (id_number, lab, date, message) VALUES (?, ?, NOW(), ?)");
+    if ($stmt === false) {
+        echo json_encode(['success' => false, 'message' => 'Database error: Failed to prepare statement.']);
+        exit();
+    }
+
+    $stmt->bind_param("sss", $idNumber, $lab, $feedback);
+
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Feedback submitted successfully.']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $stmt->error]);
+    }
+    $stmt->close();
+    exit();
 }
 
 // Handle Reservation Submission

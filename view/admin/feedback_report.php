@@ -5,7 +5,8 @@ include '../../includes/navbar_admin.php';
 require_once '../../backend/backend_admin.php'; 
 require_once '../../backend/database_connection.php';
 
-$listPerson = retrieve_current_sit_in();
+// Get feedback data instead of sit-in data
+$feedbackList = view_feedback();
 ?>
 
 <!DOCTYPE html>
@@ -14,7 +15,7 @@ $listPerson = retrieve_current_sit_in();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sit In Records</title>
+    <title>Feedback Reports</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -97,72 +98,98 @@ $listPerson = retrieve_current_sit_in();
             box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
         }
         
-        .dataTables_length select {
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            padding: 0.5rem 2rem 0.5rem 0.75rem;
-            font-size: 0.875rem;
-            background-position: right 0.5rem center;
-            transition: all 0.2s;
+        /* Modern pagination styling */
+        .modern-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0.5rem 0;
+            margin-top: 0.5rem;
         }
         
-        .dataTables_length select:focus {
-            outline: none;
-            border-color: #0284c7;
-            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
-        }
-        
-        .dataTables_info, .dataTables_length, .dataTables_filter {
-            margin-bottom: 1rem;
-            font-size: 0.875rem;
-            color: #4b5563;
-        }
-        
-        .dataTables_paginate {
-            margin-top: 1rem;
-        }
-        
-        .dataTables_paginate .paginate_button {
-            padding: 0.5rem 0.75rem;
-            margin: 0 0.25rem;
+        .modern-pagination .paginate_button {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2.25rem;
+            height: 2.25rem;
+            margin: 0 0.125rem;
+            padding: 0 0.5rem;
             border-radius: 0.375rem;
-            border: 1px solid #e5e7eb;
-            background-color: #fff;
-            color: #374151;
-            transition: all 0.2s;
-        }
-        
-        .dataTables_paginate .paginate_button.current {
-            background-color: #0284c7 !important;
-            border-color: #0284c7 !important;
-            color: white !important;
             font-weight: 500;
+            font-size: 0.875rem;
+            color: #4b5563 !important;
+            background: transparent !important;
+            border: none !important;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            overflow: hidden;
         }
         
-        .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
-            background-color: #f3f4f6 !important;
-            color: #111827 !important;
-            border-color: #e5e7eb !important;
+        .modern-pagination .paginate_button.current {
+            background: #0284c7 !important;
+            color: white !important;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3);
         }
         
+        .modern-pagination .paginate_button:not(.current):not(.disabled):hover {
+            background: rgba(14, 165, 233, 0.1) !important;
+            color: #0284c7 !important;
+        }
+        
+        .modern-pagination .paginate_button.disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        
+        .modern-pagination .ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 2.25rem;
+            color: #6b7280;
+            margin: 0 0.25rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        
+        /* Active page highlight glow */
+        .modern-pagination .paginate_button.current::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 20px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 3px;
+            transform: translateX(-50%);
+        }
+        
+        /* Enhanced table styling */
         table.dataTable {
             border-collapse: separate;
             border-spacing: 0;
             width: 100%;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
         }
         
         table.dataTable thead th {
-            background: #f9fafb;
-            color: #374151;
+            background: #0284c7;
+            color: white;
             font-weight: 600;
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             text-align: left;
-            border-bottom: 2px solid #e5e7eb;
             white-space: nowrap;
+            border: none;
         }
         
         table.dataTable tbody tr {
             transition: all 0.3s ease;
+            background-color: transparent;
         }
         
         table.dataTable tbody tr:hover {
@@ -172,82 +199,34 @@ $listPerson = retrieve_current_sit_in();
         }
         
         table.dataTable tbody td {
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             border-bottom: 1px solid #e5e7eb;
             vertical-align: middle;
+            transition: all 0.2s ease;
         }
         
-        /* Status Badges */
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            text-align: center;
-            transition: all 0.3s ease;
+        /* Feedback message styling */
+        .feedback-message {
+            max-height: 80px;
+            overflow-y: auto;
+            line-height: 1.5;
         }
         
-        .status-badge.active {
-            background-color: #d1fae5;
-            color: #047857;
+        .feedback-message::-webkit-scrollbar {
+            width: 6px;
         }
         
-        .status-badge.completed {
-            background-color: #e0f2fe;
-            color: #0369a1;
+        .feedback-message::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 8px;
         }
         
-        /* Button Animations */
-        .btn-animated {
-            position: relative;
-            overflow: hidden;
-            transform: translateZ(0);
+        .feedback-message::-webkit-scrollbar-thumb {
+            background: #c5c5c5;
+            border-radius: 8px;
         }
         
-        .btn-animated::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 300%;
-            height: 300%;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            transition: transform 0.6s ease-out;
-        }
-        
-        .btn-animated:hover::before {
-            transform: translate(-50%, -50%) scale(1);
-        }
-        
-        /* Card hover effects */
-        .stat-card {
-            transition: all 0.3s ease;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        
-        .stat-card:hover .icon-container {
-            transform: scale(1.1);
-        }
-        
-        .icon-container {
-            transition: transform 0.3s ease;
-        }
-        
-        /* Shimmer effect */
-        .shimmer {
-            background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
-            background-size: 1000px 100%;
-            animation: shimmer 2s infinite linear;
-        }
-        
-        /* Custom table row animations */
+        /* Row animations */
         .row-animation {
             opacity: 0;
             transform: translateY(10px);
@@ -287,7 +266,7 @@ $listPerson = retrieve_current_sit_in();
             <nav class="flex mb-6" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
                     <li class="inline-flex items-center">
-                        <a href="Admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                        <a href="admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
                             <i class="fas fa-home mr-2"></i>
                             Dashboard
                         </a>
@@ -305,43 +284,45 @@ $listPerson = retrieve_current_sit_in();
         <!-- Table Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
             <div class="p-6">
-                <table id="sitInTable" class="w-full">
+                <table id="feedbackTable" class="w-full table-auto border-collapse text-sm text-gray-700">
                     <thead>
                         <tr>
-                            <th>Sit-in ID</th>
-                            <th>ID Number</th>
-                            <th>Name</th>
-                            <th>Purpose</th>
-                            <th>Lab</th>
-                            <th>Login</th>
-                            <th>Logout</th>
-                            <th>Date</th>
+                            <th class="px-4 py-3 text-left">User ID</th>
+                            <th class="px-4 py-3 text-left">Lab Room</th>
+                            <th class="px-4 py-3 text-left">Date</th>
+                            <th class="px-4 py-3 text-left">Feedback</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php if (!empty($listPerson)) : ?>
-                            <?php foreach ($listPerson as $person) : ?>
+                    <tbody class="divide-y divide-gray-200">
+                        <?php if (!empty($feedbackList)) : ?>
+                            <?php foreach ($feedbackList as $index => $feedback) : ?>
                                 <tr class="row-animation">
-                                    <td class="font-medium"><?php echo htmlspecialchars($person['sit_id']); ?></td>
-                                    <td><?php echo htmlspecialchars($person['id_number']); ?></td>
-                                    <td><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
-                                    <td><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
-                                    <td class="text-center">
+                                    <td class="px-4 py-3 font-medium"><?php echo htmlspecialchars($feedback['id_number']); ?></td>
+                                    <td class="px-4 py-3 text-center">
                                         <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                                            <?php echo htmlspecialchars($person['sit_lab']); ?>
+                                            <?php echo htmlspecialchars($feedback['lab']); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo htmlspecialchars($person['sit_login']); ?></td>
-                                    <td>
-                                        <?php if (empty($person['sit_logout']) || $person['sit_logout'] == 'N/A'): ?>
-                                            <span class="status-badge active">Active</span>
-                                        <?php else: ?>
-                                            <span class="status-badge completed"><?php echo htmlspecialchars($person['sit_logout']); ?></span>
-                                        <?php endif; ?>
+                                    <td class="px-4 py-3"><?php echo htmlspecialchars($feedback['date']); ?></td>
+                                    <td class="px-4 py-3">
+                                        <div class="feedback-message">
+                                            <?php echo htmlspecialchars($feedback['message']); ?>
+                                        </div>
                                     </td>
-                                    <td><?php echo htmlspecialchars($person['sit_date']); ?></td>
                                 </tr>
                             <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="4" class="px-4 py-6 text-center text-gray-500">
+                                    <div class="flex flex-col items-center justify-center text-gray-500">
+                                        <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mb-3">
+                                            <i class="fas fa-comment-slash text-gray-400 text-2xl"></i>
+                                        </div>
+                                        <p class="font-medium">No feedback reports found</p>
+                                        <p class="text-sm text-gray-400 mt-1">Feedback submitted by users will appear here</p>
+                                    </div>
+                                </td>
+                            </tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -376,53 +357,37 @@ $listPerson = retrieve_current_sit_in();
                 once: true
             });
             
-            // Animate counter numbers
-            function animateCounter() {
-                $('.counter').each(function() {
-                    const $this = $(this);
-                    const target = parseInt($this.attr('data-target'));
-                    
-                    $({ Counter: 0 }).animate({
-                        Counter: target
-                    }, {
-                        duration: 1000,
-                        easing: 'swing',
-                        step: function() {
-                            $this.text(Math.ceil(this.Counter));
-                        }
-                    });
-                });
-            }
-            
-            // Call counter animation after a short delay
-            setTimeout(animateCounter, 500);
-            
             // Initialize DataTable with export buttons
-            const table = $('#sitInTable').DataTable({
+            const table = $('#feedbackTable').DataTable({
                 responsive: true,
                 language: {
                     search: "_INPUT_",
-                    searchPlaceholder: "Search records...",
+                    searchPlaceholder: "Search feedback...",
                     paginate: {
-                        first: '<i class="fas fa-angle-double-left"></i>',
-                        previous: '<i class="fas fa-angle-left"></i>',
-                        next: '<i class="fas fa-angle-right"></i>',
-                        last: '<i class="fas fa-angle-double-right"></i>'
-                    }
+                        first: '«',
+                        previous: '‹',
+                        next: '›',
+                        last: '»'
+                    },
+                    emptyTable: "No feedback reports available",
+                    info: "",
+                    infoEmpty: "",
+                    infoFiltered: ""
                 },
-                order: [[0, 'desc']],
+                order: [[2, 'desc']], // Order by date column descending
+                dom: 'rt<"flex justify-end bg-white px-6 py-4 border-t border-gray-100"<"modern-pagination"p>>',
                 buttons: [
                     {
                         extend: 'excel',
                         className: 'hidden',
                         exportOptions: { columns: ':visible' },
-                        title: 'Sit-in Records - ' + new Date().toLocaleDateString()
+                        title: 'Feedback Reports - ' + new Date().toLocaleDateString()
                     },
                     {
                         extend: 'pdf',
                         className: 'hidden',
                         exportOptions: { columns: ':visible' },
-                        title: 'Sit-in Records',
+                        title: 'Feedback Reports',
                         customize: function(doc) {
                             doc.pageMargins = [20, 30, 20, 30];
                             doc.defaultStyle.fontSize = 10;
@@ -478,6 +443,9 @@ $listPerson = retrieve_current_sit_in();
                             });
                         }, 50 * i); // Stagger the animations
                     });
+                    
+                    // Style the ellipsis
+                    $('.ellipsis').html('•••');
                 }
             });
             
@@ -493,48 +461,47 @@ $listPerson = retrieve_current_sit_in();
             $('#exportBtn').on('click', function() {
                 $(this).addClass('animate-pulse');
                 
-                const exportMenu = $('<div>').addClass('absolute right-0 mt-2 py-2 w-48 bg-white rounded-lg shadow-lg z-20 border border-gray-200')
-                    .css('display', 'none')
-                    .appendTo($(this).parent());
-                
-                // Add export options
-                $('<a>').addClass('block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer')
-                    .html('<i class="fas fa-file-excel mr-2 text-green-600"></i> Export to Excel')
-                    .on('click', function() {
-                        $('.buttons-excel').click();
-                        exportMenu.remove();
-                        $('#exportBtn').removeClass('animate-pulse');
-                    })
-                    .appendTo(exportMenu);
-                
-                $('<a>').addClass('block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer')
-                    .html('<i class="fas fa-file-pdf mr-2 text-red-600"></i> Export to PDF')
-                    .on('click', function() {
-                        $('.buttons-pdf').click();
-                        exportMenu.remove();
-                        $('#exportBtn').removeClass('animate-pulse');
-                    })
-                    .appendTo(exportMenu);
-                    
-                $('<a>').addClass('block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer')
-                    .html('<i class="fas fa-print mr-2 text-blue-600"></i> Print Table')
-                    .on('click', function() {
-                        $('.buttons-print').click();
-                        exportMenu.remove();
-                        $('#exportBtn').removeClass('animate-pulse');
-                    })
-                    .appendTo(exportMenu);
-                
-                exportMenu.fadeIn(100);
-                
-                // Close menu when clicking outside
-                $(document).on('click', function(e) {
-                    if (!$(e.target).closest('#exportBtn, .dt-button-collection').length) {
-                        exportMenu.fadeOut(100, function() {
-                            $(this).remove();
-                            $('#exportBtn').removeClass('animate-pulse');
+                Swal.fire({
+                    title: 'Export Options',
+                    html: `
+                        <div class="grid grid-cols-1 gap-3 mt-4">
+                            <button id="btnExcelExport" class="bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                                <i class="fas fa-file-excel mr-2"></i> Export to Excel
+                            </button>
+                            <button id="btnPdfExport" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                                <i class="fas fa-file-pdf mr-2"></i> Export to PDF
+                            </button>
+                            <button id="btnPrintExport" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                                <i class="fas fa-print mr-2"></i> Print Table
+                            </button>
+                        </div>
+                    `,
+                    showConfirmButton: false,
+                    showCloseButton: true,
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp'
+                    },
+                    didOpen: () => {
+                        $('#btnExcelExport').on('click', function() {
+                            table.button(0).trigger();
+                            Swal.close();
+                        });
+                        
+                        $('#btnPdfExport').on('click', function() {
+                            table.button(1).trigger();
+                            Swal.close();
+                        });
+                        
+                        $('#btnPrintExport').on('click', function() {
+                            table.button(2).trigger();
+                            Swal.close();
                         });
                     }
+                }).then(() => {
+                    $(this).removeClass('animate-pulse');
                 });
             });
             
@@ -547,7 +514,7 @@ $listPerson = retrieve_current_sit_in();
                 // Show loading message with SweetAlert2
                 Swal.fire({
                     title: 'Refreshing Data',
-                    text: 'Getting the latest records...',
+                    text: 'Getting the latest feedback reports...',
                     timerProgressBar: true,
                     didOpen: () => {
                         Swal.showLoading();
@@ -559,25 +526,6 @@ $listPerson = retrieve_current_sit_in();
                     location.reload();
                 }, 800);
             });
-            
-            // Show welcome message (uncomment if needed)
-            /*
-            setTimeout(function() {
-                Swal.fire({
-                    title: 'Welcome Back',
-                    text: 'Sit-in Monitoring System is ready',
-                    icon: 'success',
-                    confirmButtonColor: '#0284c7',
-                    confirmButtonText: 'Continue',
-                    showClass: {
-                        popup: 'animate__animated animate__fadeInDown'
-                    },
-                    hideClass: {
-                        popup: 'animate__animated animate__fadeOutUp'
-                    }
-                });
-            }, 1000);
-            */
         });
     </script>
 </body>

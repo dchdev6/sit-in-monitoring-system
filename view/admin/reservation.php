@@ -98,9 +98,40 @@
     <!-- Include navbar -->
     <?php include '../../includes/navbar_admin.php'; ?>
 
-    <h1 class="text-primary-600 text-3xl font-semibold text-center mt-12 mb-8 animate-fadeIn">
-        <i class="fas fa-laptop-code mr-2"></i>Reservation Management
-    </h1>
+    <!-- Page Header -->
+    <div class="container mx-auto px-4 py-4 max-w-7xl">
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
+                            <i class="fas fa-laptop-code text-primary-600"></i>
+                        </div>
+                        Reservation Management
+                    </h1>
+                    <p class="text-gray-500 mt-1 ml-12">Manage laboratory reservations and computer availability</p>
+                </div>
+            </div>
+
+            <!-- Breadcrumbs -->
+            <nav class="flex mb-6" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
+                    <li class="inline-flex items-center">
+                        <a href="Admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                            <i class="fas fa-home mr-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="text-gray-400 mx-2">/</span>
+                            <span class="text-primary-600 font-medium">Reservation Management</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
 
     <div class="container mx-auto px-4 max-w-7xl">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
@@ -116,11 +147,13 @@
                             <div class="mb-4">
                                 <label for="lab" class="block text-sm font-medium text-gray-700 mb-2">Laboratory</label>
                                 <select name="lab" id="lab" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all">
-                                    <option value="524">Lab 524</option>
+                                <option value="524">Lab 524</option>
+                                <option value="524">Lab 524</option>
                                     <option value="526">Lab 526</option>
                                     <option value="528">Lab 528</option>
+                                    <option value="530">Lab 530</option>
                                     <option value="542">Lab 542</option>
-                                    <option value="Mac">Mac Lab</option>
+                                    <option value="542">Lab 542</option>
                                 </select>
                             </div>
                             <button type="submit" name="labSubmit" class="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50">
@@ -272,6 +305,7 @@
             </div>
         </div>
     </div>
+    <div class="py-8"></div>
 
     <!-- JavaScript for Interactions -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

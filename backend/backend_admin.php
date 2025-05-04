@@ -803,6 +803,7 @@ function notification($id_number,$message){
     
 }
 
+
 function reset_all_student_sessions($defaultValue = 30) {
     $db = Database::getInstance();
     $con = $db->getConnection();

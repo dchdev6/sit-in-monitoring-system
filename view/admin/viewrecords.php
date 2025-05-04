@@ -6,6 +6,32 @@ require_once '../../backend/backend_admin.php';
 require_once '../../backend/database_connection.php';
 
 $listPerson = retrieve_current_sit_in();
+
+// Format time function to convert database timestamps to hours:minutes AM/PM
+function formatTime($timeString) {
+  if (empty($timeString) || $timeString == 'N/A') {
+    return $timeString;
+  }
+  
+  // Parse the timestamp
+  $timestamp = strtotime($timeString);
+  
+  // Format to hours and minutes with AM/PM
+  return date('h:i A', $timestamp);
+}
+
+// Format date function to ensure two-digit day format
+function formatDate($dateString) {
+  if (empty($dateString)) {
+    return '';
+  }
+  
+  // Parse the date
+  $timestamp = strtotime($dateString);
+  
+  // Format to ensure two-digit day
+  return date('m/d/Y', $timestamp);
+}
 ?>
 
 <!DOCTYPE html>
@@ -27,6 +53,9 @@ $listPerson = retrieve_current_sit_in();
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Animation Library - AOS -->
   <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  
   <script>
     tailwind.config = {
       theme: {
@@ -47,241 +76,246 @@ $listPerson = retrieve_current_sit_in();
           },
           fontFamily: {
             sans: ['Inter', 'Segoe UI', 'Tahoma', 'sans-serif'],
-          },
-          keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0' },
-              '100%': { opacity: '1' },
-            },
-            slideUp: {
-              '0%': { transform: 'translateY(20px)', opacity: '0' },
-              '100%': { transform: 'translateY(0)', opacity: '1' },
-            },
-            pulse: {
-              '0%, 100%': { transform: 'scale(1)' },
-              '50%': { transform: 'scale(1.05)' },
-            },
-            shimmer: {
-              '0%': { backgroundPosition: '-1000px 0' },
-              '100%': { backgroundPosition: '1000px 0' },
-            },
-          },
-          animation: {
-            fadeIn: 'fadeIn 0.5s ease-out',
-            slideUp: 'slideUp 0.5s ease-out',
-            pulse: 'pulse 2s infinite',
-            shimmer: 'shimmer 2s infinite linear',
-          },
+          }
         }
       }
     }
   </script>
+  
   <style>
     body {
       font-family: 'Inter', sans-serif;
     }
     
-    /* DataTables Custom Styling */
-    .dataTables_wrapper {
-      background-color: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-    }
-    
-    .dataTables_filter input {
-      border: 1px solid #e5e7eb;
-      border-radius: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      margin-left: 0.5rem;
-      font-size: 0.875rem;
-      transition: all 0.2s;
-    }
-    
-    .dataTables_filter input:focus {
-      outline: none;
-      border-color: #0284c7;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
-    }
-    
-    .dataTables_length select {
-      border: 1px solid #e5e7eb;
-      border-radius: 0.5rem;
-      padding: 0.5rem 2rem 0.5rem 0.75rem;
-      font-size: 0.875rem;
-      background-position: right 0.5rem center;
-      transition: all 0.2s;
-    }
-    
-    .dataTables_length select:focus {
-      outline: none;
-      border-color: #0284c7;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
-    }
-    
-    .dataTables_info, .dataTables_length, .dataTables_filter {
-      margin-bottom: 1rem;
-      font-size: 0.875rem;
-      color: #4b5563;
-    }
-    
-    .dataTables_paginate {
-      margin-top: 1rem;
-    }
-    
-    .dataTables_paginate .paginate_button {
-      padding: 0.5rem 0.75rem;
-      margin: 0 0.25rem;
-      border-radius: 0.375rem;
-      border: 1px solid #e5e7eb;
-      background-color: #fff;
-      color: #374151;
-      transition: all 0.2s;
-    }
-    
-    .dataTables_paginate .paginate_button.current {
-      background-color: #0284c7 !important;
-      border-color: #0284c7 !important;
-      color: white !important;
-      font-weight: 500;
-    }
-    
-    .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
-      background-color: #f3f4f6 !important;
-      color: #111827 !important;
-      border-color: #e5e7eb !important;
-    }
-    
-    .dataTables_paginate .paginate_button.disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    table.dataTable {
-      border-collapse: separate;
-      border-spacing: 0;
-      width: 100%;
-    }
-    
-    table.dataTable thead th {
-      background: #f9fafb;
-      color: #374151;
-      font-weight: 600;
-      padding: 1rem;
-      text-align: left;
-      border-bottom: 2px solid #e5e7eb;
-      white-space: nowrap;
-    }
-    
-    table.dataTable tbody tr {
-      transition: all 0.3s ease;
-    }
-    
-    table.dataTable tbody tr:hover {
-      background-color: #f3f4f6;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-    
-    table.dataTable tbody td {
-      padding: 1rem;
-      border-bottom: 1px solid #e5e7eb;
-      vertical-align: middle;
-      transition: all 0.2s ease;
-    }
-    
-    /* Status Badges */
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      text-align: center;
-      transition: all 0.3s ease;
-    }
-    
-    .status-badge.active {
-      background-color: #d1fae5;
-      color: #047857;
-    }
-    
-    .status-badge.completed {
-      background-color: #e0f2fe;
-      color: #0369a1;
-    }
-    
-    /* Button Animations */
-    .btn-animated {
-      position: relative;
-      overflow: hidden;
-      transform: translateZ(0);
-    }
-    
-    .btn-animated::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 300%;
-      height: 300%;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      transition: transform 0.6s ease-out;
-    }
-    
-    .btn-animated:hover::before {
-      transform: translate(-50%, -50%) scale(1);
-    }
-    
-    /* Card hover effects */
     .stat-card {
-      transition: all 0.3s ease;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    
     .stat-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 0.75rem;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0);
+        transition: box-shadow 0.3s ease;
+        pointer-events: none;
+    }
+    .stat-card:hover::after {
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.3);
+    }
+    .stat-card .icon-wrapper {
+        transition: transform 0.5s ease;
+    }
+    .stat-card:hover .icon-wrapper {
+        transform: scale(1.1) rotate(5deg);
     }
     
-    .stat-card:hover .icon-container {
-      transform: scale(1.1);
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    .animate-slide-in-right {
+        animation: slideInRight 0.5s ease-in-out;
+    }
+    .animate-slide-in-left {
+        animation: slideInLeft 0.5s ease-in-out;
+    }
+    .animate-slide-in-up {
+        animation: slideInUp 0.5s ease-in-out;
     }
     
-    .icon-container {
-      transition: transform 0.3s ease;
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Shimmer effect */
-    .shimmer {
-      background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
-      background-size: 1000px 100%;
-      animation: shimmer 2s infinite linear;
+    .stagger-item {
+        opacity: 0;
     }
     
-    /* Counter Animation */
-    .counter-value {
-      display: inline-block;
-      transition: all 0.5s ease;
+    .hover-scale {
+        transition: transform 0.3s ease;
+    }
+    .hover-scale:hover {
+        transform: scale(1.02);
     }
     
-    /* Custom table row animations */
-    .row-enter {
-      opacity: 0;
-      transform: translateY(10px);
+    /* DataTables customization - similar to history.php */
+    .dataTables_wrapper {
+        background-color: white;
+        border-bottom-left-radius: 0.75rem;
+        border-bottom-right-radius: 0.75rem;
+        overflow: hidden;
+        padding-bottom: 1rem;
     }
     
-    .row-enter-active {
-      opacity: 1;
-      transform: translateY(0px);
-      transition: opacity 0.3s, transform 0.3s;
+    /* Search bar styling - reduced padding */
+    .dataTables_filter {
+        margin-bottom: 0;
+        padding: 0.5rem 1.5rem;
+    }
+    
+    /* More compact filter layout */
+    .dataTables_filter label {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        font-size: 0.875rem;
+        color: #4b5563;
+        font-weight: 500;
+    }
+    
+    /* Adjust top margin for table to remove extra space */
+    table.dataTable {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        outline: none;
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    
+    .dataTables_wrapper .dataTables_length select:focus,
+    .dataTables_wrapper .dataTables_filter input:focus {
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.5);
+        border-color: transparent;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background-color: #0284c7 !important;
+        color: white !important;
+        border: 0 !important;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button:not(.current) {
+        color: #374151 !important;
+        background-color: #ffffff !important;
+        border: 1px solid #d1d5db;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        transition: background-color 0.3s ease;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button:not(.current):hover {
+        background-color: #f3f4f6 !important;
+        color: #1f2937 !important;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+        background-color: #ffffff !important;
+        border-color: #d1d5db !important;
+    }
+    
+    .dataTables_wrapper .dataTables_info {
+        font-size: 0.875rem;
+        color: #4B5563;
+        padding: 0.5rem 0;
+    }
+    
+    /* Modern pagination styling */
+    .modern-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0.5rem 0;
+        margin-top: 0.5rem;
+    }
+    
+    .modern-pagination .paginate_button {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.25rem;
+        height: 2.25rem;
+        margin: 0 0.125rem;
+        padding: 0 0.5rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: #4b5563 !important;
+        background: transparent !important;
+        border: none !important;
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+        overflow: hidden;
+    }
+    
+    .modern-pagination .paginate_button.current {
+        background: #0284c7 !important;
+        color: white !important;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3);
+    }
+    
+    .modern-pagination .paginate_button:not(.current):not(.disabled):hover {
+        background: rgba(14, 165, 233, 0.1) !important;
+        color: #0284c7 !important;
+    }
+    
+    .modern-pagination .paginate_button.disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+    }
+    
+    .modern-pagination .ellipsis {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 2.25rem;
+        color: #6b7280;
+        margin: 0 0.25rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+    
+    .modern-pagination .paginate_button.current::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 50%;
+        width: 20px;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 3px;
+        transform: translateX(-50%);
     }
   </style>
 </head>
 
-<body class="bg-gray-50 font-sans text-gray-800">
+<body class="bg-gray-50 font-sans text-gray-800 opacity-0 transition-opacity duration-500">
   <div class="container mx-auto px-4 py-8 max-w-7xl">
-    <!-- Page Header -->
+    <!-- Page Header (simplified - removed export/refresh buttons) -->
     <div class="mb-8">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
             <div>
@@ -292,17 +326,6 @@ $listPerson = retrieve_current_sit_in();
                     Sit In Records
                 </h1>
                 <p class="text-gray-500 mt-1 ml-12">Comprehensive view of all laboratory users</p>
-            </div>
-            <div class="flex space-x-3 mt-4 md:mt-0">
-                <button id="refreshBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-sync-alt mr-2"></i>
-                    Refresh
-                </button>
-                
-                <button id="exportBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-download mr-2 text-gray-500"></i>
-                    Export
-                </button>
             </div>
         </div>
         
@@ -325,57 +348,67 @@ $listPerson = retrieve_current_sit_in();
         </nav>
     </div>
     
-    <!-- Table Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+    <!-- Table Card - with history.php style -->
+    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-md border border-gray-100 mb-8 transition duration-300 hover:border-primary-200 hover-scale stagger-item overflow-hidden">
       <div class="p-6">
-        <table id="sitInTable" class="w-full">
-          <thead>
-            <tr>
-              <th>Sit-in ID</th>
-              <th>ID Number</th>
-              <th>Name</th>
-              <th>Purpose</th>
-              <th>Lab</th>
-              <th>Login</th>
-              <th>Logout</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (!empty($listPerson)) : ?>
-              <?php foreach ($listPerson as $person) : ?>
-                <tr class="row-animation">
-                  <td class="font-medium"><?php echo htmlspecialchars($person['sit_id']); ?></td>
-                  <td><?php echo htmlspecialchars($person['id_number']); ?></td>
-                  <td><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
-                  <td><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
-                  <td class="text-center">
-                    <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
-                      <?php echo htmlspecialchars($person['sit_lab']); ?>
-                    </span>
-                  </td>
-                  <td><?php echo htmlspecialchars($person['sit_login']); ?></td>
-                  <td>
-                    <?php if (empty($person['sit_logout']) || $person['sit_logout'] == 'N/A'): ?>
-                      <span class="status-badge active">Active</span>
-                    <?php else: ?>
-                      <span class="status-badge completed"><?php echo htmlspecialchars($person['sit_logout']); ?></span>
-                    <?php endif; ?>
-                  </td>
-                  <td><?php echo htmlspecialchars($person['sit_date']); ?></td>
-                  <td>
-                    <div class="flex space-x-2 justify-center">
-                      <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg transition-all duration-300 transform hover:scale-110 view-details" data-id="<?php echo htmlspecialchars($person['sit_id']); ?>" title="View Details">
-                        <i class="fas fa-eye"></i>
+        <div class="overflow-x-auto">
+          <table id="sitInTable" class="w-full table-auto border-collapse text-sm text-gray-700">
+            <thead>
+              <tr class="bg-primary-600 text-white">
+                <th class="px-4 py-3 text-left">Sit-in ID</th>
+                <th class="px-4 py-3 text-left">ID Number</th>
+                <th class="px-4 py-3 text-left">Name</th>
+                <th class="px-4 py-3 text-left">Purpose</th>
+                <th class="px-4 py-3 text-left">Laboratory</th>
+                <th class="px-4 py-3 text-left">Time-in</th>
+                <th class="px-4 py-3 text-left">Time-out</th>
+                <th class="px-4 py-3 text-left">Date</th>
+                <th class="px-4 py-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <?php if (!empty($listPerson)) : ?>
+                <?php foreach ($listPerson as $person) : ?>
+                  <tr>
+                    <td class="px-4 py-3 font-medium"><?php echo htmlspecialchars($person['sit_id']); ?></td>
+                    <td class="px-4 py-3"><?php echo htmlspecialchars($person['id_number']); ?></td>
+                    <td class="px-4 py-3"><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
+                    <td class="px-4 py-3"><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
+                    <td class="px-4 py-3">
+                      <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                        <?php echo htmlspecialchars($person['sit_lab']); ?>
+                      </span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <?php echo formatTime($person['sit_login']); ?>
+                    </td>
+                    <td class="px-4 py-3">
+                      <?php if (empty($person['sit_logout']) || $person['sit_logout'] == 'N/A'): ?>
+                        <span class="px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+                          Active
+                        </span>
+                      <?php else: ?>
+                        <?php echo formatTime($person['sit_logout']); ?>
+                      <?php endif; ?>
+                    </td>
+                    <td class="px-4 py-3"><?php echo formatDate($person['sit_date']); ?></td>
+                    <td class="px-4 py-3 text-center">
+                      <button class="bg-primary-600 hover:bg-primary-700 text-white py-1 px-3 rounded view-details" data-id="<?php echo htmlspecialchars($person['sit_id']); ?>">
+                        View
                       </button>
-                    </div>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <tr>
+                  <td colspan="9" class="px-4 py-6 text-center text-gray-500">
+                    <p>No records found.</p>
                   </td>
                 </tr>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </tbody>
-        </table>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
     
@@ -386,131 +419,48 @@ $listPerson = retrieve_current_sit_in();
   </div>
 
   <!-- jQuery (required for DataTables) -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
   <!-- DataTables JS -->
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <!-- SweetAlert2 JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- AOS Animation Library -->
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <!-- DataTables Buttons JS -->
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/buttons.print.min.js"></script>
   
   <script>
     $(document).ready(function() {
+      // Fade in the body
+      setTimeout(() => {
+          document.body.style.opacity = "1";
+      }, 100);
+      
       // Initialize AOS animations
       AOS.init({
         duration: 800,
         once: true
       });
       
-      // Animate counter numbers
-      function animateCounter() {
-        $('.counter').each(function() {
-          const $this = $(this);
-          const target = parseInt($this.attr('data-target'));
-          
-          $({ Counter: 0 }).animate({
-            Counter: target
-          }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function() {
-              $this.text(Math.ceil(this.Counter));
-            }
-          });
-        });
-        
-        $('.counter-decimal').each(function() {
-          const $this = $(this);
-          const target = parseFloat($this.attr('data-target'));
-          
-          $({ Counter: 0 }).animate({
-            Counter: target
-          }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function() {
-              $this.text(this.Counter.toFixed(1));
-            }
-          });
-        });
-      }
-      
-      // Call counter animation after a short delay
-      setTimeout(animateCounter, 500);
-      
-      // Initialize DataTable with row animation
+      // Initialize DataTable with row animation - copied from report.php
       const table = $('#sitInTable').DataTable({
         responsive: true,
         language: {
           search: "_INPUT_",
           searchPlaceholder: "Search records...",
           paginate: {
-            first: '<i class="fas fa-angle-double-left"></i>',
-            previous: '<i class="fas fa-angle-left"></i>',
-            next: '<i class="fas fa-angle-right"></i>',
-            last: '<i class="fas fa-angle-double-right"></i>'
-          }
+            first: '«',
+            previous: '‹',
+            next: '›',
+            last: '»'
+          },
+          info: "",
+          infoEmpty: "",
+          infoFiltered: ""
         },
         order: [[0, 'desc']],
-        buttons: [
-          {
-            extend: 'excel',
-            className: 'hidden',
-            exportOptions: { columns: ':visible:not(:last-child)' },
-            title: 'Sit-in Records - ' + new Date().toLocaleDateString()
-          },
-          {
-            extend: 'pdf',
-            className: 'hidden',
-            exportOptions: { columns: ':visible:not(:last-child)' },
-            title: 'Sit-in Records',
-            customize: function(doc) {
-              doc.pageMargins = [20, 30, 20, 30];
-              doc.defaultStyle.fontSize = 10;
-              doc.styles.tableHeader.fontSize = 11;
-              doc.styles.tableHeader.alignment = 'left';
-              
-              // Add header
-              doc.content.splice(0, 0, {
-                margin: [0, 0, 0, 12],
-                alignment: 'center',
-                text: 'Sit-in Monitoring System',
-                style: { fontSize: 18, bold: true, color: '#0284c7' }
-              });
-              
-              // Add date
-              doc.content.splice(1, 0, {
-                margin: [0, 0, 0, 12],
-                alignment: 'center',
-                text: 'Generated on: ' + new Date().toLocaleDateString(),
-                style: { fontSize: 10, color: '#666666' }
-              });
-              
-              // Add footer
-              doc.footer = function(currentPage, pageCount) {
-                return { 
-                  text: currentPage.toString() + ' of ' + pageCount,
-                  alignment: 'center', fontSize: 8, margin: [0, 10, 0, 0]
-                };
-              };
-            }
-          },
-          {
-            extend: 'print',
-            className: 'hidden',
-            exportOptions: { columns: ':visible:not(:last-child)' }
-          }
-        ],
-        "drawCallback": function() {
+        dom: 'rt<"flex justify-end bg-white px-6 py-4 border-t border-gray-100"<"modern-pagination"p>>',
+        drawCallback: function() {
           // Animate rows when table is drawn or redrawn
-          $('.row-animation').each(function(i) {
+          $('tbody tr').each(function(i) {
             const $row = $(this);
             $row.css('opacity', 0);
             
@@ -526,116 +476,118 @@ $listPerson = retrieve_current_sit_in();
               });
             }, 50 * i); // Stagger the animations
           });
+          
+          // Style the ellipsis
+          $('.ellipsis').html('•••');
         }
       });
       
-      // Add shimmer effect to search when typing
-      $('.dataTables_filter input').on('input', function() {
-        $(this).addClass('shimmer');
+      // Add custom styling to search input
+      setTimeout(() => {
+        // Hide the empty info element that takes up space
+        $('.dataTables_info').css('display', 'none');
+        
+        // Style the ellipsis
+        $('.ellipsis').html('•••');
+        
+        // Add title tooltips for accessibility
+        $('.paginate_button.first').attr('title', 'First Page');
+        $('.paginate_button.previous').attr('title', 'Previous Page');
+        $('.paginate_button.next').attr('title', 'Next Page');
+        $('.paginate_button.last').attr('title', 'Last Page');
+      }, 100);
+      
+      // Stagger in elements with class .stagger-item
+      const staggerItems = document.querySelectorAll('.stagger-item');
+      staggerItems.forEach((item, index) => {
         setTimeout(() => {
-          $(this).removeClass('shimmer');
-        }, 500);
+            item.style.opacity = "1";
+            item.classList.add('animate-slide-in-up');
+        }, 300 + (index * 150));
       });
       
-      // Export button functionality with animation
-      $('#exportBtn').on('click', function() {
-        $(this).addClass('animate-pulse');
-        
-        Swal.fire({
-          title: 'Export Options',
-          html: `
-            <div class="grid grid-cols-1 gap-3 mt-4">
-              <button id="btnExcelExport" class="bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                <i class="fas fa-file-excel mr-2"></i> Export to Excel
-              </button>
-              <button id="btnPdfExport" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                <i class="fas fa-file-pdf mr-2"></i> Export to PDF
-              </button>
-              <button id="btnPrintExport" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                <i class="fas fa-print mr-2"></i> Print Table
-              </button>
-            </div>
-          `,
-          showConfirmButton: false,
-          showCloseButton: true,
-          showClass: {
-            popup: 'animate__animated animate__fadeInDown'
-          },
-          hideClass: {
-            popup: 'animate__animated animate__fadeOutUp'
-          },
-          didOpen: () => {
-            $('#btnExcelExport').on('click', function() {
-              $('.buttons-excel').click();
-              Swal.close();
-            });
-            
-            $('#btnPdfExport').on('click', function() {
-              $('.buttons-pdf').click();
-              Swal.close();
-            });
-            
-            $('#btnPrintExport').on('click', function() {
-              $('.buttons-print').click();
-              Swal.close();
-            });
-          }
-        }).then(() => {
-          $(this).removeClass('animate-pulse');
-        });
-      });
-      
-      // Refresh button functionality with animation
-      $('#refreshBtn').on('click', function() {
-        const $icon = $(this).find('i');
-        $icon.addClass('fa-spin');
-        $(this).addClass('animate-pulse');
-        
-        // Show loading message with SweetAlert2
-        Swal.fire({
-          title: 'Refreshing Data',
-          text: 'Getting the latest records...',
-          timerProgressBar: true,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-        
-        // Simulate refresh with animation
-        setTimeout(function() {
-          location.reload();
-        }, 800);
-      });
-      
-      // View Details Button with animated modal
+      // View Details Button - keep this functionality
       $('.view-details').on('click', function() {
         const recordId = $(this).data('id');
         
-        $(this).addClass('animate-spin');
-        setTimeout(() => {
-          $(this).removeClass('animate-spin');
-        }, 500);
+        // Find the corresponding row data
+        let recordData = null;
+        <?php if (!empty($listPerson)): ?>
+          <?php foreach ($listPerson as $person): ?>
+            if (recordId == <?php echo json_encode($person['sit_id']); ?>) {
+              recordData = {
+                sit_id: <?php echo json_encode($person['sit_id']); ?>,
+                id_number: <?php echo json_encode($person['id_number']); ?>,
+                name: <?php echo json_encode($person['firstName'] . ' ' . $person['lastName']); ?>,
+                purpose: <?php echo json_encode($person['sit_purpose']); ?>,
+                lab: <?php echo json_encode($person['sit_lab']); ?>,
+                login: <?php echo json_encode(formatTime($person['sit_login'])); ?>,
+                logout: <?php echo json_encode(empty($person['sit_logout']) || $person['sit_logout'] == 'N/A' ? 'Active' : formatTime($person['sit_logout'])); ?>,
+                date: <?php echo json_encode(formatDate($person['sit_date'])); ?>
+              };
+            }
+          <?php endforeach; ?>
+        <?php endif; ?>
         
-        Swal.fire({
-          title: 'Sit-in Record Details',
-          html: `
-            <div class="text-left">
-              <p class="mb-2"><strong>Sit-in ID:</strong> ${recordId}</p>
-              <p class="mb-2"><strong>Lab Computer:</strong> PC-${Math.floor(Math.random() * (30 - 1) + 1)}</p>
-              <p class="mb-2"><strong>Session Duration:</strong> ${Math.floor(Math.random() * 180) + 15} minutes</p>
-              <p class="mb-2"><strong>Additional Notes:</strong> Regular lab use activity</p>
-              <p class="mb-2"><strong>IP Address:</strong> 192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}</p>
-            </div>
-          `,
-          confirmButtonColor: '#0284c7',
-          confirmButtonText: 'Close',
-          showClass: {
-            popup: 'animate__animated animate__fadeIn'
-          },
-          hideClass: {
-            popup: 'animate__animated animate__fadeOut'
-          }
-        });
+        if (recordData) {
+          Swal.fire({
+            title: 'Sit-in Record Details',
+            html: `
+              <div class="text-left">
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                  <div class="bg-blue-50 p-3 rounded-lg">
+                    <p class="text-xs text-blue-600 mb-1">ID Number</p>
+                    <p class="font-semibold">${recordData.id_number}</p>
+                  </div>
+                  <div class="bg-blue-50 p-3 rounded-lg">
+                    <p class="text-xs text-blue-600 mb-1">Lab</p>
+                    <p class="font-semibold">${recordData.lab}</p>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <p class="text-xs text-gray-500 mb-1">Student Name</p>
+                  <p class="font-semibold">${recordData.name}</p>
+                </div>
+                
+                <div class="bg-gray-50 p-3 rounded-lg mb-4">
+                  <p class="text-xs text-gray-500 mb-1">Purpose</p>
+                  <p>${recordData.purpose}</p>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <p class="text-xs text-gray-500 mb-1">Time in</p>
+                    <p class="font-medium text-blue-600">${recordData.login}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-500 mb-1">Time out</p>
+                    <p class="font-medium ${recordData.logout === 'Active' ? 'text-green-600' : 'text-blue-600'}">${recordData.logout}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-500 mb-1">Date</p>
+                    <p class="font-medium">${recordData.date}</p>
+                  </div>
+                </div>
+              </div>
+            `,
+            confirmButtonColor: '#0284c7',
+            confirmButtonText: 'Close',
+            showClass: {
+              popup: 'animate__animated animate__fadeIn'
+            },
+            hideClass: {
+              popup: 'animate__animated animate__fadeOut'
+            }
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Record Not Found',
+            text: 'The selected record could not be found.',
+            confirmButtonColor: '#0284c7'
+          });
+        }
       });
     });
   </script>
