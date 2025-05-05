@@ -1,6 +1,12 @@
 <?php
-include '../../api/api_student.php';
+include_once '../../api/api_student.php'; // Changed from include to include_once
+// Include the points functions
+include_once __DIR__ . '/points_functions.php';
 
+// Make sure we have the student's points in the session
+if (isset($_SESSION['id_number']) && !isset($_SESSION['points'])) {
+    $_SESSION['points'] = get_student_points($_SESSION['id_number']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,8 +33,8 @@ include '../../api/api_student.php';
                 200: '#bae6fd',
                 300: '#7dd3fc',
                 400: '#38bdf8',
-                500: '#0ea5e9',
-                600: '#0284c7',
+                500: '#0284c7', /* Changed from 0ea5e9 to 0284c7 */
+                600: '#0284c7', /* Changed to match the requested color */
                 700: '#0369a1',
                 800: '#075985',
                 900: '#0c4a6e',
@@ -285,6 +291,28 @@ include '../../api/api_student.php';
             <span>Notifications</span>
           </a>
           
+          <!-- Points and Leaderboard -->
+          <div class="dropdown-wrapper">
+            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover rounded-md inline-flex items-center transition duration-200">
+              <i class="fas fa-award mr-2"></i>
+              <span>My Points: <?php echo isset($_SESSION['points']) ? $_SESSION['points'] : '0'; ?></span>
+              <svg class="ml-1 h-4 w-4 transform transition-transform duration-200 group-hover:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <div class="dropdown-menu">
+              <a href="leaderboard.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'leaderboard.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
+                <i class="fas fa-trophy mr-3 w-5 text-center"></i> Leaderboard
+              </a>
+              <a href="points_history.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'points_history.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
+                <i class="fas fa-history mr-3 w-5 text-center"></i> Points History
+              </a>
+              <a href="use_points.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'use_points.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
+                <i class="fas fa-exchange-alt mr-3 w-5 text-center"></i> Use Points
+              </a>
+            </div>
+          </div>
+          
           <!-- Logout Button -->
           <a href="../../auth/logout.php" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center" onclick="handleLogout(event)" aria-label="Logout from student dashboard">
             <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -313,6 +341,29 @@ include '../../api/api_student.php';
         
         <a href="reservation.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'reservation.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-calendar-check mr-2 w-5 text-center"></i> Reservation
+        </a>
+        
+        <!-- Reward System -->
+        <div class="pt-2 pb-1">
+          <p class="px-3 text-xs uppercase tracking-wider font-semibold text-gray-500">Reward System</p>
+        </div>
+
+        <div class="flex items-center justify-between px-3 py-2">
+          <span class="text-base font-medium text-gray-700">
+            <i class="fas fa-award mr-2 w-5 text-center"></i> My Points: <?php echo isset($_SESSION['points']) ? $_SESSION['points'] : '0'; ?>
+          </span>
+        </div>
+
+        <a href="leaderboard.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'leaderboard.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-trophy mr-2 w-5 text-center"></i> Leaderboard
+        </a>
+
+        <a href="points_history.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'points_history.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-history mr-2 w-5 text-center"></i> Points History
+        </a>
+
+        <a href="use_points.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'use_points.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-exchange-alt mr-2 w-5 text-center"></i> Use Points
         </a>
         
         <!-- Mobile Notifications -->
@@ -388,5 +439,6 @@ include '../../api/api_student.php';
         }
       });
     }
+  </script>
 </body>
 </html>

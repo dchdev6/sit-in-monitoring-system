@@ -1,7 +1,10 @@
 <?php
     include '../backend/backend_index.php';
 
-    session_start();
+    // Check if a session is already active before starting a new one
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 ?>
 <!DOCTYPE html>
 <html lang="en">

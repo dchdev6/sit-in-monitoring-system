@@ -1,5 +1,21 @@
 <?php 
 include '../../api/api_admin.php';
+// Include the points functions - fixing the path
+include_once __DIR__ . '/points_functions.php';
+
+// Initialize pending_count variable
+$pending_count = 0;
+
+// Get count of pending point requests if the function exists
+if (function_exists('get_pending_point_requests')) {
+  try {
+    $pending_requests = get_pending_point_requests();
+    $pending_count = is_array($pending_requests) ? count($pending_requests) : 0;
+  } catch (Exception $e) {
+    error_log("Error getting pending requests count: " . $e->getMessage());
+    $pending_count = 0;
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -310,13 +326,13 @@ include '../../api/api_admin.php';
             <span>Sit-in</span>
           </a>
           
-          <!-- Dropdown for Reports -->
+          <!-- Reports Dropdown -->
           <div class="relative dropdown-wrapper">
-            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover rounded-md inline-flex items-center transition duration-200 <?php echo in_array(basename($_SERVER['PHP_SELF']), ['ViewRecords.php', 'Report.php', 'Feedback_Report.php']) ? 'nav-link-active' : ''; ?>">
-              <i class="fas fa-chart-line mr-1"></i>
+            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover rounded-md inline-flex items-center transition duration-200 <?php echo in_array(basename($_SERVER['PHP_SELF']), ['ViewRecords.php', 'Report.php', 'Feedback_Report.php', 'Reservation.php']) ? 'nav-link-active' : ''; ?>">
+              <i class="fas fa-file-lines mr-1"></i>
               <span>Reports</span>
               <svg class="ml-1 h-4 w-4 transform transition-transform duration-200 group-hover:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a 1 1 0 01-1.414 0l-4-4a 1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
             </button>
             <div class="dropdown-menu">
@@ -329,66 +345,116 @@ include '../../api/api_admin.php';
               <a href="Feedback_Report.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'Feedback_Report.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
                 <i class="fas fa-comments"></i> Feedback Reports
               </a>
+              <a href="Reservation.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'Reservation.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
+                <i class="fas fa-calendar-check"></i> Reservation
+              </a>
             </div>
           </div>
           
-          <a href="Reservation.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center <?php echo basename($_SERVER['PHP_SELF']) == 'Reservation.php' ? 'nav-link-active' : ''; ?>">
-            <i class="fas fa-calendar-check mr-1"></i>
-            <span>Reservation</span>
-          </a>
-          
-          <!-- Logout Button -->
-          <a href="../../auth/logout.php" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center" onclick="handleLogout(event)" aria-label="Logout from admin dashboard">
-            <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Log out
+          <!-- Rewards Dropdown -->
+          <div class="relative dropdown-wrapper">
+            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover rounded-md inline-flex items-center transition duration-200 <?php echo in_array(basename($_SERVER['PHP_SELF']), ['reward_points.php', 'pending_points.php', 'leaderboard_admin.php']) ? 'nav-link-active' : ''; ?>">
+              <i class="fas fa-award mr-1"></i>
+              <span>Rewards</span>
+              <svg class="ml-1 h-4 w-4 transform transition-transform duration-200 group-hover:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a 1 1 0 01-1.414 0l-4-4a 1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              
+              <!-- Pending approval count badge -->
+              <?php if($pending_count > 0): ?>
+              <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"><?php echo $pending_count; ?></span>
+              <?php endif; ?>
+            </button>
+            <div class="dropdown-menu">
+              <a href="pending_points.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'pending_points.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
+                <i class="fas fa-clock"></i> Pending Approvals
+                <?php if($pending_count > 0): ?>
+                <span class="ml-auto bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"><?php echo $pending_count; ?></span>
+                <?php endif; ?>
+              </a>
+              <a href="reward_points.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'reward_points.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
+                <i class="fas fa-gift"></i> Give Points
+              </a>
+              <a href="leaderboard_admin.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'leaderboard_admin.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
+                <i class="fas fa-trophy"></i> Leaderboard
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Logout Button -->
+        <div class="hidden md:flex items-center ml-4">
+          <a href="../../auth/logout.php" 
+             class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition-all duration-200 flex items-center space-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+             onclick="handleLogout(event)" 
+             aria-label="Logout from admin dashboard">
+            <i class="fas fa-sign-out-alt mr-2"></i>
+            <span>Log out</span>
           </a>
         </div>
-      </div>
+      </div>  
     </div>
 
     <!-- Mobile menu -->
     <div class="md:hidden bg-white border-t border-gray-100" id="mobile-menu">
-      <div class="px-2 pt-2 pb-3 space-y-1">
-        <a href="Admin.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Admin.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+      <div class="px-4 py-3 space-y-3">
+        <a href="Admin.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Admin.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-home mr-2 w-5 text-center"></i> Home
         </a>
         
-        <button type="button" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="animateSearch()">
+        <button type="button" class="w-full text-left block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="animateSearch()">
           <i class="fas fa-search mr-2 w-5 text-center"></i> Search
         </button>
         
-        <a href="Students.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Students.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Students.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Students.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-user-graduate mr-2 w-5 text-center"></i> Students
         </a>
         
-        <a href="Sit_in.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Sit_in.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Sit_in.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Sit_in.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-laptop-code mr-2 w-5 text-center"></i> Sit-in
         </a>
         
-        <div class="pt-2 pb-1">
+        <div class="pt-4 pb-2">
           <p class="px-3 text-xs uppercase tracking-wider font-semibold text-gray-500">Reports</p>
         </div>
         
-        <a href="ViewRecords.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'ViewRecords.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="ViewRecords.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'ViewRecords.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-list-ul mr-2 w-5 text-center"></i> View Sit-in Records
         </a>
         
-        <a href="Report.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Report.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Report.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Report.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-file-lines mr-2 w-5 text-center"></i> Sit-in Reports
         </a>
         
-        <a href="Feedback_Report.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Feedback_Report.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Feedback_Report.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Feedback_Report.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-comments mr-2 w-5 text-center"></i> Feedback Reports
         </a>
         
-        <a href="Reservation.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Reservation.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Reservation.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Reservation.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-calendar-check mr-2 w-5 text-center"></i> Reservation
         </a>
         
-        <div class="pt-4 pb-3 border-t border-gray-200">
-          <a href="../../auth/logout.php" class="flex items-center justify-center w-full text-center px-4 py-2 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-all duration-200" onclick="handleLogout(event)">
+        <div class="pt-4 pb-2">
+          <p class="px-3 text-xs uppercase tracking-wider font-semibold text-gray-500">Rewards</p>
+        </div>
+
+        <a href="pending_points.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'pending_points.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-clock mr-2 w-5 text-center"></i> Pending Approvals
+          <?php if($pending_count > 0): ?>
+          <span class="ml-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 inline-flex items-center justify-center"><?php echo $pending_count; ?></span>
+          <?php endif; ?>
+        </a>
+
+        <a href="reward_points.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'reward_points.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-gift mr-2 w-5 text-center"></i> Give Points
+        </a>
+
+        <a href="leaderboard_admin.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'leaderboard_admin.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-trophy mr-2 w-5 text-center"></i> Leaderboard
+        </a>
+        
+        <div class="pt-6 pb-4 border-t border-gray-200 mt-2">
+          <a href="../../auth/logout.php" class="flex items-center justify-center w-full text-center px-4 py-3 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-all duration-200" onclick="handleLogout(event)">
             <i class="fas fa-sign-out-alt mr-2"></i> Log out
           </a>
         </div>

@@ -1,3 +1,15 @@
+<?php
+$listPerson = [];
+$data = []; // Initialize $data as empty array
+$lab_final = isset($_POST['lab']) ? 'lab_' . $_POST['lab'] : 'lab_524'; // Default lab if not set
+
+// Include necessary files and get data when lab is selected
+if (isset($_POST['labSubmit']) && isset($_POST['lab'])) {
+    $lab = $_POST['lab'];
+    $lab_final = 'lab_' . $lab;
+    $data = retrieve_pc($lab_final);
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

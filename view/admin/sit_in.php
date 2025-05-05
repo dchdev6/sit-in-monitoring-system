@@ -1,7 +1,11 @@
 <?php
 include '../../includes/navbar_admin.php';
 
+// Get sit-in records and initialize as an empty array if null
 $listPerson = retrieve_sit_in();
+if (!is_array($listPerson)) {
+    $listPerson = [];
+}
 ?>
 
 <!DOCTYPE html>

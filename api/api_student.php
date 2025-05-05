@@ -11,6 +11,9 @@ error_log("FILES: " . print_r($_FILES, true));
 // Include backend file
 include __DIR__ . '/../backend/backend_student.php';
 
+// Include points functions
+include_once __DIR__ . '/../includes/points_functions.php';
+
 // Ensure assets/images directory exists
 $assetsDir = __DIR__ . "/../assets";
 $imagesDir = $assetsDir . "/images";
@@ -239,6 +242,165 @@ if (isset($_POST['reserve_user'])) {
         $_SESSION['error_message'] = "Failed to submit reservation. Error: " . $stmt->error;
         header("Location: ../view/student/reservation.php");
         exit;
+    }
+}
+
+/**
+ * Request login points for student
+ * @param int $student_id The ID number of the student
+ * @return bool True if request successful, false otherwise
+ */
+if (!function_exists('request_login_points')) {
+    function request_login_points($student_id) {
+        global $conn;
+        
+        try {
+            // Check if student already requested points today
+            $check_query = "SELECT * FROM points_requests 
+                            WHERE student_id = ? 
+                            AND DATE(request_date) = CURDATE() 
+                            AND request_type = 'login'";
+            $check_stmt = $conn->prepare($check_query);
+            $check_stmt->bind_param("i", $student_id);
+            $check_stmt->execute();
+            $result = $check_stmt->get_result();
+            
+            if ($result->num_rows > 0) {
+                // Already requested today
+                return false;
+            }
+            
+            // Insert new points request
+            $query = "INSERT INTO points_requests (student_id, points_amount, request_type, status, request_date) 
+                      VALUES (?, 3, 'login', 'pending', NOW())";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $student_id);
+            $success = $stmt->execute();
+            
+            return $success;
+        } catch (Exception $e) {
+            error_log('Error requesting login points: ' . $e->getMessage());
+            return false;
+        }
+    }
+}
+
+/**
+ * Get points history for a student
+ * @param int $student_id The ID number of the student
+ * @return array Array of points history records
+ */
+if (!function_exists('get_points_history')) {
+    function get_points_history($student_id) {
+        global $conn;
+        
+        try {
+            $query = "SELECT ph.*, pr.request_type 
+                      FROM points_history ph
+                      LEFT JOIN points_requests pr ON ph.request_id = pr.id
+                      WHERE ph.student_id = ?
+                      ORDER BY ph.created_at DESC";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $student_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $history = [];
+            while ($row = $result->fetch_assoc()) {
+                $history[] = $row;
+            }
+            
+            return $history;
+        } catch (Exception $e) {
+            error_log('Error getting points history: ' . $e->getMessage());
+            return [];
+        }
+    }
+}
+
+/**
+ * Use points for sit-in reservation
+ * @param int $student_id The ID number of the student
+ * @param int $points_amount Points to use (default 3)
+ * @return bool True if successful, false otherwise
+ */
+if (!function_exists('use_points_for_reservation')) {
+    function use_points_for_reservation($student_id, $points_amount = 3) {
+        global $conn;
+        
+        try {
+            $conn->begin_transaction();
+            
+            // Check if student has enough points
+            $current_points = get_student_points($student_id);
+            if ($current_points < $points_amount) {
+                return false;
+            }
+            
+            // Deduct points from student
+            $update_query = "UPDATE students SET points = points - ? WHERE id_number = ?";
+            $update_stmt = $conn->prepare($update_query);
+            $update_stmt->bind_param("ii", $points_amount, $student_id);
+            $update_stmt->execute();
+            
+            // Record the transaction in points history
+            $history_query = "INSERT INTO points_history 
+                             (student_id, points_amount, transaction_type, description, created_at) 
+                             VALUES (?, ?, 'deduct', 'Used for sit-in reservation', NOW())";
+            $history_stmt = $conn->prepare($history_query);
+            $history_stmt->bind_param("ii", $student_id, $points_amount);
+            $history_stmt->execute();
+            
+            // Grant a reservation session (You'll need to implement this part according to your system's design)
+            // This is placeholder code - replace with actual reservation creation
+            $reservation_query = "INSERT INTO reservations 
+                                 (student_id, points_used, status, created_at) 
+                                 VALUES (?, ?, 'approved', NOW())";
+            $reservation_stmt = $conn->prepare($reservation_query);
+            $status = "approved";
+            $reservation_stmt->bind_param("iis", $student_id, $points_amount, $status);
+            $reservation_stmt->execute();
+            
+            $conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $conn->rollback();
+            error_log('Error using points for reservation: ' . $e->getMessage());
+            return false;
+        }
+    }
+}
+
+/**
+ * Get leaderboard of students with most points
+ * @param int $limit Number of students to return (default 10)
+ * @return array Array of top students
+ */
+if (!function_exists('get_leaderboard')) {
+    function get_leaderboard($limit = 10) {
+        global $conn;
+        
+        try {
+            $query = "SELECT s.id_number, s.first_name, s.last_name, s.points, p.name as program 
+                      FROM students s
+                      LEFT JOIN programs p ON s.program_id = p.id
+                      ORDER BY s.points DESC
+                      LIMIT ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $limit);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $leaderboard = [];
+            while ($row = $result->fetch_assoc()) {
+                $leaderboard[] = $row;
+            }
+            
+            return $leaderboard;
+        } catch (Exception $e) {
+            error_log('Error getting leaderboard: ' . $e->getMessage());
+            return [];
+        }
     }
 }
 ?>

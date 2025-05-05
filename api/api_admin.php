@@ -424,7 +424,158 @@ if(isset($_POST['deny_reservation'])){
   }
 }
 
+/**
+ * Get all pending point approval requests
+ * @return array Array of pending requests
+ */
+function get_pending_point_requests() {
+    global $conn;
+    
+    try {
+        $query = "SELECT pr.*, s.firstName as first_name, s.lastName as last_name, s.id_number 
+                  FROM points_requests pr
+                  JOIN students s ON pr.student_id = s.id_number
+                  WHERE pr.status = 'pending'
+                  ORDER BY pr.request_date DESC";
+        $stmt = $conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $requests = [];
+        while ($row = $result->fetch_assoc()) {
+            $requests[] = $row;
+        }
+        
+        return $requests;
+    } catch (Exception $e) {
+        error_log('Error getting pending point requests: ' . $e->getMessage());
+        return [];
+    }
+}
 
+/**
+ * Count pending point approval requests
+ * @return int Number of pending requests
+ */
+function count_pending_point_requests() {
+    global $conn;
+    
+    try {
+        $query = "SELECT COUNT(*) AS count
+                  FROM points_requests 
+                  WHERE status = 'pending'";
+        $stmt = $conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($row = $result->fetch_assoc()) {
+            return (int)$row['count'];
+        }
+        
+        return 0;
+    } catch (Exception $e) {
+        error_log('Error counting pending point requests: ' . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Approve or reject a points request
+ * @param int $request_id The ID of the request
+ * @param string $status 'approved' or 'rejected'
+ * @return bool True if successful, false otherwise
+ */
+function process_points_request($request_id, $status) {
+    global $conn;
+    
+    try {
+        $conn->begin_transaction();
+        
+        // Get request details
+        $query = "SELECT * FROM points_requests WHERE id = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $request_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($row = $result->fetch_assoc()) {
+            // Update request status
+            $update_query = "UPDATE points_requests SET status = ? WHERE id = ?";
+            $update_stmt = $conn->prepare($update_query);
+            $update_stmt->bind_param("si", $status, $request_id);
+            $update_stmt->execute();
+            
+            // If approved, add points to student
+            if ($status === 'approved') {
+                $student_id = $row['student_id'];
+                $points_amount = $row['points_amount'];
+                
+                // Add points to student
+                $add_points_query = "UPDATE students SET points = points + ? WHERE id_number = ?";
+                $add_points_stmt = $conn->prepare($add_points_query);
+                $add_points_stmt->bind_param("ii", $points_amount, $student_id);
+                $add_points_stmt->execute();
+                
+                // Record in history
+                $history_query = "INSERT INTO points_history 
+                                 (student_id, request_id, points_amount, transaction_type, description, created_at) 
+                                 VALUES (?, ?, ?, 'add', ?, NOW())";
+                $history_stmt = $conn->prepare($history_query);
+                $transaction_type = "add";
+                $description = ucfirst($row['request_type']) . " points";
+                $history_stmt->bind_param("iiiss", $student_id, $request_id, $points_amount, $transaction_type, $description);
+                $history_stmt->execute();
+            }
+            
+            $conn->commit();
+            return true;
+        }
+        
+        $conn->rollback();
+        return false;
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log('Error processing points request: ' . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * Award points manually to a student
+ * @param int $student_id The ID of the student
+ * @param int $points_amount Points to award
+ * @param string $reason Reason for awarding points
+ * @return bool True if successful, false otherwise
+ */
+function award_points_to_student($student_id, $points_amount, $reason) {
+    global $conn;
+    
+    try {
+        $conn->begin_transaction();
+        
+        // Add points to student
+        $add_points_query = "UPDATE students SET points = points + ? WHERE id_number = ?";
+        $add_points_stmt = $conn->prepare($add_points_query);
+        $add_points_stmt->bind_param("ii", $points_amount, $student_id);
+        $add_points_stmt->execute();
+        
+        // Record in history
+        $history_query = "INSERT INTO points_history 
+                         (student_id, points_amount, transaction_type, description, created_at) 
+                         VALUES (?, ?, 'add', ?, NOW())";
+        $history_stmt = $conn->prepare($history_query);
+        $transaction_type = "add";
+        $history_stmt->bind_param("iis", $student_id, $points_amount, $reason);
+        $history_stmt->execute();
+        
+        $conn->commit();
+        return true;
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log('Error awarding points: ' . $e->getMessage());
+        return false;
+    }
+}
 
 ?>
 
@@ -673,7 +824,7 @@ if(isset($_POST['deny_reservation'])){
   <script src="https://cdn.datatables.net/2.0.6/js/dataTables.bootstrap5.js"></script>
   <script src="https://cdn.datatables.net/2.0.6/js/dataTables.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKpH+YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.js"></script>

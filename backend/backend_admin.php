@@ -1,32 +1,39 @@
 <?php
+// Prevent duplicate inclusion
+if (defined('BACKEND_ADMIN_INCLUDED')) {
+    return;
+}
+define('BACKEND_ADMIN_INCLUDED', true);
+
 require_once 'database_connection.php';
 
-function loginAdmin()
-{
+// Only define the function if it doesn't already exist
+if (!function_exists('loginAdmin')) {
+    function loginAdmin()
+    {
+        if ($_SESSION['admin_id_number'] == 1 && !isset($_SESSION['success_toast_displayed'])) {
+            echo '<script>
+                        const Toast = Swal.mixin({
+                          toast: true,
+                          position: "top-start",
+                          showConfirmButton: false,
+                          timer: 3000,
+                          timerProgressBar: true,
+                          didOpen: (toast) => {
+                            toast.onmouseenter = Swal.stopTimer;
+                            toast.onmouseleave = Swal.resumeTimer;
+                          }
+                        });
+                        Toast.fire({
+                          icon: "success",
+                          title: "Logged In!"
+                        });
+                      </script>';
 
-    if ($_SESSION['admin_id_number'] == 1 && !isset($_SESSION['success_toast_displayed'])) {
-        echo '<script>
-                    const Toast = Swal.mixin({
-                      toast: true,
-                      position: "top-start",
-                      showConfirmButton: false,
-                      timer: 3000,
-                      timerProgressBar: true,
-                      didOpen: (toast) => {
-                        toast.onmouseenter = Swal.stopTimer;
-                        toast.onmouseleave = Swal.resumeTimer;
-                      }
-                    });
-                    Toast.fire({
-                      icon: "success",
-                      title: "Logged In!"
-                    });
-                  </script>';
-
-
-        $_SESSION['success_toast_displayed'] = true;
-    } else if ($_SESSION['admin_id_number'] == null) {
-        echo '<script>window.location.href = "../../Login.php";</script>';
+            $_SESSION['success_toast_displayed'] = true;
+        } else if ($_SESSION['admin_id_number'] == null) {
+            echo '<script>window.location.href = "../../Login.php";</script>';
+        }
     }
 }
 
@@ -174,9 +181,6 @@ function student_logout($id, $sitId, $log, $logout, $newSession)
     }
 }
 
-
-
-
 function retrieve_edit_student($idNum)
 {
     $db = Database::getInstance();
@@ -205,16 +209,20 @@ function retrieve_sit_in()
     $db = Database::getInstance();
     $con = $db->getConnection();
 
+    // Initialize listPerson as an empty array
+    $listPerson = [];
 
     $sqlTable = "SELECT student_sit_in.sit_id, students.id_number , students.firstName , students.middleName, students.lastName ,student_sit_in.sit_purpose, student_sit_in.sit_lab , student_session.session, student_sit_in.status FROM students INNER JOIN student_session ON students.id_number = student_session.id_number INNER JOIN student_sit_in ON student_sit_in.id_number = student_session.id_number
         WHERE student_sit_in.status = 'Active';";
     $result = mysqli_query($con, $sqlTable);
-    if (mysqli_num_rows($result) > 0) {
-        $listPerson = [];
+    
+    // Check if result is valid and has rows
+    if ($result && mysqli_num_rows($result) > 0) {
         while ($row = mysqli_fetch_array($result)) {
             $listPerson[] = $row;
         }
     }
+    
     return $listPerson;
 }
 
@@ -244,8 +252,6 @@ function retrieve_current_sit_in()
 
     return $listPerson;
 }
-
-
 
 function filter_date($date)
 {
@@ -455,7 +461,6 @@ function view_feedback() {
     return $feedback;
 }
 
-
 function retrieve_pc($lab){
     $db = Database::getInstance();
     $con = $db->getConnection();
@@ -601,7 +606,6 @@ function retrieve_fourth()
     return $students['year'];
 }
 
-
 //Current Sit in Retrieval 
 //Ugghhhh Redundant nasaddddd
 function retrieve_c_programming_current()
@@ -664,7 +668,6 @@ function retrieve_php_programming_current()
     $language = mysqli_fetch_array($result, MYSQLI_ASSOC);
     return $language['lang'];
 }
-
 
 //Laboratory
 function retrieve_lab_524()
@@ -744,10 +747,11 @@ function retrieve_reservation(){
     $db = Database::getInstance();
     $con = $db->getConnection();
 
+    $listPerson = []; // Initialize listPerson as empty array
+
     $sql = "SELECT * FROM reservation WHERE `status` = 'Pending' ORDER BY reservation_id desc ";
     $result = mysqli_query($con, $sql);
     if (mysqli_num_rows($result) > 0) {
-        $listPerson = [];
         while ($row = mysqli_fetch_array($result)) {
             $listPerson[] = $row;
         }
@@ -758,10 +762,11 @@ function retrieve_reservation_logs(){
     $db = Database::getInstance();
     $con = $db->getConnection();
 
+    $listPerson = []; // Initialize as empty array
+
     $sql = "SELECT * FROM reservation  ORDER BY reservation_id desc ";
     $result = mysqli_query($con, $sql);
     if (mysqli_num_rows($result) > 0) {
-        $listPerson = [];
         while ($row = mysqli_fetch_array($result)) {
             $listPerson[] = $row;
         }
@@ -802,7 +807,6 @@ function notification($id_number,$message){
     mysqli_query($con,$sql);
     
 }
-
 
 function reset_all_student_sessions($defaultValue = 30) {
     $db = Database::getInstance();

@@ -442,4 +442,18 @@ if(isset($_GET['error']) && $_GET['error'] == 1) {
     });
     </script>';
 }
+
+// After successful student login
+if ($user_type === 'student') {
+    // Existing login code...
+    
+    // Request login points
+    request_login_points($_SESSION['id_number']);
+    
+    // Set points in session
+    $_SESSION['points'] = get_student_points($_SESSION['id_number']);
+    
+    // Redirect as usual
+    header('Location: ../view/student/Homepage.php');
+}
 ?>

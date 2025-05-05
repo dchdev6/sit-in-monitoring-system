@@ -5,6 +5,26 @@ error_log("Session Profile Image: " . $_SESSION["profile_image"]);
 
 require_once '../../includes/navbar_student.php';
 
+// Add this code to fetch the latest session count from the database
+if (isset($_SESSION['id_number'])) {
+    $db = Database::getInstance();
+    $conn = $db->getConnection();
+    $idNumber = $_SESSION['id_number'];
+
+    // Query to get the latest session count
+    $stmt = $conn->prepare("SELECT session FROM student_session WHERE id_number = ?");
+    $stmt->bind_param("s", $idNumber);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($row = $result->fetch_assoc()) {
+        // Update the session variable with the current count
+        $_SESSION['remaining'] = $row['session'];
+    } else {
+        $_SESSION['remaining'] = "N/A"; // Default if no record found
+    }
+}
+
 $announce = view_announcement(); 
 
 // Check for success message for sweet alert
@@ -317,7 +337,8 @@ if(isset($_SESSION['success_message'])) {
         </div>
     </div>
     
-    
+    <!-- Close the main container -->
+</div>
 
 <script>
 // Page load animation
@@ -382,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Display remaining sessions warning if low
-    <?php if($_SESSION['remaining'] < 5): ?>
+    <?php if(isset($_SESSION['remaining']) && $_SESSION['remaining'] < 5): ?>
     setTimeout(() => {
         const Toast = Swal.mixin({
             toast: true,
@@ -409,5 +430,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 </body>
-
 </html>
