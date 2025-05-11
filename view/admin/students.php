@@ -1302,8 +1302,9 @@ if(isset($_SESSION['registration_error'])) {
           $('.dataTables_filter label').addClass('flex items-center');
           $('.dataTables_length select').addClass('focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500');
           
-          // Remove any padding adjustments that were for the icon
-          $('.dataTables_filter input').removeClass('pl-9');
+          // Add icon to search input
+          $('.dataTables_filter label').prepend('<i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>');
+          $('.dataTables_filter input').addClass('pl-10').css('padding-left', '2.5rem');
         }
       });
       

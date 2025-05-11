@@ -17,24 +17,17 @@ if (isset($_POST['submit_feedback'])) {
     $feedback = $_POST['feedback_text'];
 
     if (!empty($feedback)) {
-        require_once '../../includes/db_connection.php'; // Ensure the database connection is included
-
-        // Save feedback to the database
-        $stmt = $conn->prepare("INSERT INTO feedback (id_number, lab, date, message) VALUES (?, ?, NOW(), ?)");
-        if ($stmt === false) {
-            $_SESSION['success_message'] = "Failed to prepare the database statement.";
-            header("Location: history.php");
-            exit();
-        }
-
-        $stmt->bind_param("sss", $idNumber, $lab, $feedback);
-
-        if ($stmt->execute()) {
+        require_once '../../backend/database_connection.php'; // Use the correct database connection file
+        require_once '../../backend/backend_student.php'; // Include the backend functions
+        
+        // Use the function to submit feedback
+        $result = submit_feedback($idNumber, $lab, $feedback);
+        
+        if ($result) {
             $_SESSION['success_message'] = "Your feedback has been submitted successfully!";
         } else {
-            $_SESSION['success_message'] = "Failed to save feedback: " . $stmt->error;
+            $_SESSION['success_message'] = "Failed to save feedback. Please try again.";
         }
-        $stmt->close();
     } else {
         $_SESSION['success_message'] = "Feedback cannot be empty.";
     }
@@ -151,7 +144,7 @@ if (isset($_POST['submit_feedback'])) {
         }
         @keyframes slideInLeft {
             from { opacity: 0; transform: translateX(-30px); }
-            to { opacity: 1; transform: translateX(0); }
+            to { opacity: 1; }
         }
         @keyframes slideInUp {
             from { opacity: 0; transform: translateY(30px); }
@@ -436,403 +429,93 @@ if (isset($_POST['submit_feedback'])) {
         .ripple {
             position: absolute;
             border-radius: 50%;
-            transform: scale(0);
-            background-color: rgba(14, 165, 233, 0.15);
-            animation: rippleEffect 0.6s linear;
-        }
-        
-        @keyframes rippleEffect {
-            to {
-                transform: scale(4);
-                opacity: 0;
-            }
-        }
-
-        /* Enhanced pagination styling */
-        .dt-pagination {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0.75rem 0;
-            gap: 0.25rem;
-        }
-        
-        .dt-pagination .paginate_button {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 0.125rem;
-            min-width: 2.25rem;
-            height: 2.25rem;
-            padding: 0 0.5rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-            color: #374151 !important;
-            background: #ffffff !important;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-        }
-        
-        .dt-pagination .paginate_button.current {
-            color: #ffffff !important;
-            background: #0284c7 !important;
-            border: 1px solid #0284c7 !important;
-            box-shadow: 0 1px 3px rgba(2, 132, 199, 0.4);
-            font-weight: 600;
-        }
-        
-        .dt-pagination .paginate_button:not(.current):not(.disabled):hover {
-            background: #f9fafb !important;
-            border-color: #0284c7 !important;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .dt-pagination .paginate_button.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        
-        .dt-pagination .paginate_button i {
-            transition: transform 0.2s ease;
-        }
-        
-        .dt-pagination .paginate_button:not(.disabled):hover i {
-            transform: scale(1.2);
-        }
-        
-        .dt-pagination .ellipsis {
-            padding: 0 0.5rem;
-            color: #6b7280;
-        }
-
-        /* Custom pagination styling */
-        .custom-pagination {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0.75rem 0;
-            gap: 0.25rem;
-        }
-        
-        /* Base pagination button style */
-        .custom-pagination .paginate_button {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 0.125rem;
-            min-width: 2.25rem;
-            height: 2.25rem;
-            padding: 0 0.5rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-            color: #374151 !important;
-            background: #ffffff !important;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-        }
-        
-        /* Current page button */
-        .custom-pagination .paginate_button.current {
-            color: #ffffff !important;
-            background: #0284c7 !important;
-            border: 1px solid #0284c7 !important;
-            box-shadow: 0 1px 3px rgba(2, 132, 199, 0.4);
-            font-weight: 600;
-        }
-        
-        /* Hover state for pagination buttons */
-        .custom-pagination .paginate_button:not(.current):not(.disabled):hover {
-            background: #f9fafb !important;
-            border-color: #0284c7 !important;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        /* Disabled pagination buttons */
-        .custom-pagination .paginate_button.disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        
-        /* Custom pagination icons - replacing font awesome */
-        .pagination-icon {
-            width: 16px;
-            height: 16px;
-            position: relative;
-            transition: transform 0.2s ease;
-        }
-        
-        /* First page icon - double chevron left */
-        .first-page {
-            position: relative;
-        }
-        
-        .first-page:before,
-        .first-page:after {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            border-style: solid;
-            border-width: 0 0 2px 2px;
-            transform: rotate(45deg);
-            top: 4px;
-        }
-        
-        .first-page:before {
-            left: 2px;
-        }
-        
-        .first-page:after {
-            left: 8px;
-        }
-        
-        /* Previous page icon - single chevron left */
-        .prev-page:before {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            border-style: solid;
-            border-width: 0 0 2px 2px;
-            transform: rotate(45deg);
-            left: 5px;
-            top: 4px;
-        }
-        
-        /* Next page icon - single chevron right */
-        .next-page:before {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            border-style: solid;
-            border-width: 2px 2px 0 0;
-            transform: rotate(45deg);
-            right: 5px;
-            top: 4px;
-        }
-        
-        /* Last page icon - double chevron right */
-        .last-page {
-            position: relative;
-        }
-        
-        .last-page:before,
-        .last-page:after {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            border-style: solid;
-            border-width: 2px 2px 0 0;
-            transform: rotate(45deg);
-            top: 4px;
-        }
-        
-        .last-page:before {
-            right: 2px;
-        }
-        
-        .last-page:after {
-            right: 8px;
-        }
-        
-        /* Pagination button hover animation */
-        .pagination-hover .pagination-icon {
-            transform: scale(1.2);
-        }
-        
-        .custom-pagination .paginate_button.current .pagination-icon {
-            border-color: white;
-        }
-        
-        /* Ripple effect for the pagination buttons */
-        .ripple-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(14, 165, 233, 0.3);
+            animation: ripple-effect 0.6s linear;
             pointer-events: none;
-            border-radius: inherit;
-        }
-        
-        .ripple {
-            position: absolute;
-            border-radius: 50%;
-            transform: scale(0);
-            background-color: rgba(14, 165, 233, 0.12);
-            animation: rippleEffect 0.6s linear;
-        }
-        
-        @keyframes rippleEffect {
-            to {
-                transform: scale(4);
-                opacity: 0;
-            }
-        }
-        
-        /* Focus state for accessibility */
-        .custom-pagination .paginate_button:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.4);
-        }
-        
-        /* Page number buttons specific styling */
-        .custom-pagination .paginate_button:not(.previous):not(.next):not(.first):not(.last) {
-            font-weight: 500;
-        }
-        
-        /* Ellipsis (more pages indicator) */
-        .ellipsis {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            height: 2.25rem;
-            color: #6b7280;
-            padding: 0 0.5rem;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        
-        /* Animation for page change */
-        .custom-pagination .paginate_button {
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
-        }
-        
-        .custom-pagination .paginate_button.current {
-            transform: scale(1.05);
-        }
-
-        /* Modern pagination styling */
-        .modern-pagination {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0.5rem 0;
-            margin-top: 0.5rem;
-        }
-        
-        .modern-pagination .paginate_button {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 2.25rem;
-            height: 2.25rem;
-            margin: 0 0.125rem;
-            padding: 0 0.5rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-            color: #4b5563 !important;
-            background: transparent !important;
-            border: none !important;
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-            overflow: hidden;
-        }
-        
-        .modern-pagination .paginate_button.current {
-            background: #0284c7 !important;
-            color: white !important;
-            font-weight: 600;
-            box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3);
-        }
-        
-        .modern-pagination .paginate_button:not(.current):not(.disabled):hover {
-            background: rgba(14, 165, 233, 0.1) !important;
-            color: #0284c7 !important;
-        }
-        
-        .modern-pagination .paginate_button.previous,
-        .modern-pagination .paginate_button.next {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-        
-        .modern-pagination .paginate_button.first,
-        .modern-pagination .paginate_button.last {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-        
-        .modern-pagination .paginate_button.disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-        }
-        
-        .modern-pagination .ellipsis {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            height: 2.25rem;
-            color: #6b7280;
-            margin: 0 0.25rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-        
-        /* Active page highlight glow */
-        .modern-pagination .paginate_button.current::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 50%;
-            width: 20px;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 3px;
-            transform: translateX(-50%);
-        }
-        
-        /* Ripple effect */
-        .modern-pagination .paginate_button::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(14, 165, 233, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.3s ease-out, height 0.3s ease-out;
-        }
-        
-        .modern-pagination .paginate_button:active::before {
-            width: 70px;
-            height: 70px;
         }
     </style>
 </head>
 
 <body class="bg-gray-50 font-sans text-gray-800 opacity-0 transition-opacity duration-500">
-    <div class="container mx-auto px-4 py-8 max-w-5xl">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6 flex items-center animate-slide-in-left">
-            <i class="fas fa-history mr-3 text-primary-600 animate-float"></i>
-            Sit-in History Overview
-        </h1>
-    </div>
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
+                            <i class="fas fa-history text-primary-600"></i>
+                        </div>
+                        Reservation History
+                    </h1>
+                    <p class="text-gray-500 mt-1 ml-12">View your past and upcoming lab reservations</p>
+                </div>
+                <div class="flex space-x-3 mt-4 md:mt-0">
+                    <button id="refreshButton" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
+                        <i class="fas fa-sync-alt mr-2 text-gray-500"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Breadcrumbs -->
+            <nav class="flex mb-6" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
+                    <li class="inline-flex items-center">
+                        <a href="homepage.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                            <i class="fas fa-home mr-2"></i>
+                            Home
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="text-gray-400 mx-2">/</span>
+                            <span class="text-primary-600 font-medium">Reservation History</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
 
-    <!-- History Records Card -->
-    <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-md border border-gray-100 mb-8 transition duration-300 hover:border-primary-200 hover-scale stagger-item overflow-hidden">
-        <div class="p-6">
-            <div class="overflow-x-auto">
-                <table id="historyTable" class="w-full table-auto border-collapse text-sm text-gray-700">
+        <!-- Remove the Summary Statistics cards and replace with just a small spacer -->
+        <div class="h-4"></div>
+
+        <!-- History Records Card with Enhanced Header -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 mb-8 transition duration-300 hover:border-primary-200 hover-scale stagger-item overflow-hidden">
+            <!-- Card Header with Filter Controls -->
+            <div class="bg-gray-50 border-b border-gray-100 p-5">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-history text-primary-500 mr-2"></i>
+                        Your Sit-in History
+                    </h2>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <!-- Custom Search Box -->
+                        <div class="relative">
+                            <input type="text" id="custom-search" placeholder="Search records..." 
+                                class="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        </div>
+                        <!-- Date Filter Dropdown - removing "All Dates" option -->
+                        <div class="relative inline-block">
+                            <select id="date-filter" class="appearance-none bg-white border border-gray-200 text-gray-700 py-2 px-4 pr-8 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                                <option value="today">Today</option>
+                                <option value="week">This Week</option>
+                                <option value="month">This Month</option>
+                                <option value="year">This Year</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <i class="fas fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table id="historyTable" class="w-full table-auto border-collapse text-sm text-gray-700">
                     <thead>
                         <tr class="bg-primary-600 text-white">
                             <th class="px-4 py-3 text-left">ID Number</th>
@@ -966,6 +649,8 @@ if (isset($_POST['submit_feedback'])) {
         </div>
     </div>
 
+    <div class="py-10"></div>
+    
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
     <script src="https://cdn.datatables.net/2.0.2/js/dataTables.js"></script>
@@ -975,17 +660,34 @@ if (isset($_POST['submit_feedback'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.0.8/countUp.min.js"></script>
     
     <script>
-        // Page load animation
         document.addEventListener('DOMContentLoaded', function() {
             // Fade in the body
             setTimeout(() => {
                 document.body.style.opacity = "1";
             }, 100);
             
-            // Initialize DataTable with export buttons
+            // Refresh Button functionality
+            const refreshButton = document.getElementById('refreshButton');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', function() {
+                    // Add rotate animation to the icon
+                    const icon = this.querySelector('i');
+                    icon.classList.add('animate-spin');
+                    
+                    // Disable the button temporarily
+                    this.disabled = true;
+                    
+                    // Reload the page after a short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                });
+            }
+            
+            // Initialize DataTable without pagination
             const table = $('#historyTable').DataTable({
                 responsive: true,
-                dom: 'rt<"flex justify-end bg-white px-6 py-4 border-t border-gray-100"<"modern-pagination"p>>',
+                dom: 'rt',
                 buttons: [
                     {
                         extend: 'excel',
@@ -998,52 +700,15 @@ if (isset($_POST['submit_feedback'])) {
                     }
                 ],
                 language: {
-                    info: "", // Remove the "Showing X to Y of Z entries" text
-                    infoEmpty: "",
-                    infoFiltered: "",
-                    paginate: {
-                        first: '«',
-                        previous: '‹',
-                        next: '›',
-                        last: '»'
-                    },
-                    processing: '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...'
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "No records available",
+                    infoFiltered: "(filtered from _MAX_ total entries)",
+                    processing: '<div class="processing-indicator"><div class="spinner"></div><span>Processing...</span></div>'
                 },
-                order: [[6, 'desc'], [4, 'desc']] // Sort by date (col 6) and login time (col 4)
+                order: [[6, 'desc'], [4, 'desc']], // Sort by date (col 6) and login time (col 4)
+                pageLength: -1,
+                lengthChange: false
             });
-            
-            // Add this after DataTable initialization to apply custom pagination styling
-            setTimeout(() => {
-                // Make sure search input has proper classes
-                $('.dataTables_filter input')
-                    .addClass('focus:ring-2 focus:ring-primary-500 focus:border-transparent w-64')
-                    .attr('placeholder', 'Search records...');
-                
-                // Hide the empty info element that takes up space
-                $('.dataTables_info').css('display', 'none');
-                
-                // Style the ellipsis
-                $('.ellipsis').html('•••');
-                
-                // Cleaner page transitions
-                $('.modern-pagination .paginate_button').on('click', function() {
-                    if (!$(this).hasClass('current') && !$(this).hasClass('disabled')) {
-                        // Add a subtle flash effect when changing pages
-                        const tableBody = $('#historyTable tbody');
-                        tableBody.css('opacity', '0.6');
-                        setTimeout(() => {
-                            tableBody.css('transition', 'opacity 0.3s ease');
-                            tableBody.css('opacity', '1');
-                        }, 300);
-                    }
-                });
-                
-                // Add title tooltips for accessibility
-                $('.paginate_button.first').attr('title', 'First Page');
-                $('.paginate_button.previous').attr('title', 'Previous Page');
-                $('.paginate_button.next').attr('title', 'Next Page');
-                $('.paginate_button.last').attr('title', 'Last Page');
-            }, 100);
             
             // Stagger in elements with class .stagger-item
             const staggerItems = document.querySelectorAll('.stagger-item');
@@ -1084,12 +749,17 @@ if (isset($_POST['submit_feedback'])) {
             });
             
             // Export button handler (use custom button instead of DataTables button)
-            document.getElementById('exportBtn').addEventListener('click', function() {
+            document.getElementById('quickExport').addEventListener('click', function(e) {
+                e.preventDefault();
                 table.button(0).trigger(); // Trigger the first button (Excel export)
+                
+                // Hide the menu
+                document.getElementById('quickActionMenu').classList.add('invisible', 'opacity-0', 'translate-y-2');
+                document.getElementById('quickActionBtn').innerHTML = '<i class="fas fa-plus text-xl"></i>';
             });
             
             // Help button handler
-            document.getElementById('helpBtn').addEventListener('click', function() {
+            document.getElementById('quickFeedback').addEventListener('click', function() {
                 Swal.fire({
                     title: 'History Page Help',
                     html: `
@@ -1121,112 +791,74 @@ if (isset($_POST['submit_feedback'])) {
                     const idNum = this.getAttribute('data-id_number');
                     const lab = this.getAttribute('data-sit_lab');
                     
-                    console.log('Feedback button clicked for:', idNum, lab); // Debug info
-                    
-                    // Set the hidden input values
-                    document.getElementById('modal_id_number').value = idNum;
-                    document.getElementById('modal_sit_lab').value = lab;
-                    
-                    // Show the modal
-                    document.getElementById('feedbackModal').classList.remove('hidden');
-                    
-                    // Focus on the textarea
-                    setTimeout(() => {
-                        document.getElementById('feedback_text').focus();
-                    }, 100);
-                });
-            });
-            
-            // Cancel button
-            document.getElementById('cancelFeedback').addEventListener('click', function() {
-                document.getElementById('feedbackModal').classList.add('hidden');
-                document.getElementById('feedbackForm').reset();
-            });
-            
-            // Close modal when clicking outside
-            document.getElementById('feedbackModal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.add('hidden');
-                    document.getElementById('feedbackForm').reset();
-                }
-            });
-            
-            // Form submission
-            document.getElementById('feedbackForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                const feedback = document.getElementById('feedback_text').value.trim();
-                const idNum = document.getElementById('modal_id_number').value;
-                const lab = document.getElementById('modal_sit_lab').value;
-
-                if (feedback === '') {
+                    // Use SweetAlert2 for a nicer feedback modal experience
                     Swal.fire({
-                        title: 'Empty Feedback',
-                        text: 'Please enter your feedback before submitting.',
-                        icon: 'warning',
-                        confirmButtonColor: '#0284c7'
-                    });
-                    return;
-                }
-
-                // Create form data for submission
-                const formData = new FormData();
-                formData.append('submit_feedback', '1');
-                formData.append('feedback_text', feedback);
-                formData.append('sit_lab', lab);
-                formData.append('id_number', idNum);
-
-                // Show loading state
-                Swal.fire({
-                    title: 'Submitting...',
-                    html: 'Please wait while we process your feedback',
-                    allowOutsideClick: false,
-                    allowEscapeKey: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                // Send AJAX request to submit feedback
-                fetch('../../api/api_student.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Server Response:', data); // Log the server response for debugging
-                    if (data.success) {
-                        document.getElementById('feedbackModal').classList.add('hidden');
-                        document.getElementById('feedbackForm').reset();
-
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Thank You!',
-                            text: data.message,
-                            confirmButtonColor: '#0284c7',
-                            timer: 3000,
-                            timerProgressBar: true
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Submission Failed',
-                            text: data.message,
-                            confirmButtonColor: '#0284c7'
-                        });
-                    }
-                })
-                .catch(error => {
-                    console.error('Error submitting feedback:', error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Submission Failed',
-                        text: 'There was an error submitting your feedback. Please try again.',
-                        confirmButtonColor: '#0284c7'
+                        title: 'Share Your Feedback',
+                        html: `
+                            <div class="text-left mb-4" style="max-height: 60vh; overflow-y: auto; overflow-x: hidden;">
+                                <p class="text-sm text-gray-600">Your feedback helps us improve the ${lab} laboratory experience for everyone.</p>
+                                <div class="mt-4">
+                                    <input type="hidden" id="swal-id-number" value="${idNum}">
+                                    <input type="hidden" id="swal-sit-lab" value="${lab}">
+                                    <textarea id="swal-feedback" class="w-full border rounded-md p-3 text-sm" 
+                                        rows="6" placeholder="Please share your thoughts on your experience..."></textarea>
+                                </div>
+                            </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: 'Submit Feedback',
+                        confirmButtonColor: '#0284c7',
+                        cancelButtonText: 'Cancel',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Create a form and submit it programmatically
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = 'history.php';
+                            form.style.display = 'none';
+                            
+                            const idField = document.createElement('input');
+                            idField.type = 'hidden';
+                            idField.name = 'id_number';
+                            idField.value = idNum;
+                            form.appendChild(idField);
+                            
+                            const labField = document.createElement('input');
+                            labField.type = 'hidden';
+                            labField.name = 'sit_lab';
+                            labField.value = lab;
+                            form.appendChild(labField);
+                            
+                            const feedbackField = document.createElement('input');
+                            feedbackField.type = 'hidden';
+                            feedbackField.name = 'feedback_text';
+                            feedbackField.value = document.getElementById('swal-feedback').value;
+                            form.appendChild(feedbackField);
+                            
+                            const submitBtn = document.createElement('input');
+                            submitBtn.type = 'hidden';
+                            submitBtn.name = 'submit_feedback';
+                            submitBtn.value = '1';
+                            form.appendChild(submitBtn);
+                            
+                            document.body.appendChild(form);
+                            
+                            // Show loading indicator
+                            Swal.fire({
+                                title: 'Submitting Feedback',
+                                text: 'Please wait...',
+                                allowOutsideClick: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+                            
+                            form.submit();
+                        }
                     });
                 });
             });
-
+            
             // Quick action button
             document.getElementById('quickActionBtn').addEventListener('click', function() {
                 const menu = document.getElementById('quickActionMenu');
@@ -1287,13 +919,98 @@ if (isset($_POST['submit_feedback'])) {
                     html: '<span class="text-sm">Your sit-in history has been updated</span>'
                 });
             }, 3000);
+
+            // Display current date in header
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
+            
+            // Connect custom search box to DataTable
+            document.getElementById('custom-search').addEventListener('keyup', function() {
+                table.search(this.value).draw();
+            });
+            
+            // Date filter functionality
+            document.getElementById('date-filter').addEventListener('change', function() {
+                let dateFilterValue = this.value;
+                
+                // Clear existing search and then apply filter
+                $.fn.dataTable.ext.search.pop();
+                
+                if (dateFilterValue !== 'all') {
+                    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                        const dateStr = data[6]; // Date is in column 6
+                        if (!dateStr) return true;
+                        
+                        // Parse date (format MM/DD/YY)
+                        const parts = dateStr.split('/');
+                        const dateObject = new Date(2000 + parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+                        const now = new Date();
+                        
+                        if (dateFilterValue === 'today') {
+                            return dateObject.toDateString() === now.toDateString();
+                        } else if (dateFilterValue === 'week') {
+                            // Get start of week (Sunday)
+                            const startOfWeek = new Date(now);
+                            startOfWeek.setDate(now.getDate() - now.getDay());
+                            startOfWeek.setHours(0, 0, 0, 0);
+                            return dateObject >= startOfWeek;
+                        } else if (dateFilterValue === 'month') {
+                            return dateObject.getMonth() === now.getMonth() && 
+                                   dateObject.getFullYear() === now.getFullYear();
+                        } else if (dateFilterValue === 'year') {
+                            return dateObject.getFullYear() === now.getFullYear();
+                        }
+                        return true;
+                    });
+                }
+                
+                table.draw();
+            });
+            
+            // Connect Export button to DataTable export
+            document.getElementById('exportBtn').addEventListener('click', function() {
+                table.button(0).trigger(); // Trigger Excel export
+            });
+            
+            // Connect Help button
+            document.getElementById('helpBtn').addEventListener('click', function() {
+                Swal.fire({
+                    title: 'History Page Help',
+                    html: `
+                        <div class="text-left">
+                            <p class="mb-3"><i class="fas fa-info-circle text-primary-500 mr-2"></i> <b>Your Sit-in History</b></p>
+                            <ul class="list-disc pl-5 space-y-1 mb-4">
+                                <li>View all your laboratory sit-in sessions</li>
+                                <li>Search for specific records using the search box</li>
+                                <li>Filter by date range using the dropdown</li>
+                                <li>Export your history to Excel for your records</li>
+                                <li>Provide feedback for any of your sessions</li>
+                            </ul>
+                            <p class="mb-2"><i class="fas fa-search text-primary-500 mr-2"></i> <b>Search & Filtering:</b></p>
+                            <p class="text-sm mb-3">Use the search box to find records by any keyword such as laboratory name, purpose, or date.</p>
+                            <p class="mb-2"><i class="fas fa-filter text-primary-500 mr-2"></i> <b>Date Filtering:</b></p>
+                            <p class="text-sm">Select from the dropdown to view records from today, this week, this month, or this year.</p>
+                        </div>
+                    `,
+                    icon: 'info',
+                    confirmButtonColor: '#0284c7',
+                    confirmButtonText: 'Got it!',
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp'
+                    }
+                });
+            });
         });
         
         // Show success alerts with SweetAlert2
         <?php if(!empty($successMessage)): ?>
         Swal.fire({
             icon: 'success',
-            title: 'Success!',
+            title: 'Feedback Submitted!',
             text: '<?php echo $successMessage; ?>',
             confirmButtonColor: '#0284c7',
             timer: 3000,
@@ -1303,6 +1020,42 @@ if (isset($_POST['submit_feedback'])) {
             },
             hideClass: {
                 popup: 'animate__animated animate__fadeOutUp'
+            },
+            didOpen: () => {
+                // Add confetti effect for successful feedback submission
+                if ('<?php echo $successMessage; ?>'.includes('submitted successfully')) {
+                    const confettiColors = ['#0ea5e9', '#38bdf8', '#7dd3fc', '#bae6fd', '#ffffff'];
+                    const confettiAnimation = setInterval(() => {
+                        const confetti = document.createElement('div');
+                        confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                        confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                        confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                        confetti.style.position = 'absolute';
+                        confetti.style.zIndex = '9999';
+                        confetti.style.top = '-10px';
+                        confetti.style.left = Math.random() * document.body.clientWidth + 'px';
+                        confetti.style.borderRadius = '50%';
+                        confetti.style.opacity = Math.random() + 0.5;
+                        
+                        document.body.appendChild(confetti);
+                        
+                        const animation = confetti.animate(
+                            [
+                                { transform: 'translate3d(0,0,0)', opacity: 1 },
+                                { transform: `translate3d(${Math.random() * 100 - 50}px, ${Math.random() * 600 + 400}px, 0)`, opacity: 0 }
+                            ],
+                            {
+                                duration: Math.random() * 1500 + 1500,
+                                easing: 'cubic-bezier(0,0.9,0.57,1)',
+                                delay: Math.random() * 100
+                            }
+                        );
+                        
+                        animation.onfinish = () => confetti.remove();
+                    }, 100);
+                    
+                    setTimeout(() => clearInterval(confettiAnimation), 2000);
+                }
             }
         });
         <?php endif; ?>

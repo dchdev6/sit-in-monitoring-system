@@ -120,18 +120,50 @@ if(isset($_SESSION['success_message'])) {
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 opacity-0 transition-opacity duration-500">
-    <div class="container mx-auto px-4 pt-8 max-w-5xl">
-        <h1 class="text-2xl font-bold text-gray-800 flex items-center animate-slide-in-left">
-            <i class="fas fa-bell mr-3 text-primary-600 animate-float"></i>
-            Notifications
-        </h1>
-    </div>
-    
-    <div class="container mx-auto px-4 py-8 max-w-5xl">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
+                            <i class="fas fa-bell text-primary-600"></i>
+                        </div>
+                        Notifications
+                    </h1>
+                    <p class="text-gray-500 mt-1 ml-12">View your system notifications and updates</p>
+                </div>
+                <div class="flex space-x-3 mt-4 md:mt-0">
+                    <button id="refreshButton" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
+                        <i class="fas fa-sync-alt mr-2 text-gray-500"></i>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Breadcrumbs -->
+            <nav class="flex mb-6" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
+                    <li class="inline-flex items-center">
+                        <a href="homepage.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                            <i class="fas fa-home mr-2"></i>
+                            Home
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="text-gray-400 mx-2">/</span>
+                            <span class="text-primary-600 font-medium">Notifications</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
         <!-- Updated Notification Section -->
         <div class="bg-white rounded-xl shadow-md border border-gray-100 mb-8 notification-card animate-fade-in hover:border-primary-200">
             <div class="border-b border-gray-100 px-6 py-4 flex items-center">
-                <div class="rounded-full bg-primary-100 p-3 mr-3">
+                <div class=" p-3 mr-3">
                     <i class="fas fa-bell text-primary-600 animate-pulse-slow"></i>
                 </div>
                 <h2 class="text-lg font-semibold text-gray-800">Reservation Status Updates</h2>
@@ -140,7 +172,7 @@ if(isset($_SESSION['success_message'])) {
             <div class="p-6">
                 <div class="max-h-[30rem] overflow-y-auto pr-2 space-y-4 scrollbar-thin">
                     <?php
-                    $reservations = retrieve_reservation_logs($_SESSION['id_number']);
+                    $reservations = retrieve_student_reservation_logs($_SESSION['id_number']);
                     if(empty($reservations)): 
                     ?>
                         <div class="text-center py-16 text-gray-500">
@@ -246,35 +278,6 @@ if(isset($_SESSION['success_message'])) {
                 </div>
             </div>
         </div>
-        
-        <!-- Reminders Card -->
-        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 notification-card stagger-item">
-            <div class="flex items-center mb-4">
-                <div class="rounded-full bg-primary-100 p-3 mr-3">
-                    <i class="fas fa-lightbulb text-primary-600"></i>
-                </div>
-                <h2 class="text-lg font-semibold text-gray-800">Reservation Reminders</h2>
-            </div>
-            
-            <ul class="space-y-3 ml-12">
-                <li class="flex items-start">
-                    <i class="fas fa-check-circle text-success-500 mt-1 mr-2"></i>
-                    <span class="text-gray-600">Be sure to arrive on time for your approved reservations</span>
-                </li>
-                <li class="flex items-start">
-                    <i class="fas fa-check-circle text-success-500 mt-1 mr-2"></i>
-                    <span class="text-gray-600">Bring your student ID card for verification</span>
-                </li>
-                <li class="flex items-start">
-                    <i class="fas fa-check-circle text-success-500 mt-1 mr-2"></i>
-                    <span class="text-gray-600">Follow lab rules and guidelines during your session</span>
-                </li>
-                <li class="flex items-start">
-                    <i class="fas fa-check-circle text-success-500 mt-1 mr-2"></i>
-                    <span class="text-gray-600">Contact lab administrators if you need to cancel a reservation</span>
-                </li>
-            </ul>
-        </div>
     </div>
 
     <script>
@@ -284,6 +287,24 @@ if(isset($_SESSION['success_message'])) {
             setTimeout(() => {
                 document.body.style.opacity = "1";
             }, 100);
+            
+            // Refresh Button functionality
+            const refreshButton = document.getElementById('refreshButton');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', function() {
+                    // Add rotate animation to the icon
+                    const icon = this.querySelector('i');
+                    icon.classList.add('animate-spin');
+                    
+                    // Disable the button temporarily
+                    this.disabled = true;
+                    
+                    // Reload the page after a short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                });
+            }
             
             // Stagger in elements with class .stagger-item
             const staggerItems = document.querySelectorAll('.stagger-item');

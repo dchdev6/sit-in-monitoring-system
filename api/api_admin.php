@@ -1,6 +1,8 @@
 <?php
 include __DIR__ . '/../backend/backend_admin.php';
 
+// Start output buffering to prevent "headers already sent" errors
+ob_start();
 
 loginAdmin();
 //Object Student
@@ -10,14 +12,24 @@ class Student
   public  $id;
   public  $name;
   public  $records;
+  public  $profile_image;
+  public  $email;
+  public  $yearLevel;
+  public  $course;
+  public  $address;
 
   // Constructor method
 
-  public function __construct($id, $name, $records)
+  public function __construct($id, $name, $records, $profile_image = 'default-profile.jpg', $email = '', $yearLevel = '', $course = '', $address = '')
   {
     $this->id = $id;
     $this->name = $name;
     $this->records = $records;
+    $this->profile_image = $profile_image;
+    $this->email = $email;
+    $this->yearLevel = $yearLevel;
+    $this->course = $course;
+    $this->address = $address;
   }
 }
 //Delete Student
@@ -47,8 +59,16 @@ if (isset($_GET["search"])) {
     $user = $retrieve->fetch_assoc();
     $record = retrieve_student_session($user['id_number']);
 
-    $student = new Student($user["id_number"], $user["firstName"] . " " . $user["middleName"] . " " . $user["lastName"], $record["session"]);
-
+    $student = new Student(
+      $user["id_number"], 
+      $user["firstName"] . " " . $user["middleName"] . " " . $user["lastName"], 
+      $record["session"],
+      $user["profile_image"],
+      $user["email"],
+      $user["yearLevel"],
+      $user["course"],
+      $user["address"]
+    );
 
     $displayModal = true;
   } else {
@@ -93,7 +113,7 @@ if (isset($_POST["sitIn"])) {
     //Check if the student is currently sit in
     $check = check_student_active($idNum);
 
-    if ($check["sit_id"] != null) {
+    if ($check && isset($check["sit_id"]) && $check["sit_id"] != null) {
       echo '<script>const Toast = Swal.mixin({
         toast: true,
         position: "top-end",
@@ -146,19 +166,28 @@ if (isset($_POST["edit"])) {
 
 
 if (isset($_POST["logout"])) {
-  session_start();
+  // Don't start a session if one is already active
+  if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+  }
 
   $id = $_POST['idNum'];
   $sitId = $_POST['sitId'];
   $log = date("H:i:s");
   $logout = date('Y-m-d');
-  $ses = $_POST["session"];
+  $ses = intval($_POST["session"]);  // Convert to integer
   $sitlab = $_POST["sitLab"];
   $newSession = max(0, $ses - 1);
+  $awardPoints = isset($_POST['award_points']) && $_POST['award_points'] == '1' ? true : false; // Check the actual value
 
-  if (student_logout($id, $sitId, $log, $logout, $newSession)) {
+  if (student_logout($id, $sitId, $log, $logout, $newSession, $awardPoints)) {
+      $successMsg = 'Logout successful!';
+      if ($awardPoints) {
+          $successMsg .= ' 1 point has been awarded to the student.';
+      }
+      
       echo "<script>
-          alert('Logout successful!');
+          alert('$successMsg');
           window.location.href = '../view/admin/viewrecords.php';
       </script>";
       exit();
@@ -170,11 +199,64 @@ if (isset($_POST["logout"])) {
   }
 }
 
-
-
-
-
-
+// AJAX endpoint for ending a session with optional point awarding
+if (isset($_POST['action']) && $_POST['action'] === 'end_session') {
+    // Required parameters
+    $sessionId = isset($_POST['sessionId']) ? (int)$_POST['sessionId'] : 0;
+    $studentId = isset($_POST['studentId']) ? $_POST['studentId'] : '';
+    $awardPoints = isset($_POST['awardPoints']) ? (int)$_POST['awardPoints'] : 0;
+    
+    // Validation
+    if (empty($sessionId) || empty($studentId)) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Missing required parameters'
+        ]);
+        exit;
+    }
+    
+    // Get current date and time
+    $log = date("H:i:s");
+    $logout = date('Y-m-d');
+    
+    // Get current session count for the student
+    $sesData = retrieve_student_session($studentId);
+    if (!$sesData) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Student not found'
+        ]);
+        exit;
+    }
+    
+    $currentSession = $sesData['session'] ?? 0;
+    $newSession = max(0, $currentSession - 1);
+    
+    // End the sit-in session with the optional points award
+    $result = student_logout($studentId, $sessionId, $log, $logout, $newSession, $awardPoints > 0);
+    
+    if ($result) {
+        $message = 'Session ended successfully';
+        if ($awardPoints > 0) {
+            $message .= ' and 1 point awarded';
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'message' => $message,
+            'studentId' => $studentId,
+            'sessionId' => $sessionId,
+            'newSessionCount' => $newSession,
+            'pointsAwarded' => $awardPoints > 0
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to end session. Please try again.'
+        ]);
+    }
+    exit;
+}
 
 if (isset($_POST["submitEdit"])) {
   $idNum = $_POST['idNumber'];
@@ -338,52 +420,79 @@ if (isset($_POST['labSubmit'])) {
   $data = retrieve_pc($lab_final);
 }
 if (isset($_POST['submitAvail'])) {
-  $pc1 = $_POST['pc'];
+  $pc1 = isset($_POST['pc']) ? $_POST['pc'] : [];
   $lab = $_POST['filter_lab'];
 
+  // Only proceed if there are PCs selected
+  if (!empty($pc1)) {
+    $concat = ""; // Initialize an empty string to store concatenated values
 
-  $concat = ""; // Initialize an empty string to store concatenated values
+    for ($i = 0; $i < count($pc1); $i++) {
+      $concat .= $pc1[$i];
 
-  for ($i = 0; $i < count($pc1); $i++) {
-    $concat .= $pc1[$i];
-
-    // Add a comma after each element except for the last one
-    if ($i < count($pc1) - 1) {
-      $concat .= ",";
+      // Add a comma after each element except for the last one
+      if ($i < count($pc1) - 1) {
+        $concat .= ",";
+      }
     }
-  }
 
-
-  if (available_pc($concat, $lab)) {
+    if (available_pc($concat, $lab)) {
+      echo "<script>Swal.fire({
+          title: 'Notification',
+          text: 'PC Available!',
+          icon: 'success',
+          showConfirmButton: false,
+          timer: 1500,
+          willClose: () => {
+            // Force page reload to refresh the PC status display
+            window.location.reload();
+          }
+        });</script>";
+    }
+  } else {
     echo "<script>Swal.fire({
         title: 'Notification',
-        text: 'PC Available!',
-        icon: 'success',
+        text: 'No PCs selected!',
+        icon: 'warning',
         showConfirmButton: false,
         timer: 1500
       });</script>";
   }
 }
 if (isset($_POST['submitDecline'])) {
-  $pc1 = $_POST['pc'];
+  $pc1 = isset($_POST['pc']) ? $_POST['pc'] : [];
   $lab = $_POST['filter_lab'];
 
+  // Only proceed if there are PCs selected
+  if (!empty($pc1)) {
+    $concat = ""; // Initialize an empty string to store concatenated values
 
-  $concat = ""; // Initialize an empty string to store concatenated values
+    for ($i = 0; $i < count($pc1); $i++) {
+      $concat .= $pc1[$i];
 
-  for ($i = 0; $i < count($pc1); $i++) {
-    $concat .= $pc1[$i];
-
-    // Add a comma after each element except for the last one
-    if ($i < count($pc1) - 1) {
-      $concat .= ",";
+      // Add a comma after each element except for the last one
+      if ($i < count($pc1) - 1) {
+        $concat .= ",";
+      }
     }
-  }
-  if (used_pc($concat, $lab)) {
+    if (used_pc($concat, $lab)) {
+      echo "<script>Swal.fire({
+          title: 'Notification',
+          text: 'PC Not Available!',
+          icon: 'success',
+          showConfirmButton: false,
+          timer: 1500,
+          willClose: () => {
+            // Force page reload to refresh the PC status display
+            window.location.reload();
+          }
+        });</script>";
+    }
+  } else {
     echo "<script>Swal.fire({
         title: 'Notification',
-        text: 'PC Not Available!',
-        icon: 'success',
+        text: 'No PCs selected!',
+        icon: 'warning',
         showConfirmButton: false,
         timer: 1500
       });</script>";
@@ -398,11 +507,15 @@ if(isset($_POST['accept_reservation'])){
 
   if(approve_reservation($reservation_id, $pc_number,$lab,$id_number )){
     echo "<script>Swal.fire({
-      title: 'Notification',
-      text: 'Approve Reservation!',
+      title: 'Success',
+      text: 'Reservation Approved - PC marked as Used',
       icon: 'success',
       showConfirmButton: false,
-      timer: 1500
+      timer: 1500,
+      willClose: () => {
+        // Force page reload to refresh the PC status display
+        window.location.reload();
+      }
     });</script>";
   }
 }
@@ -419,7 +532,11 @@ if(isset($_POST['deny_reservation'])){
       text: 'Decline Reservation!',
       icon: 'success',
       showConfirmButton: false,
-      timer: 1500
+      timer: 1500,
+      willClose: () => {
+        // Force page reload to refresh the PC status display
+        window.location.reload();
+      }
     });</script>";
   }
 }
@@ -489,52 +606,84 @@ function process_points_request($request_id, $status) {
     global $conn;
     
     try {
-        $conn->begin_transaction();
+        $db = Database::getInstance();
+        $con = $db->getConnection();
+        
+        if (!$con) {
+            error_log("Database connection failed in process_points_request");
+            return false;
+        }
+        
+        $con->begin_transaction();
         
         // Get request details
         $query = "SELECT * FROM points_requests WHERE id = ?";
-        $stmt = $conn->prepare($query);
+        $stmt = $con->prepare($query);
         $stmt->bind_param("i", $request_id);
         $stmt->execute();
         $result = $stmt->get_result();
         
         if ($row = $result->fetch_assoc()) {
+            $student_id = $row['student_id'];
+            
             // Update request status
             $update_query = "UPDATE points_requests SET status = ? WHERE id = ?";
-            $update_stmt = $conn->prepare($update_query);
+            $update_stmt = $con->prepare($update_query);
             $update_stmt->bind_param("si", $status, $request_id);
             $update_stmt->execute();
             
             // If approved, add points to student
             if ($status === 'approved') {
-                $student_id = $row['student_id'];
                 $points_amount = $row['points_amount'];
                 
                 // Add points to student
-                $add_points_query = "UPDATE students SET points = points + ? WHERE id_number = ?";
-                $add_points_stmt = $conn->prepare($add_points_query);
-                $add_points_stmt->bind_param("ii", $points_amount, $student_id);
+                $add_points_query = "UPDATE students SET points = IFNULL(points, 0) + ? WHERE id_number = ?";
+                $add_points_stmt = $con->prepare($add_points_query);
+                $add_points_stmt->bind_param("is", $points_amount, $student_id);
                 $add_points_stmt->execute();
                 
                 // Record in history
                 $history_query = "INSERT INTO points_history 
                                  (student_id, request_id, points_amount, transaction_type, description, created_at) 
                                  VALUES (?, ?, ?, 'add', ?, NOW())";
-                $history_stmt = $conn->prepare($history_query);
+                $history_stmt = $con->prepare($history_query);
                 $transaction_type = "add";
-                $description = ucfirst($row['request_type']) . " points";
-                $history_stmt->bind_param("iiiss", $student_id, $request_id, $points_amount, $transaction_type, $description);
+                $description = ucfirst($row['request_type']) . " points request approved";
+                $history_stmt->bind_param("iiis", $student_id, $request_id, $points_amount, $description);
                 $history_stmt->execute();
+                
+                // Add notification for student
+                $notification_message = "Your points request has been approved. {$points_amount} points have been added to your account.";
+                $notify_query = "INSERT INTO notification (id_number, message) VALUES (?, ?)";
+                $notify_stmt = $con->prepare($notify_query);
+                $notify_stmt->bind_param("ss", $student_id, $notification_message);
+                $notify_stmt->execute();
+            } else {
+                // Add rejection notification
+                $notification_message = "Your points request has been rejected.";
+                $notify_query = "INSERT INTO notification (id_number, message) VALUES (?, ?)";
+                $notify_stmt = $con->prepare($notify_query);
+                $notify_stmt->bind_param("ss", $student_id, $notification_message);
+                $notify_stmt->execute();
             }
             
-            $conn->commit();
+            $con->commit();
+            
+            // Check if points need to be converted to sessions
+            if ($status === 'approved') {
+                convert_points_to_session($student_id);
+            }
+            
             return true;
         }
         
-        $conn->rollback();
+        $con->rollback();
         return false;
     } catch (Exception $e) {
-        $conn->rollback();
+        // Rollback transaction on error
+        if (isset($con) && $con->ping()) {
+            $con->rollback();
+        }
         error_log('Error processing points request: ' . $e->getMessage());
         return false;
     }
@@ -551,303 +700,102 @@ function award_points_to_student($student_id, $points_amount, $reason) {
     global $conn;
     
     try {
-        $conn->begin_transaction();
+        // First check if the database connection is available
+        $db = Database::getInstance();
+        $con = $db->getConnection();
+        
+        if (!$con) {
+            error_log("Database connection failed in award_points_to_student");
+            return false;
+        }
+        
+        $con->begin_transaction();
         
         // Add points to student
-        $add_points_query = "UPDATE students SET points = points + ? WHERE id_number = ?";
-        $add_points_stmt = $conn->prepare($add_points_query);
-        $add_points_stmt->bind_param("ii", $points_amount, $student_id);
+        $add_points_query = "UPDATE students SET points = IFNULL(points, 0) + ? WHERE id_number = ?";
+        $add_points_stmt = $con->prepare($add_points_query);
+        $add_points_stmt->bind_param("is", $points_amount, $student_id);
         $add_points_stmt->execute();
         
         // Record in history
         $history_query = "INSERT INTO points_history 
                          (student_id, points_amount, transaction_type, description, created_at) 
                          VALUES (?, ?, 'add', ?, NOW())";
-        $history_stmt = $conn->prepare($history_query);
+        $history_stmt = $con->prepare($history_query);
         $transaction_type = "add";
-        $history_stmt->bind_param("iis", $student_id, $points_amount, $reason);
+        $history_stmt->bind_param("iss", $student_id, $points_amount, $reason);
         $history_stmt->execute();
         
-        $conn->commit();
+        // Add notification for student
+        $notification_message = "You have been awarded {$points_amount} points: {$reason}";
+        $notify_query = "INSERT INTO notification (id_number, message) VALUES (?, ?)";
+        $notify_stmt = $con->prepare($notify_query);
+        $notify_stmt->bind_param("ss", $student_id, $notification_message);
+        $notify_stmt->execute();
+        
+        $con->commit();
+        
+        // Check if points need to be converted to sessions
+        convert_points_to_session($student_id);
+        
         return true;
     } catch (Exception $e) {
-        $conn->rollback();
+        // Rollback transaction on error
+        if (isset($con) && $con->ping()) {
+            $con->rollback();
+        }
         error_log('Error awarding points: ' . $e->getMessage());
         return false;
     }
 }
 
-?>
-
-
-
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
-
-  <title>CCS | Home</title>
-
-</head>
-
-<body>
-
-
-
-  <!-- Search Student Modal -->
-<form action="Admin.php" method="GET">
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content rounded-lg shadow-lg border-0">
-                <div class="modal-header bg-primary-50 border-0">
-                    <h5 class="modal-title text-primary-800 font-semibold" id="exampleModalLabel">
-                        <i class="fas fa-search me-2"></i>Search Student
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
-                </div>
-                
-                <div class="modal-body p-4">
-                    <h6 class="font-medium text-gray-700 mb-4 text-center">Enter Student ID or Name</h6>
-                    
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        </div>
-                        <input 
-                            type="text" 
-                            name="searchBar" 
-                            placeholder="Search by ID number or name..." 
-                            class="form-control bg-white border border-gray-300 text-gray-900 text-lg rounded-md pl-10 py-3 w-full focus:ring-primary-500 focus:border-primary-500"
-                            autofocus
-                        >
-                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 opacity-70">
-                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Enter to search</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-3 text-xs text-gray-500 px-1">
-                        <p><i class="fas fa-info-circle mr-1"></i> Search by student ID number for exact match or name for related results.</p>
-                    </div>
-                </div>
-                
-                <div class="modal-footer flex justify-center border-0 bg-gray-50 rounded-b-lg">
-                    <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition duration-200 flex items-center" data-dismiss="modal">
-                        <i class="fas fa-times-circle mr-2"></i>Cancel
-                    </button>
-                    <button type="submit" name="search" class="px-4 py-2 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-md transition duration-200 flex items-center shadow-sm">
-                        <i class="fas fa-search mr-2"></i>Search Student
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</form>
-
-<script>
-    // Add animation when modal appears
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchModal = document.getElementById('exampleModal');
-        if (searchModal) {
-            searchModal.addEventListener('show.bs.modal', function () {
-                const modalContent = this.querySelector('.modal-content');
-                modalContent.classList.add('animate__animated', 'animate__fadeInDown', 'animate__faster');
-                
-                // Focus the search input when modal opens
-                setTimeout(() => {
-                    this.querySelector('input[name="searchBar"]').focus();
-                }, 300);
-            });
-            
-            searchModal.addEventListener('hidden.bs.modal', function () {
-                const modalContent = this.querySelector('.modal-content');
-                modalContent.classList.remove('animate__animated', 'animate__fadeInDown', 'animate__faster');
-            });
+/**
+ * Post a new announcement
+ * @param string $message The announcement message
+ * @param string $admin_name The name of the admin posting the announcement
+ * @param string $date The date of the announcement
+ * @return bool True if successful, false otherwise
+ */
+function post_announcement($message, $admin_name, $date) {
+    global $conn;
+    
+    try {
+        $db = Database::getInstance();
+        $con = $db->getConnection();
+        
+        if (!$con) {
+            error_log("Database connection failed in post_announcement");
+            return false;
         }
-    });
-</script>
-
-
-<!-- Modal -->
-<form action="Admin.php" method="POST">
-    <div class="modal fade" id="exampleModalCenter" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-lg shadow-lg border-0">
-                <div class="modal-header bg-primary-50 border-0">
-                    <h5 class="modal-title text-primary-800 font-semibold" id="exampleModalLongTitle">
-                        <i class="fas fa-laptop-code me-2"></i>Sit In Form
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                
-                <div class="modal-body p-4">
-                    <h6 class="font-medium text-gray-700 mb-4 text-center">Student Information</h6>
-                    
-                    <div class="space-y-3">
-                        <div class="form-group row align-items-center">
-                            <label for="id" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">ID Number:</label>
-                            <div class="col-sm-8">
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    </div>
-                                    <input id="id" name="studentID" type="text" value="<?php echo $student->id ?>" readonly 
-                                        class="form-control bg-gray-50 border border-gray-300 text-gray-900 rounded-md pl-10 py-2" />
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group row align-items-center">
-                            <label for="name" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">Student Name:</label>
-                            <div class="col-sm-8">
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    </div>
-                                    <input id="name" name="studentName" type="text" value="<?php echo $student->name ?>" readonly 
-                                        class="form-control bg-gray-50 border border-gray-300 text-gray-900 rounded-md pl-10 py-2" />
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group row align-items-center">
-                            <label for="purposes" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">Purpose:</label>
-                            <div class="col-sm-8">
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    </div>
-                                    <select name="purpose" id="purposes" 
-                                        class="form-control bg-white border border-gray-300 text-gray-900 rounded-md pl-10 py-2 appearance-none">
-                                        <option value="C-Programming">C Programming</option>
-                                        <option value="Java Programming">Java Programming</option>
-                                        <option value="C# Programming">C# Programming</option>
-                                        <option value="Php Programming">PHP Programming</option>
-                                        <option value="ASP.Net Programming">ASP.NET Programming</option>
-                                    </select>
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group row align-items-center">
-                            <label for="lab" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">Lab:</label>
-                            <div class="col-sm-8">
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    </div>
-                                    <select name="lab" id="lab" 
-                                        class="form-control bg-white border border-gray-300 text-gray-900 rounded-md pl-10 py-2 appearance-none">
-                                        <option value="524">524</option>
-                                        <option value="526">526</option>
-                                        <option value="528">528</option>
-                                        <option value="530">530</option>
-                                        <option value="542">542</option>
-                                        <option value="Mac">Mac Laboratory</option>
-                                    </select>
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group row align-items-center">
-                            <label for="remaining" class="col-sm-4 col-form-label text-sm font-medium text-gray-700">Sessions Left:</label>
-                            <div class="col-sm-8">
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    </div>
-                                    <input id="remaining" type="text" value="<?php echo $student->records ?>" readonly 
-                                        class="form-control bg-gray-50 border border-gray-300 text-gray-900 rounded-md pl-10 py-2" />
-                                    
-                                    <?php if ($student->records <= 3): ?>
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium <?php echo $student->records > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'; ?>">
-                                            <i class="fas <?php echo $student->records > 0 ? 'fa-exclamation-triangle mr-1' : 'fa-times-circle mr-1'; ?>"></i>
-                                            <?php echo $student->records > 0 ? 'Low' : 'None'; ?>
-                                        </span>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                                <?php if ($student->records <= 3): ?>
-                                <p class="mt-1 text-xs text-gray-500 italic">
-                                    <?php echo $student->records > 0 
-                                        ? 'Student is low on available sessions.' 
-                                        : 'Student has no available sessions left.'; ?>
-                                </p>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="modal-footer flex justify-center border-0 bg-gray-50 rounded-b-lg">
-                    <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition duration-200 flex items-center" data-bs-dismiss="modal">
-                        <i class="fas fa-times-circle mr-2"></i>Cancel
-                    </button>
-                    <button type="submit" name="sitIn" class="px-4 py-2 bg-[#0ea5e9] hover:bg-[#0284c7] text-white rounded-md transition duration-200 flex items-center shadow-sm" <?php echo $student->records <= 0 ? 'disabled' : ''; ?>>
-                        <i class="fas fa-sign-in-alt mr-2"></i>Proceed with Sit-In
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</form>
-
-<script>
-    // Add animation when modal appears
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('exampleModalCenter');
-        if (modal) {
-            modal.addEventListener('show.bs.modal', function () {
-                const modalContent = this.querySelector('.modal-content');
-                modalContent.classList.add('animate__animated', 'animate__fadeInDown', 'animate__faster');
-            });
-            
-            modal.addEventListener('hidden.bs.modal', function () {
-                const modalContent = this.querySelector('.modal-content');
-                modalContent.classList.remove('animate__animated', 'animate__fadeInDown', 'animate__faster');
-            });
+        
+        $sql = "INSERT INTO announce (message, admin_name, date) VALUES (?, ?, ?)";
+        $stmt = $con->prepare($sql);
+        $stmt->bind_param("sss", $message, $admin_name, $date);
+        
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            error_log("Error posting announcement: " . $stmt->error);
+            return false;
         }
-    });
-</script>
+    } catch (Exception $e) {
+        error_log('Error posting announcement: ' . $e->getMessage());
+        return false;
+    }
+}
 
+// IMPORTANT: DO NOT ADD CLOSING PHP TAG OR HTML CONTENT BELOW THIS POINT
+// Remove all HTML content to prevent headers already sent errors
 
-
-
-
-
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
-  <script src="https://cdn.datatables.net/2.0.6/js/dataTables.bootstrap5.js"></script>
-  <script src="https://cdn.datatables.net/2.0.6/js/dataTables.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKpH+YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-  <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/dataTables.buttons.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/buttons.dataTables.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/buttons.print.min.js"></script>
-
-
-</body>
-
-</html>
-<script>
-  <?php if ($displayModal) : ?>
-    $(document).ready(function() {
-      $('#exampleModalCenter').modal('show');
-    });
-  <?php endif; ?>
-</script>
-
-<?php
-loginAdmin();
-?>
+// Handle semester update
+if (isset($_POST["updateSemester"])) {
+    $semester = $_POST['semester'];
+    $academic_year = $_POST['academic_year'];
+    
+    if (update_current_semester($semester, $academic_year)) {
+        echo json_encode(['success' => true, 'message' => 'Semester updated successfully']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to update semester']);
+    }
+    exit();
+}

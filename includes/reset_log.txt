@@ -1,0 +1,2 @@
+Database connection successful
+Query executed. Result: success

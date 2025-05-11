@@ -135,19 +135,21 @@ function student_register($idNum, $last_Name, $first_Name, $middle_Name, $course
     }
 }
 
-function view_announcement()
+if (!function_exists('view_announcement'))
 {
-    $db = Database::getInstance();
-    $con = $db->getConnection();
+    function view_announcement()
+    {
+        $db = Database::getInstance();
+        $con = $db->getConnection();
 
-    $sql = "SELECT * FROM announce ORDER BY announce_id desc";
-
-    $result = mysqli_query($con, $sql);
-    if (mysqli_num_rows($result) > 0) {
-        $announcement = [];
-        while ($row = mysqli_fetch_array($result)) {
-            $announcement[] = $row;
+        $sql = "SELECT * FROM announce ORDER BY announce_id desc";
+        $result = mysqli_query($con, $sql);
+        if (mysqli_num_rows($result) > 0) {
+            $announcement = [];
+            while ($row = mysqli_fetch_array($result)) {
+                $announcement[] = $row;
+            }
+            return $announcement;
         }
     }
-    return $announcement;
 }

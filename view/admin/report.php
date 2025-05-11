@@ -51,10 +51,9 @@ function formatDate($dateString) {
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
   <!-- Inter Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Animation Library - AOS -->
-  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-  <!-- Animate.css -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <!-- Animation Library - Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  
   <script>
     tailwind.config = {
       theme: {
@@ -107,44 +106,45 @@ function formatDate($dateString) {
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f9fafb;
     }
     
     /* DataTables Custom Styling */
     .dataTables_wrapper {
-      background-color: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
+      background-color: transparent;
+      padding: 0.5rem;
     }
     
     .dataTables_filter input {
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      padding: 0.5rem 0.75rem;
+      padding: 0.5rem 1rem; /* Remove left padding that was accommodating the icon */
       margin-left: 0.5rem;
       font-size: 0.875rem;
       transition: all 0.2s;
+      background-image: none; /* Remove the background image */
     }
     
     .dataTables_filter input:focus {
       outline: none;
-      border-color: #0284c7;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
     }
     
     .dataTables_length select {
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      padding: 0.5rem 2rem 0.5rem 0.75rem;
+      padding: 0.5rem 0.75rem; /* Adjust padding (remove extra right padding) */
       font-size: 0.875rem;
-      background-position: right 0.5rem center;
       transition: all 0.2s;
+      background-image: none;
+      -webkit-appearance: auto; /* Reset to browser default */
+      appearance: auto; /* Reset to browser default */
     }
     
     .dataTables_length select:focus {
       outline: none;
-      border-color: #0284c7;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
     }
     
     .dataTables_info, .dataTables_length, .dataTables_filter {
@@ -153,108 +153,100 @@ function formatDate($dateString) {
       color: #4b5563;
     }
     
-    /* Modern pagination styling */
-    .modern-pagination {
+    .dataTables_paginate {
+      margin-top: 1.5rem;
       display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 0.5rem 0;
-      margin-top: 0.5rem;
-    }
-    
-    .modern-pagination .paginate_button {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
       justify-content: center;
-      min-width: 2.25rem;
-      height: 2.25rem;
-      margin: 0 0.125rem;
-      padding: 0 0.5rem;
+    }
+    
+    .dataTables_paginate .paginate_button {
+      padding: 0.5rem 0.75rem;
+      margin: 0 0.25rem;
       border-radius: 0.375rem;
-      font-weight: 500;
-      font-size: 0.875rem;
-      color: #4b5563 !important;
-      background: transparent !important;
-      border: none !important;
-      transition: all 0.2s ease-in-out;
-      cursor: pointer;
-      overflow: hidden;
+      border: 1px solid #e5e7eb;
+      background-color: #fff;
+      color: #374151;
+      transition: all 0.2s;
     }
     
-    .modern-pagination .paginate_button.current {
-      background: #0284c7 !important;
+    .dataTables_paginate .paginate_button.current {
+      background-color: #0ea5e9 !important;
+      border-color: #0ea5e9 !important;
       color: white !important;
-      font-weight: 600;
-      box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3);
+      font-weight: 500;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     }
     
-    .modern-pagination .paginate_button:not(.current):not(.disabled):hover {
-      background: rgba(14, 165, 233, 0.1) !important;
-      color: #0284c7 !important;
+    .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
+      background-color: #f3f4f6 !important;
+      color: #111827 !important;
+      border-color: #e5e7eb !important;
+      /* Override any potential DataTables internal hover styles */
+      background: #f3f4f6 !important;
+      background-image: none !important;
+      box-shadow: none !important;
     }
     
-    .modern-pagination .paginate_button.disabled {
-      opacity: 0.35;
+    /* Additional specificity to override DataTables defaults */
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+      background-color: #f3f4f6 !important;
+      color: #111827 !important;
+      border-color: #e5e7eb !important;
+      background: #f3f4f6 !important;
+      background-image: none !important;
+    }
+    
+    .dataTables_paginate .paginate_button.disabled {
+      opacity: 0.5;
       cursor: not-allowed;
     }
     
-    .modern-pagination .ellipsis {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 2.25rem;
-      color: #6b7280;
-      margin: 0 0.25rem;
-      font-weight: 600;
-      letter-spacing: 1px;
-    }
-    
-    /* Active page highlight glow */
-    .modern-pagination .paginate_button.current::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      left: 50%;
-      width: 20px;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 3px;
-      transform: translateX(-50%);
-    }
-    
-    /* Enhanced table styling */
     table.dataTable {
       border-collapse: separate;
       border-spacing: 0;
       width: 100%;
-      margin-top: 0 !important;
-      margin-bottom: 0 !important;
+      border-radius: 0.5rem;
+      overflow: hidden;
     }
     
     table.dataTable thead th {
-      background: #0284c7;
-      color: white;
+      background: #f9fafb;
+      color: #374151;
       font-weight: 600;
-      padding: 0.75rem 1rem;
+      padding: 1rem;
       text-align: left;
+      border-bottom: 2px solid #e5e7eb;
       white-space: nowrap;
-      border: none;
+      position: relative;
+    }
+    
+    table.dataTable thead th::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 0;
+      width: 0;
+      background-color: transparent;
+      transition: none;
+    }
+    
+    table.dataTable thead th:hover::after {
+      width: 0;
     }
     
     table.dataTable tbody tr {
       transition: all 0.3s ease;
-      background-color: transparent;
     }
     
     table.dataTable tbody tr:hover {
-      background-color: #f3f4f6;
+      background-color: #f0f9ff;
       transform: translateY(-2px);
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     
     table.dataTable tbody td {
-      padding: 0.75rem 1rem;
+      padding: 1rem;
       border-bottom: 1px solid #e5e7eb;
       vertical-align: middle;
       transition: all 0.2s ease;
@@ -281,6 +273,37 @@ function formatDate($dateString) {
       color: #0369a1;
     }
     
+    /* Button Animations */
+    .btn-animated {
+      position: relative;
+      overflow: hidden;
+      transform: translateZ(0);
+    }
+    
+    .btn-animated::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 300%;
+      height: 300%;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.6s ease-out;
+    }
+    
+    .btn-animated:hover::before {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    /* Shimmer effect */
+    .shimmer {
+      background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+      background-size: 1000px 100%;
+      animation: shimmer 2s infinite linear;
+    }
+    
     /* Row animations */
     .row-animation {
       opacity: 0;
@@ -293,7 +316,7 @@ function formatDate($dateString) {
   <div class="container mx-auto px-4 py-8 max-w-7xl">
     <!-- Page Header -->
     <div class="mb-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center">
                     <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
@@ -304,13 +327,13 @@ function formatDate($dateString) {
                 <p class="text-gray-500 mt-1 ml-12">Generate and export comprehensive lab usage reports</p>
             </div>
             <div class="flex space-x-3 mt-4 md:mt-0">
-                <button id="refreshBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-sync-alt mr-2"></i>
-                    Refresh
+                <button id="refreshBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+                    <i class="fas fa-sync-alt mr-2 text-gray-500"></i>
+                    Refresh Data
                 </button>
                 
-                <button id="exportBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-download mr-2 text-gray-500"></i>
+                <button id="exportBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+                    <i class="fas fa-download mr-2"></i>
                     Export
                 </button>
             </div>
@@ -320,7 +343,7 @@ function formatDate($dateString) {
         <nav class="flex mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
                 <li class="inline-flex items-center">
-                    <a href="Admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                    <a href="admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
                         <i class="fas fa-home mr-2"></i>
                         Dashboard
                     </a>
@@ -336,52 +359,75 @@ function formatDate($dateString) {
     </div>
 
     <!-- Table Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 animate__animated animate__fadeInUp animate__faster">
+      <div class="border-b border-gray-100 px-6 py-4">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+          <i class="fas fa-list-alt text-primary-500 mr-2"></i>
+          Sit-In Records
+        </h2>
+      </div>
       <div class="p-6">
-        <table id="sitInTable" class="w-full table-auto border-collapse text-sm text-gray-700">
+        <table id="sitInTable" class="w-full">
           <thead>
             <tr>
-              <th class="px-4 py-3 text-left">Sit-in ID</th>
-              <th class="px-4 py-3 text-left">ID Number</th>
-              <th class="px-4 py-3 text-left">Name</th>
-              <th class="px-4 py-3 text-left">Purpose</th>
-              <th class="px-4 py-3 text-left">Lab</th>
-              <th class="px-4 py-3 text-left">Time in</th>
-              <th class="px-4 py-3 text-left">Time out</th>
-              <th class="px-4 py-3 text-left">Date</th>
+              <th>Sit-in ID</th>
+              <th>ID Number</th>
+              <th>Name</th>
+              <th>Purpose</th>
+              <th>Lab</th>
+              <th>Time in</th>
+              <th>Time out</th>
+              <th>Date</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200">
+          <tbody>
             <?php if (!empty($listPerson)) : ?>
               <?php foreach ($listPerson as $person) : ?>
                 <tr class="row-animation">
-                  <td class="px-4 py-3 font-medium"><?php echo htmlspecialchars($person['sit_id']); ?></td>
-                  <td class="px-4 py-3"><?php echo htmlspecialchars($person['id_number']); ?></td>
-                  <td class="px-4 py-3"><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
-                  <td class="px-4 py-3"><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
-                  <td class="px-4 py-3 text-center">
-                    <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                  <td class="font-medium"><?php echo htmlspecialchars($person['sit_id']); ?></td>
+                  <td><?php echo htmlspecialchars($person['id_number']); ?></td>
+                  <td><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
+                  <td><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
+                  <td>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                       <?php echo htmlspecialchars($person['sit_lab']); ?>
                     </span>
                   </td>
-                  <td class="px-4 py-3">
+                  <td>
                     <span class="status-badge completed">
                       <?php echo formatTime($person['sit_login']); ?>
                     </span>
                   </td>
-                  <td class="px-4 py-3">
+                  <td>
                     <?php if (empty($person['sit_logout']) || $person['sit_logout'] == 'N/A'): ?>
                       <span class="status-badge active">Active</span>
                     <?php else: ?>
                       <span class="status-badge completed"><?php echo formatTime($person['sit_logout']); ?></span>
                     <?php endif; ?>
                   </td>
-                  <td class="px-4 py-3"><?php echo formatDate($person['sit_date']); ?></td>
+                  <td><?php echo formatDate($person['sit_date']); ?></td>
                 </tr>
               <?php endforeach; ?>
             <?php endif; ?>
           </tbody>
         </table>
+      </div>
+    </div>
+    
+    <!-- Quick Help Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8 animate__animated animate__fadeInUp animate__faster">
+      <div class="flex items-start">
+        <div class="flex-shrink-0 bg-primary-50 rounded-lg p-3 mr-4">
+          <i class="fas fa-lightbulb text-primary-500 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">Quick Tips</h3>
+          <div class="text-sm text-gray-600 space-y-2">
+            <p>• Use the search box to quickly find records by name, ID, or laboratory</p>
+            <p>• Export reports in Excel, PDF, or CSV format for your records</p>
+            <p>• "Active" sessions indicate students currently using the laboratory</p>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -400,8 +446,6 @@ function formatDate($dateString) {
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <!-- SweetAlert2 JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- AOS Animation Library -->
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 
   <!-- DataTables Buttons JS - SPECIFIC VERSIONS -->
   <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
@@ -418,30 +462,35 @@ function formatDate($dateString) {
   
   <script>
     $(document).ready(function() {
-      // Initialize AOS animations
-      AOS.init({
-        duration: 800,
-        once: true
-      });
+      // Initialize animations for page elements
+      function animateElements() {
+        $('.animate__animated').each(function(i) {
+          $(this).css('opacity', '0');
+          
+          setTimeout(() => {
+            $(this).css('opacity', '1');
+          }, i * 100);
+        });
+      }
+      
+      animateElements();
       
       // Initialize DataTable with row animation
       const table = $('#sitInTable').DataTable({
         responsive: true,
         language: {
-          search: "_INPUT_",
+          search: "",
           searchPlaceholder: "Search records...",
+          lengthMenu: "Show _MENU_ entries",
+          info: "Showing _START_ to _END_ of _TOTAL_ records",
           paginate: {
-            first: '«',
-            previous: '‹',
-            next: '›',
-            last: '»'
-          },
-          info: "",
-          infoEmpty: "",
-          infoFiltered: ""
+            first: '<i class="fas fa-angle-double-left"></i>',
+            previous: '<i class="fas fa-angle-left"></i>',
+            next: '<i class="fas fa-angle-right"></i>',
+            last: '<i class="fas fa-angle-double-right"></i>'
+          }
         },
         order: [[0, 'desc']],
-        dom: 'rt<"flex justify-end bg-white px-6 py-4 border-t border-gray-100"<"modern-pagination"p>>',
         buttons: [
           {
             extend: 'excel',
@@ -520,8 +569,28 @@ function formatDate($dateString) {
             }, 50 * i); // Stagger the animations
           });
           
-          // Style the ellipsis
-          $('.ellipsis').html('•••');
+          // Enhance pagination
+          $('.dataTables_paginate .paginate_button').addClass('hover:shadow-sm');
+          $('.dataTables_paginate .paginate_button.current').css('background-color', '#0284c7').css('border-color', '#0284c7');
+          
+          // Add icons to pagination buttons if not already present
+          if ($('.dataTables_paginate .previous i').length === 0) {
+            $('.dataTables_paginate .previous').html('<i class="fas fa-angle-left"></i>');
+            $('.dataTables_paginate .next').html('<i class="fas fa-angle-right"></i>');
+            $('.dataTables_paginate .first').html('<i class="fas fa-angle-double-left"></i>');
+            $('.dataTables_paginate .last').html('<i class="fas fa-angle-double-right"></i>');
+          }
+        },
+        initComplete: function() {
+          // Add custom classes to DataTable elements
+          $('.dataTables_filter').addClass('relative');
+          $('.dataTables_filter label').addClass('flex items-center');
+          $('.dataTables_filter input').addClass('focus:border-[#0284c7] focus:ring focus:ring-[#0284c7] focus:ring-opacity-20');
+          $('.dataTables_length select').addClass('focus:border-[#0284c7] focus:ring focus:ring-[#0284c7] focus:ring-opacity-20');
+          
+          // Add icon to search input
+          $('.dataTables_filter label').prepend('<i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>');
+          $('.dataTables_filter input').addClass('pl-10').css('padding-left', '2.5rem');
         }
       });
 
@@ -534,6 +603,29 @@ function formatDate($dateString) {
         setTimeout(() => {
           $(this).removeClass('shimmer');
         }, 500);
+      });
+
+      // Refresh button functionality
+      $('#refreshBtn').on('click', function() {
+        const $icon = $(this).find('i');
+        $icon.addClass('fa-spin');
+        $(this).addClass('animate-pulse');
+        
+        // Show loading indicator
+        Swal.fire({
+          title: 'Refreshing...',
+          html: 'Updating sit-in records',
+          timer: 1000,
+          timerProgressBar: true,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+          willClose: () => {
+            $(this).removeClass('animate-pulse');
+            // Reload the page to fetch fresh data
+            window.location.reload();
+          }
+        });
       });
 
       // Export button functionality
@@ -590,28 +682,6 @@ function formatDate($dateString) {
         }).then(() => {
           $(this).removeClass('animate-pulse');
         });
-      });
-
-      // Refresh button functionality with animation
-      $('#refreshBtn').on('click', function() {
-        const $icon = $(this).find('i');
-        $icon.addClass('fa-spin');
-        $(this).addClass('animate-pulse');
-        
-        // Show loading message with SweetAlert2
-        Swal.fire({
-          title: 'Refreshing Data',
-          text: 'Getting the latest records...',
-          timerProgressBar: true,
-          didOpen: () => {
-            Swal.showLoading();
-          }
-        });
-        
-        // Simulate refresh with animation
-        setTimeout(function() {
-          location.reload();
-        }, 800);
       });
     });
   </script>

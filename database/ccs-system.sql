@@ -62,9 +62,13 @@ INSERT INTO `feedback` (`feedback_id`, `id_number`, `lab`, `date`, `message`) VA
 --
 
 CREATE TABLE `notification` (
-  `notification_id` int(11) NOT NULL,
-  `id_number` int(11) NOT NULL,
-  `message` varchar(100) NOT NULL
+  `notification_id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_number` varchar(50) NOT NULL,
+  `message` text NOT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`notification_id`),
+  KEY `id_number` (`id_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -190,6 +194,20 @@ CREATE TABLE `student_session` (
 INSERT INTO `student_session` (`id_number`, `session`) VALUES
 (20946976, 22);
 
+--
+-- Table structure for table `student_points`
+--
+
+CREATE TABLE `student_points` (
+  `id_number` int(11) NOT NULL,
+  `points` int(11) NOT NULL DEFAULT 0,
+  `semester` varchar(20) NOT NULL,
+  `academic_year` varchar(20) NOT NULL,
+  `last_updated` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id_number`),
+  CONSTRAINT `student_points_ibfk_1` FOREIGN KEY (`id_number`) REFERENCES `students` (`id_number`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- --------------------------------------------------------
 
 --
@@ -221,6 +239,43 @@ INSERT INTO `student_sit_in` (`sit_id`, `id_number`, `sit_purpose`, `sit_lab`, `
 (7, 20946976, 'C-Programming', '524', '12:05:14pm', '12:06:15', '2025-03-13', 'Finished'),
 (8, 20946976, 'C-Programming', '542', '12:57:35pm', '12:57:50', '2025-03-13', 'Finished');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `current_semester`
+--
+
+CREATE TABLE `current_semester` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `semester` varchar(20) NOT NULL,
+  `academic_year` varchar(20) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `current_semester`
+--
+
+INSERT INTO `current_semester` (`semester`, `academic_year`) VALUES
+('Second Semester', '2024-2025');
+
+--
+-- Table structure for table `points_archive`
+--
+
+CREATE TABLE `points_archive` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `student_id` int(11) NOT NULL,
+  `points` int(11) NOT NULL,
+  `semester` varchar(20) NOT NULL,
+  `academic_year` varchar(20) NOT NULL,
+  `archived_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `student_id` (`student_id`),
+  CONSTRAINT `points_archive_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`id_number`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Indexes for dumped tables
 --
@@ -228,96 +283,4 @@ INSERT INTO `student_sit_in` (`sit_id`, `id_number`, `sit_purpose`, `sit_lab`, `
 --
 -- Indexes for table `announce`
 --
-ALTER TABLE `announce`
-  ADD PRIMARY KEY (`announce_id`);
-
---
--- Indexes for table `feedback`
---
-ALTER TABLE `feedback`
-  ADD PRIMARY KEY (`feedback_id`);
-
---
--- Indexes for table `notification`
---
-ALTER TABLE `notification`
-  ADD PRIMARY KEY (`notification_id`);
-
---
--- Indexes for table `reservation`
---
-ALTER TABLE `reservation`
-  ADD PRIMARY KEY (`reservation_id`);
-
---
--- Indexes for table `students`
---
-ALTER TABLE `students`
-  ADD PRIMARY KEY (`id_number`);
-
---
--- Indexes for table `student_pc`
---
-ALTER TABLE `student_pc`
-  ADD PRIMARY KEY (`pc_id`);
-
---
--- Indexes for table `student_session`
---
-ALTER TABLE `student_session`
-  ADD PRIMARY KEY (`id_number`);
-
---
--- Indexes for table `student_sit_in`
---
-ALTER TABLE `student_sit_in`
-  ADD PRIMARY KEY (`sit_id`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-
---
--- AUTO_INCREMENT for table `announce`
---
-ALTER TABLE `announce`
-  MODIFY `announce_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
-
---
--- AUTO_INCREMENT for table `feedback`
---
-ALTER TABLE `feedback`
-  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
-
---
--- AUTO_INCREMENT for table `notification`
---
-ALTER TABLE `notification`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
-
---
--- AUTO_INCREMENT for table `reservation`
---
-ALTER TABLE `reservation`
-  MODIFY `reservation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
-
---
--- AUTO_INCREMENT for table `student_sit_in`
---
-ALTER TABLE `student_sit_in`
-  MODIFY `sit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `student_session`
---
-ALTER TABLE `student_session`
-  ADD CONSTRAINT `student_session_ibfk_1` FOREIGN KEY (`id_number`) REFERENCES `students` (`id_number`) ON DELETE CASCADE ON UPDATE CASCADE;
-COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+ALTER TABLE `

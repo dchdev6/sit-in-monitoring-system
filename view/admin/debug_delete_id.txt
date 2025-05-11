@@ -1,14 +1,14 @@
 GET parameters: Array
 (
-    [id] => 67
+    [id] => 70
 )
 
-Attempting to delete ID: 67
+Attempting to delete ID: 70
 Attempting to include: ../../backend/database_connection.php
 Available connection variables: Array
 (
+    [conn] => mysqli
 )
 
-Created new database connection
 Delete result: success
 Affected rows: 1

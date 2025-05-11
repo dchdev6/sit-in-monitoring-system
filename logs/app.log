@@ -1,0 +1,37 @@
+[2025-05-11 14:11:38] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:11:39] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:11:40] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:11:45] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:12:33] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:26] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:27] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:27] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:28] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:28] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:28] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:31] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:32] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:32] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:32] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:13:55] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:14:17] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:17:14] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:18:36] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:19:01] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:19:03] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:19:03] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:19:04] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:19:05] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:19:05] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:19:08] [WARNING] Unauthorized access attempt to admin area
+[2025-05-11 14:19:15] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:19:16] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:19:16] [ERROR] Database connection failed: Unknown database 'reservation'
+[2025-05-11 14:19:44] [WARNING] Failed login attempt for ID: admin (Type: admin)
+[2025-05-11 14:19:44] [ERROR] Login error: Invalid ID number or password
+[2025-05-11 14:19:47] [WARNING] Failed login attempt for ID: admin (Type: student)
+[2025-05-11 14:19:47] [ERROR] Login error: Invalid ID number or password
+[2025-05-11 14:20:11] [INFO] Successful login: Administrator (ID: admin, Type: admin)
+[2025-05-11 14:23:31] [WARNING] Failed login attempt for ID: admin (Type: student)
+[2025-05-11 14:23:31] [ERROR] Login error: Invalid ID number or password
+[2025-05-11 14:23:35] [INFO] Successful login: Administrator (ID: admin, Type: admin)
