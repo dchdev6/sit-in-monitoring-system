@@ -120,33 +120,68 @@ if(isset($_SESSION['success_message'])) {
     </style>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800 opacity-0 transition-opacity duration-500">
-    <div class="container mx-auto px-4 py-8 max-w-4xl">
-        <div class="flex items-center justify-center mb-6 animate-slide-in-up">
-            <div class="bg-primary-600 h-10 w-1 rounded mr-3"></div>
-            <h1 class="text-2xl font-bold text-gray-800">Notifications</h1>
-        </div>
-        
-        <div class="bg-white rounded-xl shadow-md border border-gray-100 mb-8 notification-card animate-fade-in">
-            <div class="border-b border-gray-100 px-6 py-4 flex items-center bg-gradient-to-r from-primary-600 to-primary-700 rounded-t-xl">
-                <div class="rounded-full bg-white/20 p-2 mr-3 shadow-sm animate-pulse-slow">
-                    <i class="fas fa-bell text-white"></i>
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
+                            <i class="fas fa-bell text-primary-600"></i>
+                        </div>
+                        Notifications
+                    </h1>
+                    <p class="text-gray-500 mt-1 ml-12">View your system notifications and updates</p>
                 </div>
-                <h2 class="text-lg font-semibold text-white">Reservation Status Updates</h2>
+                <div class="flex space-x-3 mt-4 md:mt-0">
+                    <button id="refreshButton" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
+                        <i class="fas fa-sync-alt mr-2 text-gray-500"></i>
+                        Refresh
+                    </button>
+                </div>
             </div>
             
-            <div class="p-5">
+            <!-- Breadcrumbs -->
+            <nav class="flex mb-6" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
+                    <li class="inline-flex items-center">
+                        <a href="homepage.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                            <i class="fas fa-home mr-2"></i>
+                            Home
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="text-gray-400 mx-2">/</span>
+                            <span class="text-primary-600 font-medium">Notifications</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Updated Notification Section -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 mb-8 notification-card animate-fade-in hover:border-primary-200">
+            <div class="border-b border-gray-100 px-6 py-4 flex items-center">
+                <div class=" p-3 mr-3">
+                    <i class="fas fa-bell text-primary-600 animate-pulse-slow"></i>
+                </div>
+                <h2 class="text-lg font-semibold text-gray-800">Reservation Status Updates</h2>
+            </div>
+            
+            <div class="p-6">
                 <div class="max-h-[30rem] overflow-y-auto pr-2 space-y-4 scrollbar-thin">
                     <?php
-                    $reservations = retrieve_reservation_logs($_SESSION['id_number']);
+                    $reservations = retrieve_student_reservation_logs($_SESSION['id_number']);
                     if(empty($reservations)): 
                     ?>
                         <div class="text-center py-16 text-gray-500">
-                            <div class="bg-gray-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                                <i class="fas fa-bell-slash text-gray-300 text-2xl"></i>
+                            <div class="bg-gray-100 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                                <i class="fas fa-bell-slash text-gray-300 text-3xl"></i>
                             </div>
-                            <p class="text-gray-600 font-medium">No notifications yet</p>
+                            <p class="text-gray-600 font-medium text-lg">No notifications yet</p>
                             <p class="text-sm text-gray-400 mt-1">Your reservation updates will appear here</p>
-                            <a href="reservation.php" class="mt-4 inline-block px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition duration-300 text-sm">
+                            <a href="reservation.php" class="mt-4 inline-block px-5 py-2 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition duration-300 text-sm shadow-md">
                                 <i class="fas fa-plus-circle mr-2"></i>Create Reservation
                             </a>
                         </div>
@@ -155,7 +190,7 @@ if(isset($_SESSION['success_message'])) {
                         foreach($reservations as $index => $row): 
                             // Determine status styling
                             $statusColor = 'gray';
-                            $statusBg = 'bg-gray-100';
+                            $statusBg = 'bg-gray-50';
                             $statusIcon = 'fa-question-circle';
                             
                             if(strtolower($row['status']) == 'approved') {
@@ -172,22 +207,22 @@ if(isset($_SESSION['success_message'])) {
                                 $statusIcon = 'fa-times-circle';
                             }
                     ?>
-                        <div class="rounded-lg border border-gray-100 p-4 notification-item stagger-item <?php echo $statusBg; ?>" style="transition-delay: <?php echo $index * 100; ?>ms">
+                        <div class="rounded-lg border border-gray-200 p-5 notification-item stagger-item <?php echo $statusBg; ?>" style="transition-delay: <?php echo $index * 100; ?>ms">
                             <div class="flex items-start">
                                 <div class="flex-shrink-0 mt-1">
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-<?php echo $statusColor; ?>-600 shadow-sm">
-                                        <i class="fas <?php echo $statusIcon; ?> text-xl"></i>
+                                    <div class="w-12 h-12 rounded-full flex items-center justify-center text-<?php echo $statusColor; ?>-600 shadow-md bg-white">
+                                        <i class="fas <?php echo $statusIcon; ?> text-2xl"></i>
                                     </div>
                                 </div>
-                                <div class="ml-4 flex-1">
-                                    <div class="flex items-center justify-between mb-1">
-                                        <h3 class="font-semibold text-gray-800">Reservation #<?php echo substr(md5($row['id_number'] . $row['reservation_date']), 0, 8); ?></h3>
-                                        <span class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-<?php echo $statusColor; ?>-100 text-<?php echo $statusColor; ?>-800">
+                                <div class="ml-5 flex-1">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="font-semibold text-gray-800 text-lg">Reservation #<?php echo substr(md5($row['id_number'] . $row['reservation_date']), 0, 8); ?></h3>
+                                        <span class="text-xs font-medium px-3 py-1 rounded-full bg-<?php echo $statusColor; ?>-100 text-<?php echo $statusColor; ?>-800">
                                             <?php echo $row['status']; ?>
                                         </span>
                                     </div>
                                     
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm mt-3">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mt-3">
                                         <div>
                                             <p class="text-gray-500 flex items-center">
                                                 <i class="fas fa-calendar-day w-5 text-primary-500"></i>
@@ -225,10 +260,10 @@ if(isset($_SESSION['success_message'])) {
                                     </div>
                                     
                                     <?php if(strtolower($row['status']) == 'approved'): ?>
-                                    <div class="mt-3 pt-3 border-t border-gray-100">
+                                    <div class="mt-4 pt-4 border-t border-gray-200">
                                         <div class="flex justify-end">
-                                            <a href="check_in.php?id=<?php echo $row['reservation_id']; ?>" class="text-sm bg-success-600 hover:bg-success-500 text-white py-1.5 px-3 rounded-lg transition duration-300 flex items-center shadow-sm">
-                                                <i class="fas fa-sign-in-alt mr-1"></i> Check In
+                                            <a href="check_in.php?id=<?php echo $row['reservation_id']; ?>" class="text-sm bg-success-500 hover:bg-success-400 text-white py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-md">
+                                                <i class="fas fa-sign-in-alt mr-2"></i> Check In
                                             </a>
                                         </div>
                                     </div>
@@ -243,35 +278,6 @@ if(isset($_SESSION['success_message'])) {
                 </div>
             </div>
         </div>
-        
-        <!-- Reminders Card -->
-        <div class="bg-white rounded-xl shadow-md border border-gray-100 p-6 notification-card stagger-item">
-            <div class="flex items-center mb-4">
-                <div class="rounded-full bg-primary-100 p-3 mr-3">
-                    <i class="fas fa-lightbulb text-primary-600"></i>
-                </div>
-                <h2 class="text-lg font-semibold text-gray-800">Reservation Reminders</h2>
-            </div>
-            
-            <ul class="space-y-3 ml-12">
-                <li class="flex items-start">
-                    <i class="fas fa-check-circle text-success-500 mt-1 mr-2"></i>
-                    <span class="text-gray-600">Be sure to arrive on time for your approved reservations</span>
-                </li>
-                <li class="flex items-start">
-                    <i class="fas fa-check-circle text-success-500 mt-1 mr-2"></i>
-                    <span class="text-gray-600">Bring your student ID card for verification</span>
-                </li>
-                <li class="flex items-start">
-                    <i class="fas fa-check-circle text-success-500 mt-1 mr-2"></i>
-                    <span class="text-gray-600">Follow lab rules and guidelines during your session</span>
-                </li>
-                <li class="flex items-start">
-                    <i class="fas fa-check-circle text-success-500 mt-1 mr-2"></i>
-                    <span class="text-gray-600">Contact lab administrators if you need to cancel a reservation</span>
-                </li>
-            </ul>
-        </div>
     </div>
 
     <script>
@@ -281,6 +287,24 @@ if(isset($_SESSION['success_message'])) {
             setTimeout(() => {
                 document.body.style.opacity = "1";
             }, 100);
+            
+            // Refresh Button functionality
+            const refreshButton = document.getElementById('refreshButton');
+            if (refreshButton) {
+                refreshButton.addEventListener('click', function() {
+                    // Add rotate animation to the icon
+                    const icon = this.querySelector('i');
+                    icon.classList.add('animate-spin');
+                    
+                    // Disable the button temporarily
+                    this.disabled = true;
+                    
+                    // Reload the page after a short delay
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                });
+            }
             
             // Stagger in elements with class .stagger-item
             const staggerItems = document.querySelectorAll('.stagger-item');

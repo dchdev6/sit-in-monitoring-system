@@ -1,5 +1,12 @@
 <?php
-include '../../api/api_student.php';
+include_once '../../api/api_student.php'; // Changed from include to include_once
+// Include the points functions
+include_once __DIR__ . '/points_functions.php';
+
+// Make sure we have the student's points in the session
+if (isset($_SESSION['id_number']) && !isset($_SESSION['points'])) {
+    $_SESSION['points'] = get_student_points($_SESSION['id_number']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,8 +33,8 @@ include '../../api/api_student.php';
                 200: '#bae6fd',
                 300: '#7dd3fc',
                 400: '#38bdf8',
-                500: '#0ea5e9',
-                600: '#0284c7',
+                500: '#0284c7', /* Changed from 0ea5e9 to 0284c7 */
+                600: '#0284c7', /* Changed to match the requested color */
                 700: '#0369a1',
                 800: '#075985',
                 900: '#0c4a6e',
@@ -143,6 +150,13 @@ include '../../api/api_student.php';
         transform: translateX(3px);
       }
       
+      .dropdown-item i {
+        margin-right: 0.5rem;
+        width: 1rem;
+        text-align: center;
+        color: #0ea5e9;
+      }
+
       .notification-badge {
         position: absolute;
         top: -2px;
@@ -234,83 +248,67 @@ include '../../api/api_student.php';
             <span class="hidden md:block text-primary-700 font-semibold text-lg tracking-tight">Student Portal</span>
           </a>
         </div>
-        
-        <!-- Mobile menu button -->
-        <div class="flex items-center md:hidden">
-          <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-primary-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 transition duration-150" 
-            id="mobile-menu-button" 
-            aria-expanded="false"
-            aria-label="Open main menu">
-            <span class="sr-only">Open main menu</span>
-            <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
 
         <!-- Desktop Navigation Links -->
-        <div class="hidden md:flex md:items-center md:space-x-4">
+        <div class="hidden md:flex md:items-center md:space-x-4 md:justify-center flex-1">
           <!-- Home -->
-          <a href="Homepage.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Homepage.php' ? 'nav-link-active' : ''; ?>">
+          <a href="Homepage.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center justify-center <?php echo basename($_SERVER['PHP_SELF']) == 'Homepage.php' ? 'nav-link-active' : ''; ?>">
             <i class="fas fa-home mr-1"></i>
             <span>Home</span>
           </a>
           
-          <!-- Edit Profile -->
-          <a href="Profile.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Profile.php' ? 'nav-link-active' : ''; ?>">
-            <i class="fas fa-user-edit mr-1"></i>
-            <span>Edit Profile</span>
-          </a>
-          
-          <!-- History -->
-          <a href="history.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'history.php' ? 'nav-link-active' : ''; ?>">
-            <i class="fas fa-history mr-1"></i>
-            <span>History</span>
-          </a>
-          
           <!-- Reservation -->
-          <a href="reservation.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'reservation.php' ? 'nav-link-active' : ''; ?>">
+          <a href="reservation.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center justify-center <?php echo basename($_SERVER['PHP_SELF']) == 'reservation.php' ? 'nav-link-active' : ''; ?>">
             <i class="fas fa-calendar-check mr-1"></i>
             <span>Reservation</span>
           </a>
           
+          <!-- Leaderboard -->
+          <a href="leaderboard.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center justify-center <?php echo basename($_SERVER['PHP_SELF']) == 'leaderboard.php' ? 'nav-link-active' : ''; ?>">
+            <i class="fas fa-trophy mr-1"></i>
+            <span>Leaderboard</span>
+          </a>
+          
           <!-- Notifications -->
-          <div class="relative dropdown-wrapper">
-            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover rounded-md inline-flex items-center transition duration-200">
-              <i class="fas fa-bell mr-1"></i>
-              <span>Notifications</span>
-              <?php $notifications = retrieve_notification($_SESSION['id_number']); 
-              if (count($notifications) > 0): ?>
-                <span class="notification-badge"><?php echo count($notifications); ?></span>
-              <?php endif; ?>
+          <?php
+          // Keep the function call to avoid breaking dependencies
+          $notifications = retrieve_notification($_SESSION['id_number']);
+          ?>
+          <a href="../../view/student/notification.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center justify-center <?php echo basename($_SERVER['PHP_SELF']) == 'notification.php' ? 'nav-link-active' : ''; ?>">
+            <i class="fas fa-bell mr-1"></i>
+            <span>Notifications</span>
+          </a>
+          
+          <!-- More Options Dropdown -->
+          <div class="dropdown-wrapper">
+            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center justify-center <?php echo in_array(basename($_SERVER['PHP_SELF']), ['Profile.php', 'history.php', 'schedules.php', 'resources.php']) ? 'nav-link-active' : ''; ?>">
+              <span>More</span>
               <svg class="ml-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
             </button>
-            <div class="dropdown-menu notification-dropdown">
-              <div class="p-3">
-                <h3 class="text-sm font-semibold text-gray-900 mb-2">Notifications</h3>
-                <hr class="mb-2">
-                <?php if (count($notifications) > 0): ?>
-                  <div class="space-y-2">
-                    <?php foreach($notifications as $row) : ?>
-                      <div class="p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                        <p class="text-sm text-gray-700"><?php echo $row['message']; ?></p>
-                        <p class="text-xs text-gray-500 mt-1"><?php echo isset($row['created_at']) ? date('M d, Y h:i A', strtotime($row['created_at'])) : ''; ?></p>
-                      </div>
-                    <?php endforeach; ?>
-                  </div>
-                <?php else: ?>
-                  <div class="text-center py-4">
-                    <p class="text-sm text-gray-500">No new notifications</p>
-                  </div>
-                <?php endif; ?>
+            <div class="dropdown-menu">
+              <div class="py-1">
+                <a href="Profile.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'Profile.php' ? 'text-primary-600 bg-primary-50' : ''; ?>">
+                  <i class="fas fa-user-edit"></i> Edit Profile
+                </a>
+                <a href="history.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'history.php' ? 'text-primary-600 bg-primary-50' : ''; ?>">
+                  <i class="fas fa-history"></i> History
+                </a>
+                <a href="schedules.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'schedules.php' ? 'text-primary-600 bg-primary-50' : ''; ?>">
+                  <i class="fas fa-calendar-alt"></i> Lab Schedules
+                </a>
+                <a href="resources.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'resources.php' ? 'text-primary-600 bg-primary-50' : ''; ?>">
+                  <i class="fas fa-file-alt"></i> Learning Resources
+                </a>
               </div>
             </div>
           </div>
-          
-          <!-- Logout Button -->
-          <a href="../../auth/logout.php" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center" onclick="handleLogout(event)" aria-label="Logout from student dashboard">
+        </div>
+
+        <!-- Logout Button -->
+        <div class="hidden md:flex md:items-center">
+          <a href="../../auth/logout.php" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center justify-center" onclick="handleLogout(event)" aria-label="Logout from student dashboard">
             <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
@@ -327,6 +325,18 @@ include '../../api/api_student.php';
           <i class="fas fa-home mr-2 w-5 text-center"></i> Home
         </a>
         
+        <a href="reservation.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'reservation.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-calendar-check mr-2 w-5 text-center"></i> Reservation
+        </a>
+        
+        <a href="leaderboard.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'leaderboard.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-trophy mr-2 w-5 text-center"></i> Leaderboard
+        </a>
+        
+        <div class="pt-3 pb-2">
+          <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">More Options</p>
+        </div>
+        
         <a href="Profile.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Profile.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-user-edit mr-2 w-5 text-center"></i> Edit Profile
         </a>
@@ -335,8 +345,12 @@ include '../../api/api_student.php';
           <i class="fas fa-history mr-2 w-5 text-center"></i> History
         </a>
         
-        <a href="reservation.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'reservation.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
-          <i class="fas fa-calendar-check mr-2 w-5 text-center"></i> Reservation
+        <a href="schedules.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'schedules.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-calendar-alt mr-2 w-5 text-center"></i> Lab Schedules
+        </a>
+        
+        <a href="resources.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'resources.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-file-alt mr-2 w-5 text-center"></i> Learning Resources
         </a>
         
         <!-- Mobile Notifications -->

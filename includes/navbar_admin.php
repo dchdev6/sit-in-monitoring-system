@@ -1,5 +1,19 @@
 <?php 
 include '../../api/api_admin.php';
+include '../../backend/backend_student.php';
+
+// Calculate unread notifications count
+$notifications = retrieve_notification($_SESSION['admin_id_number']);
+$unread_count = 0;
+foreach ($notifications as $notification) {
+    if (!$notification['is_read']) {
+        $unread_count++;
+    }
+}
+
+// The points functions reference has been removed
+
+// No need for pending_count variable anymore
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -310,85 +324,133 @@ include '../../api/api_admin.php';
             <span>Sit-in</span>
           </a>
           
-          <!-- Dropdown for Reports -->
+          <!-- Reports Dropdown -->
           <div class="relative dropdown-wrapper">
-            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover rounded-md inline-flex items-center transition duration-200 <?php echo in_array(basename($_SERVER['PHP_SELF']), ['ViewRecords.php', 'Report.php', 'Feedback_Report.php']) ? 'nav-link-active' : ''; ?>">
-              <i class="fas fa-chart-line mr-1"></i>
+            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover rounded-md inline-flex items-center transition duration-200 <?php echo in_array(basename($_SERVER['PHP_SELF']), ['ViewRecords.php', 'Report.php', 'Feedback_Report.php', 'Reservation.php']) ? 'nav-link-active' : ''; ?>">
+              <i class="fas fa-file-lines mr-1"></i>
               <span>Reports</span>
               <svg class="ml-1 h-4 w-4 transform transition-transform duration-200 group-hover:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
             </button>
-            <div class="dropdown-menu">
-              <a href="ViewRecords.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'ViewRecords.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
-                <i class="fas fa-list-ul"></i> View Sit-in Records
-              </a>
-              <a href="Report.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'Report.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
-                <i class="fas fa-file-lines"></i> Sit-in Reports
-              </a>
-              <a href="Feedback_Report.php" class="dropdown-item <?php echo basename($_SERVER['PHP_SELF']) == 'Feedback_Report.php' ? 'bg-primary-50 text-primary-700 font-medium' : ''; ?>">
-                <i class="fas fa-comments"></i> Feedback Reports
-              </a>
+            <div class="absolute left-0 mt-1 w-48 bg-white rounded-md shadow-lg dropdown-menu z-50">
+              <div class="py-1">
+                <a href="ViewRecords.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 <?php echo basename($_SERVER['PHP_SELF']) == 'ViewRecords.php' ? 'bg-gray-100 text-gray-900' : ''; ?>">Student Records</a>
+                <a href="Report.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 <?php echo basename($_SERVER['PHP_SELF']) == 'Report.php' ? 'bg-gray-100 text-gray-900' : ''; ?>">Usage Report</a>
+                <a href="Feedback_Report.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 <?php echo basename($_SERVER['PHP_SELF']) == 'Feedback_Report.php' ? 'bg-gray-100 text-gray-900' : ''; ?>">Feedback Report</a>
+                <a href="reservation.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 <?php echo basename($_SERVER['PHP_SELF']) == 'reservation.php' ? 'bg-gray-100 text-gray-900' : ''; ?>">Reservations</a>
+              </div>
             </div>
           </div>
           
-          <a href="Reservation.php" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover transition duration-200 flex items-center <?php echo basename($_SERVER['PHP_SELF']) == 'Reservation.php' ? 'nav-link-active' : ''; ?>">
-            <i class="fas fa-calendar-check mr-1"></i>
-            <span>Reservation</span>
-          </a>
-          
-          <!-- Logout Button -->
-          <a href="../../auth/logout.php" class="ml-4 px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition duration-200 flex items-center" onclick="handleLogout(event)" aria-label="Logout from admin dashboard">
-            <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Log out
+          <!-- More Dropdown -->
+          <div class="relative dropdown-wrapper">
+            <button type="button" class="px-3 py-2 text-sm font-medium text-gray-700 nav-link-hover rounded-md inline-flex items-center transition duration-200">
+              <i class="fas fa-bars mr-1"></i>
+              <span>More</span>
+              <svg class="ml-1 h-4 w-4 transform transition-transform duration-200 group-hover:rotate-180" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <div class="absolute left-0 mt-1 w-48 bg-white rounded-md shadow-lg dropdown-menu z-50">
+              <div class="py-1">
+                <a href="schedules.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 <?php echo basename($_SERVER['PHP_SELF']) == 'schedules.php' ? 'bg-gray-100 text-gray-900' : ''; ?>">
+                  <i class="fas fa-calendar-alt mr-2 text-primary-500"></i>Lab Schedules
+                </a>
+                <a href="resources.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 <?php echo basename($_SERVER['PHP_SELF']) == 'resources.php' ? 'bg-gray-100 text-gray-900' : ''; ?>">
+                  <i class="fas fa-file-upload mr-2 text-primary-500"></i>Resources
+                </a>
+                <div class="border-t border-gray-100 my-1"></div>
+                <a href="notification.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 <?php echo basename($_SERVER['PHP_SELF']) == 'notification.php' ? 'bg-gray-100 text-gray-900' : ''; ?>">
+                  <i class="fas fa-bell mr-2 text-primary-500"></i>Notifications
+                  <?php if ($unread_count > 0): ?>
+                    <span class="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
+                      <?php echo $unread_count; ?>
+                    </span>
+                  <?php endif; ?>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Logout Button -->
+        <div class="hidden md:flex items-center ml-4">
+          <a href="../../auth/logout.php" 
+             class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md shadow-sm transition-all duration-200 flex items-center space-x-1 hover:-translate-y-0.5 hover:shadow-md" 
+             onclick="handleLogout(event)" 
+             aria-label="Logout from admin dashboard">
+            <i class="fas fa-sign-out-alt mr-2"></i>
+            <span>Log out</span>
           </a>
         </div>
-      </div>
+      </div>  
     </div>
 
     <!-- Mobile menu -->
     <div class="md:hidden bg-white border-t border-gray-100" id="mobile-menu">
-      <div class="px-2 pt-2 pb-3 space-y-1">
-        <a href="Admin.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Admin.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+      <div class="px-4 py-3 space-y-3">
+        <a href="Admin.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Admin.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-home mr-2 w-5 text-center"></i> Home
         </a>
         
-        <button type="button" class="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="animateSearch()">
+        <button type="button" class="w-full text-left block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200" data-bs-toggle="modal" data-bs-target="#exampleModal" onclick="animateSearch()">
           <i class="fas fa-search mr-2 w-5 text-center"></i> Search
         </button>
         
-        <a href="Students.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Students.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Students.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Students.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-user-graduate mr-2 w-5 text-center"></i> Students
         </a>
         
-        <a href="Sit_in.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Sit_in.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Sit_in.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Sit_in.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-laptop-code mr-2 w-5 text-center"></i> Sit-in
         </a>
         
-        <div class="pt-2 pb-1">
+        <div class="pt-4 pb-2">
           <p class="px-3 text-xs uppercase tracking-wider font-semibold text-gray-500">Reports</p>
         </div>
         
-        <a href="ViewRecords.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'ViewRecords.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="ViewRecords.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'ViewRecords.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-list-ul mr-2 w-5 text-center"></i> View Sit-in Records
         </a>
         
-        <a href="Report.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Report.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Report.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Report.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-file-lines mr-2 w-5 text-center"></i> Sit-in Reports
         </a>
         
-        <a href="Feedback_Report.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Feedback_Report.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Feedback_Report.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Feedback_Report.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-comments mr-2 w-5 text-center"></i> Feedback Reports
         </a>
         
-        <a href="Reservation.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Reservation.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+        <a href="Reservation.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'Reservation.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
           <i class="fas fa-calendar-check mr-2 w-5 text-center"></i> Reservation
         </a>
         
-        <div class="pt-4 pb-3 border-t border-gray-200">
-          <a href="../../auth/logout.php" class="flex items-center justify-center w-full text-center px-4 py-2 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-all duration-200" onclick="handleLogout(event)">
+        <div class="pt-4 pb-2">
+          <p class="px-3 text-xs uppercase tracking-wider font-semibold text-gray-500">Upload</p>
+        </div>
+        
+        <a href="schedules.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'schedules.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-calendar-alt mr-2 w-5 text-center"></i> Lab Schedules
+        </a>
+        
+        <a href="resources.php" class="block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 <?php echo basename($_SERVER['PHP_SELF']) == 'resources.php' ? 'bg-primary-50 text-primary-600 font-semibold' : ''; ?>">
+          <i class="fas fa-file-upload mr-2 w-5 text-center"></i> Resources
+        </a>
+        
+        <div class="pt-6 pb-4 border-t border-gray-200 mt-2">
+          <a href="notification.php" class="flex items-center justify-center w-full text-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-all duration-200 relative">
+            <i class="fas fa-bell mr-2 w-5 text-center"></i> Notifications
+            <?php if ($unread_count > 0): ?>
+                <span class="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    <?php echo $unread_count; ?>
+                </span>
+            <?php endif; ?>
+          </a>
+        </div>
+        
+        <div class="pt-6 pb-4 border-t border-gray-200 mt-2">
+          <a href="../../auth/logout.php" class="flex items-center justify-center w-full text-center px-4 py-3 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-all duration-200" onclick="handleLogout(event)">
             <i class="fas fa-sign-out-alt mr-2"></i> Log out
           </a>
         </div>
@@ -589,5 +651,450 @@ include '../../api/api_admin.php';
     });
   </script>
 </body>
+
+<!-- Search Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-lg shadow-lg animate__animated animate__fadeIn">
+      <div class="modal-header border-b border-gray-200 px-4 py-3">
+        <h5 class="modal-title font-semibold text-gray-800" id="exampleModalLabel">
+          <i class="fas fa-search mr-2 text-primary-500"></i>
+          Search Students
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form action="" method="GET" class="space-y-4">
+          <div class="form-group">
+            <label for="searchBar" class="text-sm font-medium text-gray-700 mb-1 block">
+              Enter Student ID Number:
+            </label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-id-card text-gray-400"></i>
+              </div>
+              <input type="text" name="searchBar" id="searchBar" class="form-control pl-10 py-2 border border-gray-300 rounded-md w-full focus:ring-primary-500 focus:border-primary-500 transition-all" placeholder="ex. XXXX-XXXX" required>
+            </div>
+          </div>
+          <input type="hidden" name="search" value="true">
+          <div class="flex justify-end space-x-2 mt-4">
+            <button type="button" class="btn btn-secondary px-4 py-2 rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300 transition-all" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary px-4 py-2 rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-all">
+              <i class="fas fa-search mr-1"></i> Search
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Student Results Modal -->
+<?php if(isset($displayModal) && $displayModal): ?>
+<div class="modal fade" id="studentResultsModal" tabindex="-1" aria-labelledby="studentResultsModalLabel" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-lg shadow-lg border-0 animate__animated animate__fadeIn">
+      <div class="modal-header bg-primary-50 py-3">
+        <h5 class="modal-title font-semibold text-primary-800" id="studentResultsModalLabel">
+          <i class="fas fa-user-graduate mr-2"></i>Student Information
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-4 text-center">
+          <div class="inline-block h-20 w-20 rounded-full bg-primary-100 p-2 mb-2 overflow-hidden">
+            <img src="../../assets/images/<?php echo htmlspecialchars($student->profile_image); ?>" alt="<?php echo htmlspecialchars($student->name); ?>"
+              class="h-full w-full object-cover rounded-full" onerror="this.src='../../assets/images/default-profile.jpg'">
+          </div>
+          <h4 class="text-xl font-semibold text-gray-800"><?php echo htmlspecialchars($student->name); ?></h4>
+          <p class="text-gray-500"><?php echo htmlspecialchars($student->id); ?></p>
+        </div>
+        
+        <div class="grid grid-cols-1 gap-3 mt-4">
+          <div class="bg-gray-50 p-3 rounded-lg">
+            <p class="text-sm text-gray-500 mb-1">Available Sessions</p>
+            <p class="text-lg font-semibold"><?php echo $student->records; ?> sessions</p>
+          </div>
+          
+          <!-- Actions -->
+          <div class="mt-3 flex justify-between gap-2">
+            <button type="button" class="btn btn-primary flex-1 py-2 px-4 rounded-md bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all text-center"
+                    data-bs-toggle="modal" data-bs-target="#studentProfileModal" data-bs-dismiss="modal">
+              <i class="fas fa-user-edit mr-1"></i> View Profile
+            </button>
+            <?php if($student->records > 0): ?>
+            <form action="" method="POST" class="flex-1">
+              <input type="hidden" name="studentID" value="<?php echo $student->id; ?>">
+              <button type="button" class="w-full py-2 px-4 rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-all" 
+                      data-bs-toggle="modal" data-bs-target="#sitInModal" data-student-id="<?php echo $student->id; ?>" 
+                      data-student-name="<?php echo $student->name; ?>" data-sessions="<?php echo $student->records; ?>">
+                <i class="fas fa-sign-in-alt mr-1"></i> Sit-in
+              </button>
+            </form>
+            <?php else: ?>
+            <button disabled class="flex-1 py-2 px-4 rounded-md bg-gray-200 text-gray-400 cursor-not-allowed">
+              <i class="fas fa-sign-in-alt mr-1"></i> No Sessions
+            </button>
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Student Profile Modal -->
+<div class="modal fade" id="studentProfileModal" tabindex="-1" aria-labelledby="studentProfileModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-lg shadow-lg border-0 animate__animated animate__fadeIn">
+      <div class="modal-header bg-primary-50 py-3">
+        <h5 class="modal-title font-semibold text-primary-800" id="studentProfileModalLabel">
+          <i class="fas fa-id-card mr-2"></i>Student Profile
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Profile Image Section -->
+          <div class="md:col-span-1 flex flex-col items-center justify-start p-4 bg-gray-50 rounded-lg">
+            <div class="relative w-40 h-40 rounded-full overflow-hidden mb-4 border-4 border-white shadow-md">
+              <img src="../../assets/images/<?php echo htmlspecialchars($student->profile_image); ?>" 
+                alt="<?php echo htmlspecialchars($student->name); ?>" 
+                class="w-full h-full object-cover"
+                onerror="this.src='../../assets/images/default-profile.jpg'">
+            </div>
+            <h4 class="text-xl font-bold text-center"><?php echo htmlspecialchars($student->name); ?></h4>
+            <p class="text-gray-500 text-center mb-2"><?php echo htmlspecialchars($student->id); ?></p>
+            <div class="mt-2 bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium">
+              <?php 
+                $yearLevel = $student->yearLevel;
+                $yearText = "";
+                
+                switch($yearLevel) {
+                  case "1st Year":
+                  case "1":
+                    $yearText = "Freshmen";
+                    break;
+                  case "2nd Year":
+                  case "2":
+                    $yearText = "Sophomore";
+                    break;
+                  case "3rd Year":
+                  case "3":
+                    $yearText = "Junior";
+                    break;
+                  case "4th Year":
+                  case "4":
+                    $yearText = "Senior";
+                    break;
+                  default:
+                    $yearText = $yearLevel;
+                }
+                
+                echo $yearText;
+              ?>
+            </div>
+            <div class="mt-2 bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+              <?php echo htmlspecialchars($student->course); ?>
+            </div>
+          </div>
+          
+          <!-- Student Details Section -->
+          <div class="md:col-span-2">
+            <div class="bg-white rounded-lg shadow-sm">
+              <div class="p-4 border-b border-gray-100">
+                <h5 class="text-lg font-semibold text-gray-800 mb-1">Contact Information</h5>
+              </div>
+              <div class="p-4 space-y-3">
+                <!-- Email -->
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                    <i class="fas fa-envelope text-primary-600"></i>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm text-gray-500">Email</p>
+                    <p class="text-gray-800"><?php echo htmlspecialchars($student->email); ?></p>
+                  </div>
+                </div>
+                
+                <!-- Address -->
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                    <i class="fas fa-map-marker-alt text-primary-600"></i>
+                  </div>
+                  <div class="ml-3">
+                    <p class="text-sm text-gray-500">Address</p>
+                    <p class="text-gray-800"><?php echo htmlspecialchars($student->address); ?></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Sit-in Session Info -->
+            <div class="mt-4 bg-white rounded-lg shadow-sm">
+              <div class="p-4 border-b border-gray-100">
+                <h5 class="text-lg font-semibold text-gray-800 mb-1">Lab Sessions</h5>
+              </div>
+              <div class="p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm text-gray-500">Available Sessions</p>
+                    <p class="text-2xl font-bold <?php echo $student->records > 0 ? 'text-green-600' : 'text-red-500'; ?>">
+                      <?php echo $student->records; ?>
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <?php if($student->records > 0): ?>
+                      <button type="button" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors"
+                              data-bs-toggle="modal" data-bs-target="#sitInModal" data-bs-dismiss="modal" 
+                              data-student-id="<?php echo $student->id; ?>" 
+                              data-student-name="<?php echo $student->name; ?>" 
+                              data-sessions="<?php echo $student->records; ?>">
+                        <i class="fas fa-laptop-code mr-2"></i>
+                        Start Sit-in
+                      </button>
+                    <?php else: ?>
+                      <button disabled class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-500 font-medium rounded-md cursor-not-allowed">
+                        <i class="fas fa-times-circle mr-2"></i>
+                        No Available Sessions
+                      </button>
+                    <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="mt-4 flex flex-wrap justify-end gap-2">
+              <button type="button" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-all" 
+                      onclick="window.location.href='Students.php'">
+                <i class="fas fa-list mr-1"></i> View All Students
+              </button>
+              <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-all" 
+                      data-bs-dismiss="modal">
+                <i class="fas fa-times mr-1"></i> Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
+<!-- Sit-in Modal -->
+<div class="modal fade" id="sitInModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-lg shadow-lg border-0">
+      <div class="modal-header bg-green-50 py-3">
+        <h5 class="modal-title font-semibold text-green-800">
+          <i class="fas fa-laptop-code mr-2"></i>New Sit-in Session
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="" method="POST">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <div class="font-medium text-gray-800 mb-2">Student Information</div>
+            <div class="bg-gray-50 p-3 rounded-lg mb-3">
+              <p id="sitInStudentName" class="font-semibold"></p>
+              <p id="sitInStudentId" class="text-sm text-gray-500"></p>
+              <p class="text-sm mt-1">Available Sessions: <span id="sitInSessions" class="font-semibold text-green-600"></span></p>
+            </div>
+          </div>
+          
+          <input type="hidden" name="studentID" id="sitInStudentIdInput">
+          
+          <div class="mb-3">
+            <label for="purpose" class="form-label font-medium text-gray-700">Purpose</label>
+            <select name="purpose" id="purpose" class="form-select rounded-md border-gray-300 focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-20" required>
+              <option value="">Select purpose</option>
+              <optgroup label="Programming Languages">
+                <option value="C Programming">C Programming</option>
+                <option value="Java Programming">Java Programming</option>
+                <option value="C# Programming">C# Programming</option>
+                <option value="PHP Programming">PHP Programming</option>
+                <option value="Python Programming">Python Programming</option>
+                <option value="ASP.Net Programming">ASP.Net Programming</option>
+              </optgroup>
+              <optgroup label="Computer Science">
+                <option value="Database">Database</option>
+                <option value="Digital Logic & Design">Digital Logic & Design</option>
+                <option value="Embedded Systems & IoT">Embedded Systems & IoT</option>
+                <option value="Systems Integration & Architecture">Systems Integration & Architecture</option>
+                <option value="Computer Application">Computer Application</option>
+                <option value="Web Design & Development">Web Design & Development</option>
+              </optgroup>
+              <optgroup label="General">
+                <option value="Assignment">Assignment</option>
+                <option value="Research">Research</option>
+                <option value="Project">Project</option>
+                <option value="Online Class">Online Class</option>
+                <option value="Others">Others</option>
+              </optgroup>
+            </select>
+          </div>
+          
+          <div class="mb-3">
+            <label for="lab" class="form-label font-medium text-gray-700">Laboratory</label>
+            <select name="lab" id="lab" class="form-select rounded-md border-gray-300 focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-20" required>
+              <option value="">Select laboratory</option>
+              <optgroup label="5th Floor Labs">
+                <option value="Lab 517">Lab 517</option>
+                <option value="Lab 524">Lab 524</option>
+                <option value="Lab 526">Lab 526</option>
+                <option value="Lab 528">Lab 528</option>
+                <option value="Lab 530">Lab 530</option>
+              </optgroup>
+              <optgroup label="Other Labs">  
+                <option value="Lab 542">Lab 542</option>
+                <option value="Lab 544">Lab 544</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer flex justify-end border-0 bg-gray-50">
+          <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="submit" name="sitIn" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md">
+            <i class="fas fa-check-circle mr-1"></i> Start Session
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Automatically show student results modal when search returns results
+<?php if(isset($displayModal) && $displayModal): ?>
+  document.addEventListener('DOMContentLoaded', function() {
+    var studentResultsModal = new bootstrap.Modal(document.getElementById('studentResultsModal'));
+    studentResultsModal.show();
+  });
+<?php endif; ?>
+
+// Set up sit-in modal data
+document.addEventListener('DOMContentLoaded', function() {
+  const sitInModal = document.getElementById('sitInModal');
+  if (sitInModal) {
+    sitInModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const studentId = button.getAttribute('data-student-id');
+      const studentName = button.getAttribute('data-student-name');
+      const sessions = button.getAttribute('data-sessions');
+      
+      document.getElementById('sitInStudentName').textContent = studentName;
+      document.getElementById('sitInStudentId').textContent = 'ID: ' + studentId;
+      document.getElementById('sitInSessions').textContent = sessions;
+      document.getElementById('sitInStudentIdInput').value = studentId;
+    });
+  }
+  
+  // Handle transitions between modals
+  const studentProfileModal = document.getElementById('studentProfileModal');
+  if (studentProfileModal) {
+    studentProfileModal.addEventListener('show.bs.modal', function() {
+      // This ensures proper stacking when going from one modal to another
+      document.body.classList.add('modal-open');
+    });
+    
+    // Fix for backdrop issues when chaining modals
+    studentProfileModal.addEventListener('hidden.bs.modal', function(event) {
+      // If we're going to another modal directly, prevent backdrop from disappearing
+      setTimeout(function() {
+        if (document.querySelector('.modal.show')) {
+          document.body.classList.add('modal-open');
+        }
+      }, 10);
+    });
+  }
+});
+
+// Improve image error handling
+document.addEventListener('DOMContentLoaded', function() {
+  const profileImages = document.querySelectorAll('img[onerror]');
+  profileImages.forEach(img => {
+    img.addEventListener('error', function() {
+      this.src = '../../assets/images/default-profile.jpg';
+    });
+  });
+  
+  // Enhance select dropdowns with better UX
+  const purposeSelect = document.getElementById('purpose');
+  const labSelect = document.getElementById('lab');
+  
+  if (purposeSelect && labSelect) {
+    // Add keypress event for searching in dropdown
+    [purposeSelect, labSelect].forEach(select => {
+      select.addEventListener('keypress', function(e) {
+        // Don't capture Enter or Tab to allow for normal form submission
+        if (e.key === 'Enter' || e.key === 'Tab') return;
+        
+        const searchChar = e.key.toLowerCase();
+        const options = Array.from(this.options).slice(1); // Skip the first "Select..." option
+        
+        // Find the first option that starts with the pressed key
+        const matchingOption = options.find(option => {
+          if (option.disabled) return false; // Skip optgroup labels
+          return option.text.toLowerCase().startsWith(searchChar);
+        });
+        
+        if (matchingOption) {
+          this.value = matchingOption.value;
+          // Create a custom change event to trigger any change listeners
+          this.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+    
+    // Add animation when selecting purpose
+    purposeSelect.addEventListener('change', function() {
+      if (this.value) {
+        this.classList.add('bg-green-50');
+        setTimeout(() => this.classList.remove('bg-green-50'), 300);
+        
+        // Auto-focus the lab select after selecting purpose
+        if (!labSelect.value) {
+          labSelect.focus();
+        }
+      }
+    });
+    
+    // Add animation when selecting lab
+    labSelect.addEventListener('change', function() {
+      if (this.value) {
+        this.classList.add('bg-green-50');
+        setTimeout(() => this.classList.remove('bg-green-50'), 300);
+      }
+    });
+  }
+});
+
+function toggleNotificationDropdown() {
+    const dropdown = document.getElementById('notificationDropdown');
+    dropdown.classList.toggle('hidden');
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function closeDropdown(e) {
+        if (!dropdown.contains(e.target) && !e.target.closest('#notificationDropdownButton')) {
+            dropdown.classList.add('hidden');
+            document.removeEventListener('click', closeDropdown);
+        }
+    });
+}
+
+// Close dropdown when clicking escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const dropdown = document.getElementById('notificationDropdown');
+        if (!dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+        }
+    }
+});
+</script>
 
 </html>

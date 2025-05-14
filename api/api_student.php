@@ -11,6 +11,9 @@ error_log("FILES: " . print_r($_FILES, true));
 // Include backend file
 include __DIR__ . '/../backend/backend_student.php';
 
+// Include points functions
+include_once __DIR__ . '/../includes/points_functions.php';
+
 // Ensure assets/images directory exists
 $assetsDir = __DIR__ . "/../assets";
 $imagesDir = $assetsDir . "/images";
@@ -145,16 +148,34 @@ if (isset($_POST["submit"])) {
 }
 
 // Handle Feedback Submission
-if (isset($_POST['submit_feedback'])) {
-    $message = $_POST['feedback_text'];
-    $id = $_SESSION['id_number'];
-    $lab = $_POST['sit_lab'];
-    $date = date("Y-m-d");
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_feedback'])) {
+    require_once __DIR__ . '/../backend/database_connection.php'; // Updated to use absolute path
 
-    if (submit_feedback($id, $lab, $message)) {
-        echo "<script>Swal.fire({title: 'Success', text: 'Feedback Submitted', icon: 'success', timer: 2000});</script>";
-        notifications($id, "Feedback Confirmed! | $date\nYou have successfully submitted a feedback.");
+    $idNumber = $_POST['id_number'] ?? '';
+    $lab = $_POST['sit_lab'] ?? '';
+    $feedback = $_POST['feedback_text'] ?? '';
+
+    if (empty($idNumber) || empty($lab) || empty($feedback)) {
+        echo json_encode(['success' => false, 'message' => 'All fields are required.']);
+        exit();
     }
+
+    // Save feedback to the database
+    $stmt = $conn->prepare("INSERT INTO feedback (id_number, lab, date, message) VALUES (?, ?, NOW(), ?)");
+    if ($stmt === false) {
+        echo json_encode(['success' => false, 'message' => 'Database error: Failed to prepare statement.']);
+        exit();
+    }
+
+    $stmt->bind_param("sss", $idNumber, $lab, $feedback);
+
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Feedback submitted successfully.']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $stmt->error]);
+    }
+    $stmt->close();
+    exit();
 }
 
 // Handle Reservation Submission
@@ -169,16 +190,14 @@ if (isset($_POST['reserve_user'])) {
     $lab = $_POST['lab'];
     $time = $_POST['time'];
     $date = $_POST['date'];
+    $pc_number = $_POST['pc_number']; // Use the PC number selected by the user
 
     // Ensure required fields are not empty
-    if (empty($id_number) || empty($purpose) || empty($lab) || empty($time) || empty($date)) {
+    if (empty($id_number) || empty($purpose) || empty($lab) || empty($time) || empty($date) || empty($pc_number)) {
         $_SESSION['error_message'] = "Missing required fields. Please try again.";
         header("Location: ../view/student/reservation.php");
         exit;
     }
-
-    // Generate a random PC number between 1 and 30
-    $pc_number = rand(1, 30);
     
     // Connect to database
     $db = Database::getInstance();
@@ -221,6 +240,356 @@ if (isset($_POST['reserve_user'])) {
         $_SESSION['error_message'] = "Failed to submit reservation. Error: " . $stmt->error;
         header("Location: ../view/student/reservation.php");
         exit;
+    }
+}
+
+/**
+ * Request login points for student
+ * @param int $student_id The ID number of the student
+ * @return bool True if request successful, false otherwise
+ */
+if (!function_exists('request_login_points')) {
+    function request_login_points($student_id) {
+        global $conn;
+        
+        try {
+            // Check if student already requested points today
+            $check_query = "SELECT * FROM points_requests 
+                            WHERE student_id = ? 
+                            AND DATE(request_date) = CURDATE() 
+                            AND request_type = 'login'";
+            $check_stmt = $conn->prepare($check_query);
+            $check_stmt->bind_param("i", $student_id);
+            $check_stmt->execute();
+            $result = $check_stmt->get_result();
+            
+            if ($result->num_rows > 0) {
+                // Already requested today
+                return false;
+            }
+            
+            // Insert new points request
+            $query = "INSERT INTO points_requests (student_id, points_amount, request_type, status, request_date) 
+                      VALUES (?, 3, 'login', 'pending', NOW())";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $student_id);
+            $success = $stmt->execute();
+            
+            return $success;
+        } catch (Exception $e) {
+            error_log('Error requesting login points: ' . $e->getMessage());
+            return false;
+        }
+    }
+}
+
+/**
+ * Get points history for a student
+ * @param int $student_id The ID number of the student
+ * @return array Array of points history records
+ */
+if (!function_exists('get_points_history')) {
+    function get_points_history($student_id) {
+        global $conn;
+        
+        try {
+            $query = "SELECT ph.*, pr.request_type 
+                      FROM points_history ph
+                      LEFT JOIN points_requests pr ON ph.request_id = pr.id
+                      WHERE ph.student_id = ?
+                      ORDER BY ph.created_at DESC";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $student_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $history = [];
+            while ($row = $result->fetch_assoc()) {
+                $history[] = $row;
+            }
+            
+            return $history;
+        } catch (Exception $e) {
+            error_log('Error getting points history: ' . $e->getMessage());
+            return [];
+        }
+    }
+}
+
+/**
+ * Use points for sit-in reservation
+ * @param int $student_id The ID number of the student
+ * @param int $points_amount Points to use (default 3)
+ * @return bool True if successful, false otherwise
+ */
+if (!function_exists('use_points_for_reservation')) {
+    function use_points_for_reservation($student_id, $points_amount = 3) {
+        global $conn;
+        
+        try {
+            $conn->begin_transaction();
+            
+            // Check if student has enough points
+            $current_points = get_student_points($student_id);
+            if ($current_points < $points_amount) {
+                return false;
+            }
+            
+            // Deduct points from student
+            $update_query = "UPDATE students SET points = points - ? WHERE id_number = ?";
+            $update_stmt = $conn->prepare($update_query);
+            $update_stmt->bind_param("ii", $points_amount, $student_id);
+            $update_stmt->execute();
+            
+            // Record the transaction in points history
+            $history_query = "INSERT INTO points_history 
+                             (student_id, points_amount, transaction_type, description, created_at) 
+                             VALUES (?, ?, 'deduct', 'Used for sit-in reservation', NOW())";
+            $history_stmt = $conn->prepare($history_query);
+            $history_stmt->bind_param("ii", $student_id, $points_amount);
+            $history_stmt->execute();
+            
+            // Grant a reservation session (You'll need to implement this part according to your system's design)
+            // This is placeholder code - replace with actual reservation creation
+            $reservation_query = "INSERT INTO reservations 
+                                 (student_id, points_used, status, created_at) 
+                                 VALUES (?, ?, 'approved', NOW())";
+            $reservation_stmt = $conn->prepare($reservation_query);
+            $status = "approved";
+            $reservation_stmt->bind_param("iis", $student_id, $points_amount, $status);
+            $reservation_stmt->execute();
+            
+            $conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $conn->rollback();
+            error_log('Error using points for reservation: ' . $e->getMessage());
+            return false;
+        }
+    }
+}
+
+/**
+ * Get leaderboard of students with most points
+ * @param int $limit Number of students to return (default 10)
+ * @return array Array of top students
+ */
+if (!function_exists('get_leaderboard')) {
+    function get_leaderboard($limit = 10) {
+        global $conn;
+        
+        try {
+            $query = "SELECT id_number, CONCAT(first_name, ' ', last_name) as name, course, points 
+                      FROM students 
+                      WHERE points > 0 
+                      ORDER BY points DESC 
+                      LIMIT ?";
+            
+            if (!$stmt = $conn->prepare($query)) {
+                error_log('Error preparing leaderboard query: ' . $conn->error);
+                return [];
+            }
+            
+            if (!$stmt->bind_param("i", $limit)) {
+                error_log('Error binding leaderboard parameters: ' . $stmt->error);
+                return [];
+            }
+            
+            if (!$stmt->execute()) {
+                error_log('Error executing leaderboard query: ' . $stmt->error);
+                return [];
+            }
+            
+            $result = $stmt->get_result();
+            $leaderboard = [];
+            
+            while ($row = $result->fetch_assoc()) {
+                $leaderboard[] = $row;
+            }
+            
+            $stmt->close();
+            return $leaderboard;
+            
+        } catch (Exception $e) {
+            error_log('Error getting leaderboard: ' . $e->getMessage());
+            return [];
+        }
+    }
+}
+
+/**
+ * Get upcoming schedules for the student dashboard
+ * @param int $limit Maximum number of schedules to return
+ * @return array Array of upcoming lab schedules
+ */
+if (!function_exists('get_upcoming_schedules')) {
+    function get_upcoming_schedules($limit = 5) {
+        global $conn;
+        
+        try {
+            $query = "SELECT * FROM schedules 
+                      WHERE end_date >= CURDATE() 
+                      ORDER BY start_date ASC, start_time ASC 
+                      LIMIT ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $limit);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $schedules = [];
+            while ($row = $result->fetch_assoc()) {
+                $schedules[] = $row;
+            }
+            
+            return $schedules;
+        } catch (Exception $e) {
+            error_log('Error getting upcoming schedules: ' . $e->getMessage());
+            return [];
+        }
+    }
+}
+
+/**
+ * Get all lab schedules
+ * @return array Array of all lab schedules
+ */
+if (!function_exists('get_all_schedules')) {
+    function get_all_schedules() {
+        global $conn;
+        
+        try {
+            $query = "SELECT * FROM schedules ORDER BY start_date ASC, start_time ASC";
+            $result = $conn->query($query);
+            
+            $schedules = [];
+            while ($row = $result->fetch_assoc()) {
+                $schedules[] = $row;
+            }
+            
+            return $schedules;
+        } catch (Exception $e) {
+            error_log('Error getting all schedules: ' . $e->getMessage());
+            return [];
+        }
+    }
+}
+
+/**
+ * Get latest resources for the student dashboard
+ * @param int $limit Maximum number of resources to return
+ * @return array Array of latest resources
+ */
+if (!function_exists('get_latest_resources')) {
+    function get_latest_resources($limit = 5) {
+        global $conn;
+        
+        try {
+            $query = "SELECT * FROM resources 
+                      ORDER BY created_at DESC 
+                      LIMIT ?";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("i", $limit);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $resources = [];
+            while ($row = $result->fetch_assoc()) {
+                $resources[] = $row;
+            }
+            
+            return $resources;
+        } catch (Exception $e) {
+            error_log('Error getting latest resources: ' . $e->getMessage());
+            return [];
+        }
+    }
+}
+
+/**
+ * Get all resources
+ * @return array Array of all resources
+ */
+if (!function_exists('get_all_resources')) {
+    function get_all_resources() {
+        global $conn;
+        
+        try {
+            $query = "SELECT * FROM resources ORDER BY created_at DESC";
+            $result = $conn->query($query);
+            
+            $resources = [];
+            while ($row = $result->fetch_assoc()) {
+                $resources[] = $row;
+            }
+            
+            return $resources;
+        } catch (Exception $e) {
+            error_log('Error getting all resources: ' . $e->getMessage());
+            return [];
+        }
+    }
+}
+
+/**
+ * Get resources by category
+ * @param string $category The category to filter by
+ * @return array Array of resources in the specified category
+ */
+if (!function_exists('get_resources_by_category')) {
+    function get_resources_by_category($category) {
+        global $conn;
+        
+        try {
+            $query = "SELECT * FROM resources 
+                      WHERE category = ? 
+                      ORDER BY created_at DESC";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("s", $category);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            $resources = [];
+            while ($row = $result->fetch_assoc()) {
+                $resources[] = $row;
+            }
+            
+            return $resources;
+        } catch (Exception $e) {
+            error_log('Error getting resources by category: ' . $e->getMessage());
+            return [];
+        }
+    }
+}
+
+/**
+ * Get current semester information
+ * @return array Array containing current semester and academic year
+ */
+if (!function_exists('get_current_semester')) {
+    function get_current_semester() {
+        global $conn;
+        
+        try {
+            $query = "SELECT * FROM current_semester ORDER BY id DESC LIMIT 1";
+            $result = $conn->query($query);
+            
+            if ($result && $result->num_rows > 0) {
+                return $result->fetch_assoc();
+            }
+            
+            // Default values if no semester is set
+            return [
+                'semester' => 'First Semester',
+                'academic_year' => date('Y') . '-' . (date('Y') + 1)
+            ];
+            
+        } catch (Exception $e) {
+            error_log('Error getting current semester: ' . $e->getMessage());
+            return [
+                'semester' => 'First Semester',
+                'academic_year' => date('Y') . '-' . (date('Y') + 1)
+            ];
+        }
     }
 }
 ?>

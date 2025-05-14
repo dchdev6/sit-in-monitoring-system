@@ -6,6 +6,32 @@ require_once '../../backend/backend_admin.php';
 require_once '../../backend/database_connection.php';
 
 $listPerson = retrieve_current_sit_in();
+
+// Format time function to convert database timestamps to hours:minutes AM/PM
+function formatTime($timeString) {
+  if (empty($timeString) || $timeString == 'N/A') {
+    return $timeString;
+  }
+  
+  // Parse the timestamp
+  $timestamp = strtotime($timeString);
+  
+  // Format to hours and minutes with AM/PM
+  return date('h:i A', $timestamp);
+}
+
+// Format date function to ensure two-digit day format
+function formatDate($dateString) {
+  if (empty($dateString)) {
+    return '';
+  }
+  
+  // Parse the date
+  $timestamp = strtotime($dateString);
+  
+  // Format to ensure two-digit day
+  return date('m/d/Y', $timestamp);
+}
 ?>
 
 <!DOCTYPE html>
@@ -25,10 +51,9 @@ $listPerson = retrieve_current_sit_in();
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
   <!-- Inter Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Animation Library - AOS -->
-  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-  <!-- Animate.css -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <!-- Animation Library - Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  
   <script>
     tailwind.config = {
       theme: {
@@ -85,39 +110,41 @@ $listPerson = retrieve_current_sit_in();
     
     /* DataTables Custom Styling */
     .dataTables_wrapper {
-      background-color: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
+      background-color: transparent;
+      padding: 0.5rem;
     }
     
     .dataTables_filter input {
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      padding: 0.5rem 0.75rem;
+      padding: 0.5rem 1rem; /* Remove left padding that was accommodating the icon */
       margin-left: 0.5rem;
       font-size: 0.875rem;
       transition: all 0.2s;
+      background-image: none; /* Remove the background image */
     }
     
     .dataTables_filter input:focus {
       outline: none;
-      border-color: #0284c7;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
     }
     
     .dataTables_length select {
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      padding: 0.5rem 2rem 0.5rem 0.75rem;
+      padding: 0.5rem 0.75rem; /* Adjust padding (remove extra right padding) */
       font-size: 0.875rem;
-      background-position: right 0.5rem center;
       transition: all 0.2s;
+      background-image: none;
+      -webkit-appearance: auto; /* Reset to browser default */
+      appearance: auto; /* Reset to browser default */
     }
     
     .dataTables_length select:focus {
       outline: none;
-      border-color: #0284c7;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
     }
     
     .dataTables_info, .dataTables_length, .dataTables_filter {
@@ -127,7 +154,9 @@ $listPerson = retrieve_current_sit_in();
     }
     
     .dataTables_paginate {
-      margin-top: 1rem;
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: center;
     }
     
     .dataTables_paginate .paginate_button {
@@ -141,16 +170,30 @@ $listPerson = retrieve_current_sit_in();
     }
     
     .dataTables_paginate .paginate_button.current {
-      background-color: #0284c7 !important;
-      border-color: #0284c7 !important;
+      background-color: #0ea5e9 !important;
+      border-color: #0ea5e9 !important;
       color: white !important;
       font-weight: 500;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     }
     
     .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
       background-color: #f3f4f6 !important;
       color: #111827 !important;
       border-color: #e5e7eb !important;
+      /* Override any potential DataTables internal hover styles */
+      background: #f3f4f6 !important;
+      background-image: none !important;
+      box-shadow: none !important;
+    }
+    
+    /* Additional specificity to override DataTables defaults */
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+      background-color: #f3f4f6 !important;
+      color: #111827 !important;
+      border-color: #e5e7eb !important;
+      background: #f3f4f6 !important;
+      background-image: none !important;
     }
     
     .dataTables_paginate .paginate_button.disabled {
@@ -162,6 +205,8 @@ $listPerson = retrieve_current_sit_in();
       border-collapse: separate;
       border-spacing: 0;
       width: 100%;
+      border-radius: 0.5rem;
+      overflow: hidden;
     }
     
     table.dataTable thead th {
@@ -172,6 +217,22 @@ $listPerson = retrieve_current_sit_in();
       text-align: left;
       border-bottom: 2px solid #e5e7eb;
       white-space: nowrap;
+      position: relative;
+    }
+    
+    table.dataTable thead th::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 0;
+      width: 0;
+      background-color: transparent;
+      transition: none;
+    }
+    
+    table.dataTable thead th:hover::after {
+      width: 0;
     }
     
     table.dataTable tbody tr {
@@ -179,7 +240,7 @@ $listPerson = retrieve_current_sit_in();
     }
     
     table.dataTable tbody tr:hover {
-      background-color: #f3f4f6;
+      background-color: #f0f9ff;
       transform: translateY(-2px);
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
@@ -236,24 +297,6 @@ $listPerson = retrieve_current_sit_in();
       transform: translate(-50%, -50%) scale(1);
     }
     
-    /* Card hover effects */
-    .stat-card {
-      transition: all 0.3s ease;
-    }
-    
-    .stat-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-    
-    .stat-card:hover .icon-container {
-      transform: scale(1.1);
-    }
-    
-    .icon-container {
-      transition: transform 0.3s ease;
-    }
-    
     /* Shimmer effect */
     .shimmer {
       background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
@@ -261,30 +304,10 @@ $listPerson = retrieve_current_sit_in();
       animation: shimmer 2s infinite linear;
     }
     
-    /* Counter Animation */
-    .counter-value {
-      display: inline-block;
-      transition: all 0.5s ease;
-    }
-    
-    /* Custom table row animations */
-    .row-enter {
+    /* Row animations */
+    .row-animation {
       opacity: 0;
       transform: translateY(10px);
-    }
-    
-    .row-enter-active {
-      opacity: 1;
-      transform: translateY(0px);
-      transition: opacity 0.3s, transform 0.3s;
-    }
-
-    /* Hidden button styling */
-    .hidden-button {
-      position: absolute;
-      left: -9999px;
-      top: -9999px;
-      visibility: hidden;
     }
   </style>
 </head>
@@ -293,7 +316,7 @@ $listPerson = retrieve_current_sit_in();
   <div class="container mx-auto px-4 py-8 max-w-7xl">
     <!-- Page Header -->
     <div class="mb-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center">
                     <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
@@ -304,29 +327,14 @@ $listPerson = retrieve_current_sit_in();
                 <p class="text-gray-500 mt-1 ml-12">Generate and export comprehensive lab usage reports</p>
             </div>
             <div class="flex space-x-3 mt-4 md:mt-0">
-                <button id="refreshBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-sync-alt mr-2"></i>
-                    Refresh
+                <button id="refreshBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+                    <i class="fas fa-sync-alt mr-2 text-gray-500"></i>
+                    Refresh Data
                 </button>
                 
-                <button id="excelBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-file-excel mr-2"></i>
-                    Excel
-                </button>
-                
-                <button id="pdfBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-file-pdf mr-2"></i>
-                    PDF
-                </button>
-                
-                <button id="csvBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-file-csv mr-2"></i>
-                    CSV
-                </button>
-                
-                <button id="printBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-print mr-2"></i>
-                    Print
+                <button id="exportBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+                    <i class="fas fa-download mr-2"></i>
+                    Export
                 </button>
             </div>
         </div>
@@ -335,7 +343,7 @@ $listPerson = retrieve_current_sit_in();
         <nav class="flex mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
                 <li class="inline-flex items-center">
-                    <a href="Admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                    <a href="admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
                         <i class="fas fa-home mr-2"></i>
                         Dashboard
                     </a>
@@ -351,7 +359,13 @@ $listPerson = retrieve_current_sit_in();
     </div>
 
     <!-- Table Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 animate__animated animate__fadeInUp animate__faster">
+      <div class="border-b border-gray-100 px-6 py-4">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+          <i class="fas fa-list-alt text-primary-500 mr-2"></i>
+          Sit-In Records
+        </h2>
+      </div>
       <div class="p-6">
         <table id="sitInTable" class="w-full">
           <thead>
@@ -361,8 +375,8 @@ $listPerson = retrieve_current_sit_in();
               <th>Name</th>
               <th>Purpose</th>
               <th>Lab</th>
-              <th>Login</th>
-              <th>Logout</th>
+              <th>Time in</th>
+              <th>Time out</th>
               <th>Date</th>
             </tr>
           </thead>
@@ -374,25 +388,46 @@ $listPerson = retrieve_current_sit_in();
                   <td><?php echo htmlspecialchars($person['id_number']); ?></td>
                   <td><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
                   <td><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
-                  <td class="text-center">
-                    <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                  <td>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                       <?php echo htmlspecialchars($person['sit_lab']); ?>
                     </span>
                   </td>
-                  <td><?php echo htmlspecialchars($person['sit_login']); ?></td>
+                  <td>
+                    <span class="status-badge completed">
+                      <?php echo formatTime($person['sit_login']); ?>
+                    </span>
+                  </td>
                   <td>
                     <?php if (empty($person['sit_logout']) || $person['sit_logout'] == 'N/A'): ?>
                       <span class="status-badge active">Active</span>
                     <?php else: ?>
-                      <span class="status-badge completed"><?php echo htmlspecialchars($person['sit_logout']); ?></span>
+                      <span class="status-badge completed"><?php echo formatTime($person['sit_logout']); ?></span>
                     <?php endif; ?>
                   </td>
-                  <td><?php echo htmlspecialchars($person['sit_date']); ?></td>
+                  <td><?php echo formatDate($person['sit_date']); ?></td>
                 </tr>
               <?php endforeach; ?>
             <?php endif; ?>
           </tbody>
         </table>
+      </div>
+    </div>
+    
+    <!-- Quick Help Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8 animate__animated animate__fadeInUp animate__faster">
+      <div class="flex items-start">
+        <div class="flex-shrink-0 bg-primary-50 rounded-lg p-3 mr-4">
+          <i class="fas fa-lightbulb text-primary-500 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">Quick Tips</h3>
+          <div class="text-sm text-gray-600 space-y-2">
+            <p>• Use the search box to quickly find records by name, ID, or laboratory</p>
+            <p>• Export reports in Excel, PDF, or CSV format for your records</p>
+            <p>• "Active" sessions indicate students currently using the laboratory</p>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -411,8 +446,6 @@ $listPerson = retrieve_current_sit_in();
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <!-- SweetAlert2 JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- AOS Animation Library -->
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 
   <!-- DataTables Buttons JS - SPECIFIC VERSIONS -->
   <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
@@ -429,54 +462,27 @@ $listPerson = retrieve_current_sit_in();
   
   <script>
     $(document).ready(function() {
-      // Initialize AOS animations
-      AOS.init({
-        duration: 800,
-        once: true
-      });
-      
-      // Animate counter numbers
-      function animateCounter() {
-        $('.counter').each(function() {
-          const $this = $(this);
-          const target = parseInt($this.attr('data-target'));
+      // Initialize animations for page elements
+      function animateElements() {
+        $('.animate__animated').each(function(i) {
+          $(this).css('opacity', '0');
           
-          $({ Counter: 0 }).animate({
-            Counter: target
-          }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function() {
-              $this.text(Math.ceil(this.Counter));
-            }
-          });
-        });
-        
-        $('.counter-decimal').each(function() {
-          const $this = $(this);
-          const target = parseFloat($this.attr('data-target'));
-          
-          $({ Counter: 0 }).animate({
-            Counter: target
-          }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function() {
-              $this.text(this.Counter.toFixed(1));
-            }
-          });
+          setTimeout(() => {
+            $(this).css('opacity', '1');
+          }, i * 100);
         });
       }
       
-      // Call counter animation after a short delay
-      setTimeout(animateCounter, 500);
+      animateElements();
       
       // Initialize DataTable with row animation
       const table = $('#sitInTable').DataTable({
         responsive: true,
         language: {
-          search: "_INPUT_",
+          search: "",
           searchPlaceholder: "Search records...",
+          lengthMenu: "Show _MENU_ entries",
+          info: "Showing _START_ to _END_ of _TOTAL_ records",
           paginate: {
             first: '<i class="fas fa-angle-double-left"></i>',
             previous: '<i class="fas fa-angle-left"></i>',
@@ -485,7 +491,6 @@ $listPerson = retrieve_current_sit_in();
           }
         },
         order: [[0, 'desc']],
-        dom: '<"flex justify-between items-center mb-4"lf>rt<"flex justify-between items-center mt-4"ip>',
         buttons: [
           {
             extend: 'excel',
@@ -563,6 +568,29 @@ $listPerson = retrieve_current_sit_in();
               });
             }, 50 * i); // Stagger the animations
           });
+          
+          // Enhance pagination
+          $('.dataTables_paginate .paginate_button').addClass('hover:shadow-sm');
+          $('.dataTables_paginate .paginate_button.current').css('background-color', '#0284c7').css('border-color', '#0284c7');
+          
+          // Add icons to pagination buttons if not already present
+          if ($('.dataTables_paginate .previous i').length === 0) {
+            $('.dataTables_paginate .previous').html('<i class="fas fa-angle-left"></i>');
+            $('.dataTables_paginate .next').html('<i class="fas fa-angle-right"></i>');
+            $('.dataTables_paginate .first').html('<i class="fas fa-angle-double-left"></i>');
+            $('.dataTables_paginate .last').html('<i class="fas fa-angle-double-right"></i>');
+          }
+        },
+        initComplete: function() {
+          // Add custom classes to DataTable elements
+          $('.dataTables_filter').addClass('relative');
+          $('.dataTables_filter label').addClass('flex items-center');
+          $('.dataTables_filter input').addClass('focus:border-[#0284c7] focus:ring focus:ring-[#0284c7] focus:ring-opacity-20');
+          $('.dataTables_length select').addClass('focus:border-[#0284c7] focus:ring focus:ring-[#0284c7] focus:ring-opacity-20');
+          
+          // Add icon to search input
+          $('.dataTables_filter label').prepend('<i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>');
+          $('.dataTables_filter input').addClass('pl-10').css('padding-left', '2.5rem');
         }
       });
 
@@ -577,439 +605,83 @@ $listPerson = retrieve_current_sit_in();
         }, 500);
       });
 
-      // Debug info
-      console.log('Table object:', table);
-      console.log('Table buttons object:', table.buttons);
-
-      // Excel export button
-      $('#excelBtn').off('click').on('click', function() {
-        // Add visual feedback
-        $(this).addClass('animate-pulse');
-        
-        try {
-          // Show loading
-          Swal.fire({
-            title: 'Exporting to Excel',
-            text: 'Please wait...',
-            timerProgressBar: true,
-            didOpen: () => {
-              Swal.showLoading();
-              
-              setTimeout(() => {
-                // Manual Excel Export
-                const tableData = [];
-                const headers = [];
-                
-                $('#sitInTable thead th').each(function() {
-                  headers.push($(this).text());
-                });
-                tableData.push(headers);
-                
-                $('#sitInTable tbody tr').each(function() {
-                  const rowData = [];
-                  $(this).find('td').each(function() {
-                    rowData.push($(this).text().trim());
-                  });
-                  tableData.push(rowData);
-                });
-                
-                // Create workbook
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.aoa_to_sheet(tableData);
-                XLSX.utils.book_append_sheet(wb, ws, "Sit-in Records");
-                
-                // Save file
-                XLSX.writeFile(wb, 'Sit-in_Records_' + new Date().toLocaleDateString().replace(/\//g, '-') + '.xlsx');
-                
-                Swal.close();
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Success!',
-                  text: 'Excel file has been generated and downloaded.',
-                  timer: 2000,
-                  showConfirmButton: false
-                });
-              }, 500); // Short delay to ensure UI responsiveness
-            }
-          });
-        } catch(e) {
-          console.error("Excel export failed:", e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'Excel export could not be completed. ' + e.message
-          });
-        } finally {
-          setTimeout(() => {
-            $(this).removeClass('animate-pulse');
-          }, 1000);
-        }
-      });
-
-      // PDF export button with centered logos at the top
-      $('#pdfBtn').off('click').on('click', function() {
-        // Add visual feedback
-        $(this).addClass('animate-pulse');
-        
-        try {
-          // Show loading
-          Swal.fire({
-            title: 'Generating PDF',
-            text: 'Please wait...',
-            timerProgressBar: true,
-            didOpen: () => {
-              Swal.showLoading();
-              
-              // First, we need to convert the images to base64 for embedding in PDF
-              const loadImages = function() {
-                return new Promise((resolve, reject) => {
-                  const images = {};
-                  let loadedImages = 0;
-                  const totalImages = 2;
-                  
-                  // Load UC logo
-                  const ucImg = new Image();
-                  ucImg.crossOrigin = "Anonymous";
-                  ucImg.onload = function() {
-                    console.log("UC logo loaded successfully");
-                    // Create canvas to convert image to base64
-                    const canvas = document.createElement('canvas');
-                    canvas.width = ucImg.width;
-                    canvas.height = ucImg.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(ucImg, 0, 0);
-                    
-                    // Get base64 data
-                    images.uc = canvas.toDataURL('image/png');
-                    loadedImages++;
-                    if (loadedImages === totalImages) resolve(images);
-                  };
-                  ucImg.onerror = function(e) {
-                    console.error("Error loading UC logo", e);
-                    images.uc = null;
-                    loadedImages++;
-                    if (loadedImages === totalImages) resolve(images);
-                  };
-                  // CORRECTED PATH
-                  ucImg.src = '../../assets/images/uc.png';
-                  
-                  // Load CCS logo
-                  const ccsImg = new Image();
-                  ccsImg.crossOrigin = "Anonymous";
-                  ccsImg.onload = function() {
-                    console.log("CCS logo loaded successfully");
-                    // Create canvas to convert image to base64
-                    const canvas = document.createElement('canvas');
-                    canvas.width = ccsImg.width;
-                    canvas.height = ccsImg.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(ccsImg, 0, 0);
-                    
-                    // Get base64 data
-                    images.ccs = canvas.toDataURL('image/png');
-                    loadedImages++;
-                    if (loadedImages === totalImages) resolve(images);
-                  };
-                  ccsImg.onerror = function(e) {
-                    console.error("Error loading CCS logo", e);
-                    images.ccs = null;
-                    loadedImages++;
-                    if (loadedImages === totalImages) resolve(images);
-                  };
-                  // CORRECTED PATH
-                  ccsImg.src = '../../assets/images/ccs.png';
-                });
-              };
-              
-              // Load images, then generate PDF
-              loadImages().then((images) => {
-                const tableData = [];
-                const headers = [];
-                
-                $('#sitInTable thead th').each(function() {
-                  headers.push($(this).text());
-                });
-                
-                $('#sitInTable tbody tr').each(function() {
-                  const rowData = [];
-                  $(this).find('td').each(function() {
-                    rowData.push($(this).text().trim());
-                  });
-                  tableData.push(rowData);
-                });
-                
-                // Create PDF document definition with logos centered at top
-                const docDefinition = {
-                  pageMargins: [20, 140, 20, 40], // Increased top margin for header
-                  header: {
-                    stack: [
-                      // Logo row - both logos next to each other, centered
-                      {
-                        columns: [
-                          { width: '*', text: '' },
-                          images.uc ? {
-                            image: images.uc,
-                            width: 60,
-                            alignment: 'right',
-                            margin: [0, 20, 5, 0]
-                          } : { text: '' },
-                          images.ccs ? {
-                            image: images.ccs,
-                            width: 60,
-                            alignment: 'left',
-                            margin: [5, 20, 0, 0]
-                          } : { text: '' },
-                          { width: '*', text: '' },
-                        ]
-                      },
-                      // Text row - below the logos
-                      {
-                        stack: [
-                          { text: 'University of Cebu', alignment: 'center', fontSize: 16, bold: true, margin: [0, 10, 0, 0] },
-                          { text: 'College of Computer Studies', alignment: 'center', fontSize: 14, bold: true },
-                          { text: 'Sit-in Monitoring System', alignment: 'center', fontSize: 12, margin: [0, 5, 0, 0] }
-                        ],
-                        margin: [0, 0, 0, 10]
-                      }
-                    ]
-                  },
-                  footer: function(currentPage, pageCount) {
-                    return { 
-                      text: currentPage.toString() + ' of ' + pageCount,
-                      alignment: 'center', 
-                      fontSize: 8,
-                      margin: [0, 10, 0, 0]
-                    };
-                  },
-                  content: [
-                    { text: 'Sit-in Records', alignment: 'center', fontSize: 14, bold: true, margin: [0, 0, 0, 8] },
-                    { text: 'Generated on: ' + new Date().toLocaleDateString(), alignment: 'center', fontSize: 10, margin: [0, 0, 0, 20] },
-                    {
-                      table: {
-                        headerRows: 1,
-                        widths: Array(headers.length).fill('*'),
-                        body: [headers, ...tableData]
-                      },
-                      layout: 'lightHorizontalLines'
-                    }
-                  ]
-                };
-                
-                // Generate PDF
-                pdfMake.createPdf(docDefinition).download('Sit-in_Records_' + new Date().toLocaleDateString().replace(/\//g, '-') + '.pdf');
-                
-                Swal.close();
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Success!',
-                  text: 'PDF has been generated and downloaded.',
-                  timer: 2000,
-                  showConfirmButton: false
-                });
-              }).catch(error => {
-                console.error("Error loading images:", error);
-                Swal.fire({
-                  icon: 'warning',
-                  title: 'Warning',
-                  text: 'PDF generated without logos due to image loading issue.'
-                });
-              });
-            }
-          });
-        } catch(e) {
-          console.error("PDF export failed:", e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'PDF export could not be completed. ' + e.message
-          });
-        } finally {
-          setTimeout(() => {
-            $(this).removeClass('animate-pulse');
-          }, 1000);
-        }
-      });
-
-      // CSV export button
-      $('#csvBtn').off('click').on('click', function() {
-        // Add visual feedback
-        $(this).addClass('animate-pulse');
-        
-        try {
-          // Show loading
-          Swal.fire({
-            title: 'Generating CSV',
-            text: 'Please wait...',
-            timerProgressBar: true,
-            didOpen: () => {
-              Swal.showLoading();
-              
-              setTimeout(() => {
-                // Get table data
-                const tableData = [];
-                const headers = [];
-                
-                $('#sitInTable thead th').each(function() {
-                  headers.push($(this).text());
-                });
-                
-                // Add headers as first row
-                tableData.push(headers.join(','));
-                
-                // Add data rows
-                $('#sitInTable tbody tr').each(function() {
-                  const rowData = [];
-                  $(this).find('td').each(function() {
-                    // Escape commas in the cell data
-                    let cellData = $(this).text().trim();
-                    // If cell contains commas, wrap in quotes
-                    if (cellData.includes(',')) {
-                      cellData = '"' + cellData + '"';
-                    }
-                    rowData.push(cellData);
-                  });
-                  tableData.push(rowData.join(','));
-                });
-                
-                // Join with newlines
-                const csvContent = tableData.join('\n');
-                
-                // Download directly without FileSaver dependency
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                
-                link.setAttribute('href', url);
-                link.setAttribute('download', 'Sit-in_Records_' + new Date().toLocaleDateString().replace(/\//g, '-') + '.csv');
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                Swal.close();
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Success!',
-                  text: 'CSV file has been generated and downloaded.',
-                  timer: 2000,
-                  showConfirmButton: false
-                });
-              }, 500);
-            }
-          });
-        } catch(e) {
-          console.error("CSV export failed:", e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'CSV export could not be completed. ' + e.message
-          });
-        } finally {
-          setTimeout(() => {
-            $(this).removeClass('animate-pulse');
-          }, 1000);
-        }
-      });
-
-      // Print button with centered logos at the top
-      $('#printBtn').off('click').on('click', function() {
-        // Add visual feedback
-        $(this).addClass('animate-pulse');
-        
-        try {
-          // Get absolute URL for images using the correct path
-          const baseUrl = window.location.origin;
-          const ucLogoPath = `${baseUrl}/Sit-in-monitoring-system/assets/images/uc.png`;
-          const ccsLogoPath = `${baseUrl}/Sit-in-monitoring-system/assets/images/ccs.png`;
-          
-          let printWindow = window.open('', '_blank');
-          let tableHTML = document.getElementById('sitInTable').outerHTML;
-          
-          printWindow.document.write(`
-            <html>
-              <head>
-                <title>Sit-in Records</title>
-                <style>
-                  body { font-family: Arial, sans-serif; margin: 20px; }
-                  .header { text-align: center; margin-bottom: 20px; }
-                  .logo-container { display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
-                  .logo { width: 80px; height: auto; margin: 0 10px; }
-                  table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-                  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                  th { background-color: #f2f2f2; }
-                  h1, h2, h3 { margin: 5px 0; }
-                  @media print {
-                    table { page-break-inside: auto; }
-                    tr { page-break-inside: avoid; page-break-after: auto; }
-                    thead { display: table-header-group; }
-                  }
-                </style>
-              </head>
-              <body>
-                <div class="header">
-                  <div class="logo-container">
-                    <img src="${ucLogoPath}" alt="UC Logo" class="logo" onerror="this.style.display='none'">
-                    <img src="${ccsLogoPath}" alt="CCS Logo" class="logo" onerror="this.style.display='none'">
-                  </div>
-                  <h1>University of Cebu</h1>
-                  <h2>College of Computer Studies</h2>
-                  <h3>Sit-in Monitoring System</h3>
-                </div>
-                <h2 style="text-align: center;">Sit-in Records - ${new Date().toLocaleDateString()}</h2>
-                ${tableHTML}
-              </body>
-            </html>
-          `);
-          
-          printWindow.document.close();
-          
-          // Wait for images to load before printing
-          printWindow.onload = function() {
-            printWindow.focus();
-            setTimeout(() => {
-              printWindow.print();
-              printWindow.close();
-            }, 1000);
-          };
-        } catch(e) {
-          console.error("Print failed:", e);
-          Swal.fire({
-            icon: 'error',
-            title: 'Print Failed',
-            text: 'Print could not be initiated. ' + e.message
-          });
-        } finally {
-          setTimeout(() => {
-            $(this).removeClass('animate-pulse');
-          }, 1000);
-        }
-      });
-
-      // Refresh button functionality with animation
+      // Refresh button functionality
       $('#refreshBtn').on('click', function() {
         const $icon = $(this).find('i');
-        const $button = $(this);
-        
-        // Disable button to prevent multiple clicks
-        $button.prop('disabled', true);
         $icon.addClass('fa-spin');
-        $button.addClass('animate-pulse');
+        $(this).addClass('animate-pulse');
         
-        // Show loading message with SweetAlert2
+        // Show loading indicator
         Swal.fire({
-          title: 'Refreshing Data',
-          text: 'Getting the latest records...',
+          title: 'Refreshing...',
+          html: 'Updating sit-in records',
+          timer: 1000,
           timerProgressBar: true,
           didOpen: () => {
             Swal.showLoading();
           },
-          allowOutsideClick: false
+          willClose: () => {
+            $(this).removeClass('animate-pulse');
+            // Reload the page to fetch fresh data
+            window.location.reload();
+          }
         });
+      });
+
+      // Export button functionality
+      $('#exportBtn').on('click', function() {
+        $(this).addClass('animate-pulse');
         
-        // Simple refresh after a brief timeout to show the loading animation
-        setTimeout(function() {
-          window.location.reload();
-        }, 1000);
+        Swal.fire({
+          title: 'Export Options',
+          html: `
+            <div class="grid grid-cols-1 gap-3 mt-4">
+              <button id="btnExcelExport" class="bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                <i class="fas fa-file-excel mr-2"></i> Export to Excel
+              </button>
+              <button id="btnPdfExport" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                <i class="fas fa-file-pdf mr-2"></i> Export to PDF
+              </button>
+              <button id="btnPrintExport" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                <i class="fas fa-print mr-2"></i> Print Table
+              </button>
+              <button id="btnCsvExport" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                <i class="fas fa-file-csv mr-2"></i> Export to CSV
+              </button>
+            </div>
+          `,
+          showConfirmButton: false,
+          showCloseButton: true,
+          showClass: {
+            popup: 'animate__animated animate__fadeInDown'
+          },
+          hideClass: {
+            popup: 'animate__animated animate__fadeOutUp'
+          },
+          didOpen: () => {
+            $('#btnExcelExport').on('click', function() {
+              table.button(0).trigger();
+              Swal.close();
+            });
+            
+            $('#btnPdfExport').on('click', function() {
+              table.button(1).trigger();
+              Swal.close();
+            });
+            
+            $('#btnPrintExport').on('click', function() {
+              table.button(2).trigger();
+              Swal.close();
+            });
+            
+            $('#btnCsvExport').on('click', function() {
+              table.button(3).trigger();
+              Swal.close();
+            });
+          }
+        }).then(() => {
+          $(this).removeClass('animate-pulse');
+        });
       });
     });
   </script>

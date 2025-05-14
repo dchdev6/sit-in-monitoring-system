@@ -6,6 +6,32 @@ require_once '../../backend/backend_admin.php';
 require_once '../../backend/database_connection.php';
 
 $listPerson = retrieve_current_sit_in();
+
+// Format time function to convert database timestamps to hours:minutes AM/PM
+function formatTime($timeString) {
+  if (empty($timeString) || $timeString == 'N/A') {
+    return $timeString;
+  }
+  
+  // Parse the timestamp
+  $timestamp = strtotime($timeString);
+  
+  // Format to hours and minutes with AM/PM
+  return date('h:i A', $timestamp);
+}
+
+// Format date function to ensure two-digit day format
+function formatDate($dateString) {
+  if (empty($dateString)) {
+    return '';
+  }
+  
+  // Parse the date
+  $timestamp = strtotime($dateString);
+  
+  // Format to ensure two-digit day
+  return date('m/d/Y', $timestamp);
+}
 ?>
 
 <!DOCTYPE html>
@@ -25,8 +51,9 @@ $listPerson = retrieve_current_sit_in();
   <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
   <!-- Inter Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Animation Library - AOS -->
-  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <!-- Animation Library - Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  
   <script>
     tailwind.config = {
       theme: {
@@ -76,6 +103,7 @@ $listPerson = retrieve_current_sit_in();
       }
     }
   </script>
+  
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -83,39 +111,41 @@ $listPerson = retrieve_current_sit_in();
     
     /* DataTables Custom Styling */
     .dataTables_wrapper {
-      background-color: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
+      background-color: transparent;
+      padding: 0.5rem;
     }
     
     .dataTables_filter input {
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      padding: 0.5rem 0.75rem;
+      padding: 0.5rem 1rem; /* Remove left padding that was accommodating the icon */
       margin-left: 0.5rem;
       font-size: 0.875rem;
       transition: all 0.2s;
+      background-image: none; /* Remove the background image */
     }
     
     .dataTables_filter input:focus {
       outline: none;
-      border-color: #0284c7;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
     }
     
     .dataTables_length select {
       border: 1px solid #e5e7eb;
       border-radius: 0.5rem;
-      padding: 0.5rem 2rem 0.5rem 0.75rem;
+      padding: 0.5rem 0.75rem; /* Adjust padding (remove extra right padding) */
       font-size: 0.875rem;
-      background-position: right 0.5rem center;
       transition: all 0.2s;
+      background-image: none;
+      -webkit-appearance: auto; /* Reset to browser default */
+      appearance: auto; /* Reset to browser default */
     }
     
     .dataTables_length select:focus {
       outline: none;
-      border-color: #0284c7;
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+      border-color: #0ea5e9;
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
     }
     
     .dataTables_info, .dataTables_length, .dataTables_filter {
@@ -125,7 +155,9 @@ $listPerson = retrieve_current_sit_in();
     }
     
     .dataTables_paginate {
-      margin-top: 1rem;
+      margin-top: 1.5rem;
+      display: flex;
+      justify-content: center;
     }
     
     .dataTables_paginate .paginate_button {
@@ -139,16 +171,30 @@ $listPerson = retrieve_current_sit_in();
     }
     
     .dataTables_paginate .paginate_button.current {
-      background-color: #0284c7 !important;
-      border-color: #0284c7 !important;
+      background-color: #0ea5e9 !important;
+      border-color: #0ea5e9 !important;
       color: white !important;
       font-weight: 500;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     }
     
     .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
       background-color: #f3f4f6 !important;
       color: #111827 !important;
       border-color: #e5e7eb !important;
+      /* Override any potential DataTables internal hover styles */
+      background: #f3f4f6 !important;
+      background-image: none !important;
+      box-shadow: none !important;
+    }
+    
+    /* Additional specificity to override DataTables defaults */
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+      background-color: #f3f4f6 !important;
+      color: #111827 !important;
+      border-color: #e5e7eb !important;
+      background: #f3f4f6 !important;
+      background-image: none !important;
     }
     
     .dataTables_paginate .paginate_button.disabled {
@@ -160,6 +206,8 @@ $listPerson = retrieve_current_sit_in();
       border-collapse: separate;
       border-spacing: 0;
       width: 100%;
+      border-radius: 0.5rem;
+      overflow: hidden;
     }
     
     table.dataTable thead th {
@@ -170,6 +218,22 @@ $listPerson = retrieve_current_sit_in();
       text-align: left;
       border-bottom: 2px solid #e5e7eb;
       white-space: nowrap;
+      position: relative;
+    }
+    
+    table.dataTable thead th::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 0;
+      width: 0;
+      background-color: transparent;
+      transition: none;
+    }
+    
+    table.dataTable thead th:hover::after {
+      width: 0;
     }
     
     table.dataTable tbody tr {
@@ -177,7 +241,7 @@ $listPerson = retrieve_current_sit_in();
     }
     
     table.dataTable tbody tr:hover {
-      background-color: #f3f4f6;
+      background-color: #f0f9ff;
       transform: translateY(-2px);
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
@@ -187,27 +251,6 @@ $listPerson = retrieve_current_sit_in();
       border-bottom: 1px solid #e5e7eb;
       vertical-align: middle;
       transition: all 0.2s ease;
-    }
-    
-    /* Status Badges */
-    .status-badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 500;
-      text-align: center;
-      transition: all 0.3s ease;
-    }
-    
-    .status-badge.active {
-      background-color: #d1fae5;
-      color: #047857;
-    }
-    
-    .status-badge.completed {
-      background-color: #e0f2fe;
-      color: #0369a1;
     }
     
     /* Button Animations */
@@ -234,24 +277,6 @@ $listPerson = retrieve_current_sit_in();
       transform: translate(-50%, -50%) scale(1);
     }
     
-    /* Card hover effects */
-    .stat-card {
-      transition: all 0.3s ease;
-    }
-    
-    .stat-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-    
-    .stat-card:hover .icon-container {
-      transform: scale(1.1);
-    }
-    
-    .icon-container {
-      transition: transform 0.3s ease;
-    }
-    
     /* Shimmer effect */
     .shimmer {
       background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
@@ -259,22 +284,10 @@ $listPerson = retrieve_current_sit_in();
       animation: shimmer 2s infinite linear;
     }
     
-    /* Counter Animation */
-    .counter-value {
-      display: inline-block;
-      transition: all 0.5s ease;
-    }
-    
-    /* Custom table row animations */
-    .row-enter {
+    /* Row animations */
+    .row-animation {
       opacity: 0;
       transform: translateY(10px);
-    }
-    
-    .row-enter-active {
-      opacity: 1;
-      transform: translateY(0px);
-      transition: opacity 0.3s, transform 0.3s;
     }
   </style>
 </head>
@@ -283,7 +296,7 @@ $listPerson = retrieve_current_sit_in();
   <div class="container mx-auto px-4 py-8 max-w-7xl">
     <!-- Page Header -->
     <div class="mb-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center">
                     <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
@@ -294,14 +307,9 @@ $listPerson = retrieve_current_sit_in();
                 <p class="text-gray-500 mt-1 ml-12">Comprehensive view of all laboratory users</p>
             </div>
             <div class="flex space-x-3 mt-4 md:mt-0">
-                <button id="refreshBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-sync-alt mr-2"></i>
-                    Refresh
-                </button>
-                
-                <button id="exportBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                    <i class="fas fa-download mr-2 text-gray-500"></i>
-                    Export
+                <button id="refreshBtn" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
+                    <i class="fas fa-sync-alt mr-2 text-gray-500"></i>
+                    Refresh Data
                 </button>
             </div>
         </div>
@@ -310,7 +318,7 @@ $listPerson = retrieve_current_sit_in();
         <nav class="flex mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
                 <li class="inline-flex items-center">
-                    <a href="Admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                    <a href="admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
                         <i class="fas fa-home mr-2"></i>
                         Dashboard
                     </a>
@@ -326,7 +334,13 @@ $listPerson = retrieve_current_sit_in();
     </div>
     
     <!-- Table Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 animate__animated animate__fadeInUp animate__faster">
+      <div class="border-b border-gray-100 px-6 py-4">
+        <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+          <i class="fas fa-list-alt text-primary-500 mr-2"></i>
+          Sit-In Records
+        </h2>
+      </div>
       <div class="p-6">
         <table id="sitInTable" class="w-full">
           <thead>
@@ -335,11 +349,11 @@ $listPerson = retrieve_current_sit_in();
               <th>ID Number</th>
               <th>Name</th>
               <th>Purpose</th>
-              <th>Lab</th>
-              <th>Login</th>
-              <th>Logout</th>
+              <th>Laboratory</th>
+              <th>Time-in</th>
+              <th>Time-out</th>
               <th>Date</th>
-              <th>Actions</th>
+              <th class="text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -350,32 +364,55 @@ $listPerson = retrieve_current_sit_in();
                   <td><?php echo htmlspecialchars($person['id_number']); ?></td>
                   <td><?php echo htmlspecialchars($person['firstName'] . " " . $person['lastName']); ?></td>
                   <td><?php echo htmlspecialchars($person['sit_purpose']); ?></td>
-                  <td class="text-center">
-                    <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                  <td>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                       <?php echo htmlspecialchars($person['sit_lab']); ?>
                     </span>
                   </td>
-                  <td><?php echo htmlspecialchars($person['sit_login']); ?></td>
+                  <td><?php echo formatTime($person['sit_login']); ?></td>
                   <td>
                     <?php if (empty($person['sit_logout']) || $person['sit_logout'] == 'N/A'): ?>
-                      <span class="status-badge active">Active</span>
+                      <span class="px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+                        Active
+                      </span>
                     <?php else: ?>
-                      <span class="status-badge completed"><?php echo htmlspecialchars($person['sit_logout']); ?></span>
+                      <?php echo formatTime($person['sit_logout']); ?>
                     <?php endif; ?>
                   </td>
-                  <td><?php echo htmlspecialchars($person['sit_date']); ?></td>
-                  <td>
-                    <div class="flex space-x-2 justify-center">
-                      <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-lg transition-all duration-300 transform hover:scale-110 view-details" data-id="<?php echo htmlspecialchars($person['sit_id']); ?>" title="View Details">
-                        <i class="fas fa-eye"></i>
-                      </button>
-                    </div>
+                  <td><?php echo formatDate($person['sit_date']); ?></td>
+                  <td class="text-center">
+                    <button class="bg-primary-600 hover:bg-primary-700 text-white py-1 px-3 rounded view-details btn-animated" data-id="<?php echo htmlspecialchars($person['sit_id']); ?>">
+                      View
+                    </button>
                   </td>
                 </tr>
               <?php endforeach; ?>
+            <?php else: ?>
+              <tr>
+                <td colspan="9" class="text-center text-gray-500">
+                  <p>No records found.</p>
+                </td>
+              </tr>
             <?php endif; ?>
           </tbody>
         </table>
+      </div>
+    </div>
+    
+    <!-- Quick Help Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8 animate__animated animate__fadeInUp animate__faster">
+      <div class="flex items-start">
+        <div class="flex-shrink-0 bg-primary-50 rounded-lg p-3 mr-4">
+          <i class="fas fa-lightbulb text-primary-500 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-medium text-gray-800 mb-2">Quick Tips</h3>
+          <div class="text-sm text-gray-600 space-y-2">
+            <p>• Use the search box to quickly find records by name, ID, or laboratory</p>
+            <p>• Click the "View" button to see more details about a sit-in session</p>
+            <p>• "Active" status indicates students currently using the laboratory</p>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -386,71 +423,35 @@ $listPerson = retrieve_current_sit_in();
   </div>
 
   <!-- jQuery (required for DataTables) -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
   <!-- DataTables JS -->
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <!-- SweetAlert2 JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- AOS Animation Library -->
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <!-- DataTables Buttons JS -->
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/3.0.1/js/buttons.print.min.js"></script>
   
   <script>
     $(document).ready(function() {
-      // Initialize AOS animations
-      AOS.init({
-        duration: 800,
-        once: true
-      });
-      
-      // Animate counter numbers
-      function animateCounter() {
-        $('.counter').each(function() {
-          const $this = $(this);
-          const target = parseInt($this.attr('data-target'));
+      // Initialize animations for page elements
+      function animateElements() {
+        $('.animate__animated').each(function(i) {
+          $(this).css('opacity', '0');
           
-          $({ Counter: 0 }).animate({
-            Counter: target
-          }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function() {
-              $this.text(Math.ceil(this.Counter));
-            }
-          });
-        });
-        
-        $('.counter-decimal').each(function() {
-          const $this = $(this);
-          const target = parseFloat($this.attr('data-target'));
-          
-          $({ Counter: 0 }).animate({
-            Counter: target
-          }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function() {
-              $this.text(this.Counter.toFixed(1));
-            }
-          });
+          setTimeout(() => {
+            $(this).css('opacity', '1');
+          }, i * 100);
         });
       }
       
-      // Call counter animation after a short delay
-      setTimeout(animateCounter, 500);
+      animateElements();
       
       // Initialize DataTable with row animation
       const table = $('#sitInTable').DataTable({
         responsive: true,
         language: {
-          search: "_INPUT_",
+          search: "",
           searchPlaceholder: "Search records...",
+          lengthMenu: "Show _MENU_ entries",
+          info: "Showing _START_ to _END_ of _TOTAL_ records",
           paginate: {
             first: '<i class="fas fa-angle-double-left"></i>',
             previous: '<i class="fas fa-angle-left"></i>',
@@ -459,56 +460,7 @@ $listPerson = retrieve_current_sit_in();
           }
         },
         order: [[0, 'desc']],
-        buttons: [
-          {
-            extend: 'excel',
-            className: 'hidden',
-            exportOptions: { columns: ':visible:not(:last-child)' },
-            title: 'Sit-in Records - ' + new Date().toLocaleDateString()
-          },
-          {
-            extend: 'pdf',
-            className: 'hidden',
-            exportOptions: { columns: ':visible:not(:last-child)' },
-            title: 'Sit-in Records',
-            customize: function(doc) {
-              doc.pageMargins = [20, 30, 20, 30];
-              doc.defaultStyle.fontSize = 10;
-              doc.styles.tableHeader.fontSize = 11;
-              doc.styles.tableHeader.alignment = 'left';
-              
-              // Add header
-              doc.content.splice(0, 0, {
-                margin: [0, 0, 0, 12],
-                alignment: 'center',
-                text: 'Sit-in Monitoring System',
-                style: { fontSize: 18, bold: true, color: '#0284c7' }
-              });
-              
-              // Add date
-              doc.content.splice(1, 0, {
-                margin: [0, 0, 0, 12],
-                alignment: 'center',
-                text: 'Generated on: ' + new Date().toLocaleDateString(),
-                style: { fontSize: 10, color: '#666666' }
-              });
-              
-              // Add footer
-              doc.footer = function(currentPage, pageCount) {
-                return { 
-                  text: currentPage.toString() + ' of ' + pageCount,
-                  alignment: 'center', fontSize: 8, margin: [0, 10, 0, 0]
-                };
-              };
-            }
-          },
-          {
-            extend: 'print',
-            className: 'hidden',
-            exportOptions: { columns: ':visible:not(:last-child)' }
-          }
-        ],
-        "drawCallback": function() {
+        drawCallback: function() {
           // Animate rows when table is drawn or redrawn
           $('.row-animation').each(function(i) {
             const $row = $(this);
@@ -526,6 +478,29 @@ $listPerson = retrieve_current_sit_in();
               });
             }, 50 * i); // Stagger the animations
           });
+          
+          // Enhance pagination
+          $('.dataTables_paginate .paginate_button').addClass('hover:shadow-sm');
+          $('.dataTables_paginate .paginate_button.current').css('background-color', '#0284c7').css('border-color', '#0284c7');
+          
+          // Add icons to pagination buttons if not already present
+          if ($('.dataTables_paginate .previous i').length === 0) {
+            $('.dataTables_paginate .previous').html('<i class="fas fa-angle-left"></i>');
+            $('.dataTables_paginate .next').html('<i class="fas fa-angle-right"></i>');
+            $('.dataTables_paginate .first').html('<i class="fas fa-angle-double-left"></i>');
+            $('.dataTables_paginate .last').html('<i class="fas fa-angle-double-right"></i>');
+          }
+        },
+        initComplete: function() {
+          // Add custom classes to DataTable elements
+          $('.dataTables_filter').addClass('relative');
+          $('.dataTables_filter label').addClass('flex items-center');
+          $('.dataTables_filter input').addClass('focus:border-[#0284c7] focus:ring focus:ring-[#0284c7] focus:ring-opacity-20');
+          $('.dataTables_length select').addClass('focus:border-[#0284c7] focus:ring focus:ring-[#0284c7] focus:ring-opacity-20');
+          
+          // Add icon to search input
+          $('.dataTables_filter label').prepend('<i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>');
+          $('.dataTables_filter input').addClass('pl-10').css('padding-left', '2.5rem');
         }
       });
       
@@ -537,105 +512,111 @@ $listPerson = retrieve_current_sit_in();
         }, 500);
       });
       
-      // Export button functionality with animation
-      $('#exportBtn').on('click', function() {
-        $(this).addClass('animate-pulse');
-        
-        Swal.fire({
-          title: 'Export Options',
-          html: `
-            <div class="grid grid-cols-1 gap-3 mt-4">
-              <button id="btnExcelExport" class="bg-green-100 hover:bg-green-200 text-green-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                <i class="fas fa-file-excel mr-2"></i> Export to Excel
-              </button>
-              <button id="btnPdfExport" class="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                <i class="fas fa-file-pdf mr-2"></i> Export to PDF
-              </button>
-              <button id="btnPrintExport" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
-                <i class="fas fa-print mr-2"></i> Print Table
-              </button>
-            </div>
-          `,
-          showConfirmButton: false,
-          showCloseButton: true,
-          showClass: {
-            popup: 'animate__animated animate__fadeInDown'
-          },
-          hideClass: {
-            popup: 'animate__animated animate__fadeOutUp'
-          },
-          didOpen: () => {
-            $('#btnExcelExport').on('click', function() {
-              $('.buttons-excel').click();
-              Swal.close();
-            });
-            
-            $('#btnPdfExport').on('click', function() {
-              $('.buttons-pdf').click();
-              Swal.close();
-            });
-            
-            $('#btnPrintExport').on('click', function() {
-              $('.buttons-print').click();
-              Swal.close();
-            });
-          }
-        }).then(() => {
-          $(this).removeClass('animate-pulse');
-        });
-      });
-      
-      // Refresh button functionality with animation
+      // Refresh button functionality
       $('#refreshBtn').on('click', function() {
         const $icon = $(this).find('i');
         $icon.addClass('fa-spin');
         $(this).addClass('animate-pulse');
         
-        // Show loading message with SweetAlert2
+        // Show loading indicator
         Swal.fire({
-          title: 'Refreshing Data',
-          text: 'Getting the latest records...',
+          title: 'Refreshing...',
+          html: 'Updating sit-in records',
+          timer: 1000,
           timerProgressBar: true,
           didOpen: () => {
             Swal.showLoading();
+          },
+          willClose: () => {
+            $(this).removeClass('animate-pulse');
+            // Reload the page to fetch fresh data
+            window.location.reload();
           }
         });
-        
-        // Simulate refresh with animation
-        setTimeout(function() {
-          location.reload();
-        }, 800);
       });
       
-      // View Details Button with animated modal
+      // View Details Button
       $('.view-details').on('click', function() {
         const recordId = $(this).data('id');
         
-        $(this).addClass('animate-spin');
-        setTimeout(() => {
-          $(this).removeClass('animate-spin');
-        }, 500);
+        // Find the corresponding row data
+        let recordData = null;
+        <?php if (!empty($listPerson)): ?>
+          <?php foreach ($listPerson as $person): ?>
+            if (recordId == <?php echo json_encode($person['sit_id']); ?>) {
+              recordData = {
+                sit_id: <?php echo json_encode($person['sit_id']); ?>,
+                id_number: <?php echo json_encode($person['id_number']); ?>,
+                name: <?php echo json_encode($person['firstName'] . ' ' . $person['lastName']); ?>,
+                purpose: <?php echo json_encode($person['sit_purpose']); ?>,
+                lab: <?php echo json_encode($person['sit_lab']); ?>,
+                login: <?php echo json_encode(formatTime($person['sit_login'])); ?>,
+                logout: <?php echo json_encode(empty($person['sit_logout']) || $person['sit_logout'] == 'N/A' ? 'Active' : formatTime($person['sit_logout'])); ?>,
+                date: <?php echo json_encode(formatDate($person['sit_date'])); ?>
+              };
+            }
+          <?php endforeach; ?>
+        <?php endif; ?>
         
-        Swal.fire({
-          title: 'Sit-in Record Details',
-          html: `
-            <div class="text-left">
-              <p class="mb-2"><strong>Sit-in ID:</strong> ${recordId}</p>
-              <p class="mb-2"><strong>Lab Computer:</strong> PC-${Math.floor(Math.random() * (30 - 1) + 1)}</p>
-              <p class="mb-2"><strong>Session Duration:</strong> ${Math.floor(Math.random() * 180) + 15} minutes</p>
-              <p class="mb-2"><strong>Additional Notes:</strong> Regular lab use activity</p>
-              <p class="mb-2"><strong>IP Address:</strong> 192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}</p>
-            </div>
-          `,
-          confirmButtonColor: '#0284c7',
-          confirmButtonText: 'Close',
-          showClass: {
-            popup: 'animate__animated animate__fadeIn'
-          },
-          hideClass: {
-            popup: 'animate__animated animate__fadeOut'
-          }
-        });
+        if (recordData) {
+          Swal.fire({
+            title: 'Sit-in Record Details',
+            html: `
+              <div class="text-left">
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                  <div class="bg-blue-50 p-3 rounded-lg">
+                    <p class="text-xs text-blue-600 mb-1">ID Number</p>
+                    <p class="font-semibold">${recordData.id_number}</p>
+                  </div>
+                  <div class="bg-blue-50 p-3 rounded-lg">
+                    <p class="text-xs text-blue-600 mb-1">Lab</p>
+                    <p class="font-semibold">${recordData.lab}</p>
+                  </div>
+                </div>
+                
+                <div class="mb-4">
+                  <p class="text-xs text-gray-500 mb-1">Student Name</p>
+                  <p class="font-semibold">${recordData.name}</p>
+                </div>
+                
+                <div class="bg-gray-50 p-3 rounded-lg mb-4">
+                  <p class="text-xs text-gray-500 mb-1">Purpose</p>
+                  <p>${recordData.purpose}</p>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <p class="text-xs text-gray-500 mb-1">Time in</p>
+                    <p class="font-medium text-blue-600">${recordData.login}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-500 mb-1">Time out</p>
+                    <p class="font-medium ${recordData.logout === 'Active' ? 'text-green-600' : 'text-blue-600'}">${recordData.logout}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-gray-500 mb-1">Date</p>
+                    <p class="font-medium">${recordData.date}</p>
+                  </div>
+                </div>
+              </div>
+            `,
+            confirmButtonColor: '#0284c7',
+            confirmButtonText: 'Close',
+            showClass: {
+              popup: 'animate__animated animate__fadeIn'
+            },
+            hideClass: {
+              popup: 'animate__animated animate__fadeOut'
+            }
+          });
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Record Not Found',
+            text: 'The selected record could not be found.',
+            confirmButtonColor: '#0284c7'
+          });
+        }
       });
     });
   </script>

@@ -596,6 +596,34 @@ if(isset($_SESSION['registration_error'])) {
         width: 100% !important;
         background-color: #10b981 !important;
     }
+
+    /* Ensure input icons and placeholders don't overlap */
+    .input-icon {
+        position: absolute;
+        left: 0.75rem; /* Adjust spacing to align with input padding */
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #9ca3af; /* Neutral gray color for icons */
+    }
+
+    .form-control {
+        padding-left: 3.5rem; /* Add enough padding to prevent overlap with icons */
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #0ea5e9; /* Tailwind primary color */
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2); /* Add focus effect */
+    }
+
+    .form-select {
+        padding-left: 3.5rem; /* Add padding for select elements as well */
+    }
+
+    textarea.form-control {
+        padding-left: 3.5rem; /* Add padding for textareas */
+    }
   </style>
 </head>
 
@@ -1274,8 +1302,9 @@ if(isset($_SESSION['registration_error'])) {
           $('.dataTables_filter label').addClass('flex items-center');
           $('.dataTables_length select').addClass('focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500');
           
-          // Remove any padding adjustments that were for the icon
-          $('.dataTables_filter input').removeClass('pl-9');
+          // Add icon to search input
+          $('.dataTables_filter label').prepend('<i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>');
+          $('.dataTables_filter input').addClass('pl-10').css('padding-left', '2.5rem');
         }
       });
       
@@ -1663,41 +1692,55 @@ if(isset($_SESSION['registration_error'])) {
         
         // Fetch student data via AJAX
         $.ajax({
-          url: '../../includes/fetch_student_data.php',
-          method: 'POST',
-          data: { studentId: studentId },
-          dataType: 'json',
-          success: function(student) {
-            // Reset button state
-            $button.html('<i class="fas fa-edit"></i>');
-            
-            // Populate and show the modal
-            $('#editStudentId').val(student.id_number);
-            $('#editLastName').val(student.lastName);
-            $('#editFirstName').val(student.firstName);
-            $('#editMiddleName').val(student.middleName);
-            $('#editYearLevel').val(student.yearLevel);
-            $('#editEmail').val(student.email);
-            $('#editCourse').val(student.course);
-            $('#editAddress').val(student.address);
-            
-            $('#editStudentModal').modal('show');
-          },
-          error: function(xhr, textStatus, errorThrown) {
-            // Reset button state
-            $button.html('<i class="fas fa-edit"></i>');
-            
-            // Show error
-            Swal.fire({
-              icon: 'error',
-              title: 'Error Loading Student Data',
-              text: 'Could not retrieve student information. Please try again.',
-              confirmButtonColor: '#0ea5e9'
-            });
-          }
+            url: '../../includes/fetch_student_data.php',
+            method: 'POST',
+            data: { studentId: studentId },
+            dataType: 'json',
+            success: function(student) {
+                // Reset button state
+                $button.html('<i class="fas fa-edit"></i>');
+                
+                if (student.success === false) {
+                    // Handle error response
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error Loading Student Data',
+                        text: student.message || 'Could not retrieve student information. Please try again.',
+                        confirmButtonColor: '#0ea5e9'
+                    });
+                    return;
+                }
+                
+                // Populate and show the modal
+                $('#editStudentId').val(student.id_number);
+                $('#editLastName').val(student.lastName);
+                $('#editFirstName').val(student.firstName);
+                $('#editMiddleName').val(student.middleName);
+                $('#editYearLevel').val(student.yearLevel);
+                $('#editEmail').val(student.email);
+                $('#editCourse').val(student.course);
+                $('#editAddress').val(student.address);
+                
+                // Show the modal using Bootstrap's modal method
+                $('#editStudentModal').modal('show');
+            },
+            error: function(xhr, textStatus, errorThrown) {
+                // Reset button state
+                $button.html('<i class="fas fa-edit"></i>');
+                
+                // Show error
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error Loading Student Data',
+                    text: 'Could not retrieve student information. Please try again.',
+                    confirmButtonColor: '#0ea5e9'
+                });
+                
+                console.error("AJAX error:", textStatus, errorThrown);
+            }
         });
       });
-      
+
       // Handle edit student form submission
       $('#editStudentForm').on('submit', function(e) {
         e.preventDefault();
@@ -1710,283 +1753,50 @@ if(isset($_SESSION['registration_error'])) {
         
         // Submit form via AJAX
         $.ajax({
-          url: '../../includes/update_student.php',
-          method: 'POST',
-          data: formData,
-          dataType: 'json',
-          success: function(response) {
-            // Hide modal
-            $('#editStudentModal').modal('hide');
-            
-            if (response.success) {
-              // Show success message
-              Swal.fire({
-                icon: 'success',
-                title: 'Student Updated',
-                text: 'The student information has been successfully updated.',
-                confirmButtonColor: '#0ea5e9',
-                showClass: {
-                  popup: 'animate__animated animate__fadeInDown animate__faster'
-                },
-                hideClass: {
-                  popup: 'animate__animated animate__fadeOutUp animate__faster'
+            url: '../../includes/update_student.php',
+            method: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function(response) {
+                // Hide modal
+                $('#editStudentModal').modal('hide');
+                
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Student information has been updated.',
+                        confirmButtonColor: '#0ea5e9'
+                    }).then(() => {
+                        // Reload the page to show updated data
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: response.message || 'There was a problem updating the student information.',
+                        confirmButtonColor: '#0ea5e9'
+                    });
                 }
-              }).then(() => {
-                // Reload page to show updated data
-                window.location.reload();
-              });
-            } else {
-              // Show error message
-              Swal.fire({
-                icon: 'error',
-                title: 'Update Failed',
-                text: response.message || 'There was a problem updating the student information.',
-                confirmButtonColor: '#0ea5e9'
-              });
+            },
+            error: function(xhr, textStatus, errorThrown) {
+                $('#editStudentModal').modal('hide');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Server Error',
+                    text: 'There was a problem connecting to the server. Please try again.',
+                    confirmButtonColor: '#0ea5e9'
+                });
+                console.error("AJAX error:", textStatus, errorThrown);
+            },
+            complete: function() {
+                // Reset button state
+                $('#editStudentSubmitBtn').html('<i class="fas fa-save mr-2"></i>Save Changes');
+                $('#editStudentSubmitBtn').prop('disabled', false);
             }
-          },
-          error: function(xhr, textStatus, errorThrown) {
-            // Hide modal
-            $('#editStudentModal').modal('hide');
-            
-            // Show error message
-            Swal.fire({
-              icon: 'error',
-              title: 'Connection Error',
-              text: 'Could not connect to the server. Please try again later.',
-              confirmButtonColor: '#0ea5e9'
-            });
-          },
-          complete: function() {
-            // Reset button state
-            $('#editStudentSubmitBtn').html('<i class="fas fa-save mr-2"></i>Save Changes');
-            $('#editStudentSubmitBtn').prop('disabled', false);
-          }
         });
       });
-
-      // Update the Add Student button to open the modal instead of redirecting
-      $('a[href="Add.php"]').on('click', function(e) {
-          e.preventDefault();
-          $('#addStudentModal').modal('show');
-      });
-      
-      // Password toggle functionality
-      $('#togglePassword').on('click', function() {
-          const passwordInput = $('#password');
-          const icon = $(this).find('i');
-          
-          if (passwordInput.attr('type') === 'password') {
-              passwordInput.attr('type', 'text');
-              icon.removeClass('fa-eye').addClass('fa-eye-slash');
-          } else {
-              passwordInput.attr('type', 'password');
-              icon.removeClass('fa-eye-slash').addClass('fa-eye');
-          }
-      });
-      
-      // Password strength indicator
-      $('#password').on('input', function() {
-          const password = $(this).val();
-          const strengthBar = $('#passwordStrength');
-          
-          if (password.length === 0) {
-              strengthBar.removeClass('password-weak password-medium password-strong').css('width', '0');
-              return;
-          }
-          
-          // Simple strength check (you can make this more complex)
-          if (password.length < 6) {
-              strengthBar.removeClass('password-medium password-strong').addClass('password-weak');
-          } else if (password.length < 10 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-              strengthBar.removeClass('password-weak password-strong').addClass('password-medium');
-          } else {
-              strengthBar.removeClass('password-weak password-medium').addClass('password-strong');
-          }
-      });
-      
-      // Hide input icons on focus/typing
-      $('input, select, textarea').on('focus', function() {
-          $(this).siblings('.input-icon').css('opacity', '0');
-      }).on('blur', function() {
-          if ($(this).val() === '') {
-              $(this).siblings('.input-icon').css('opacity', '1');
-          }
-      });
-      
-      // Check if input already has value on page load
-      $('input, select, textarea').each(function() {
-          if ($(this).val() !== '') {
-              $(this).siblings('.input-icon').css('opacity', '0');
-          }
-      });
-      
-      // For select elements, handle change events separately
-      $('select').on('change', function() {
-          if ($(this).val() !== '') {
-              $(this).siblings('.input-icon').css('opacity', '0');
-          } else {
-              $(this).siblings('.input-icon').css('opacity', '1');
-          }
-      });
-      
-      // Add Student Form Submission
-      $('#addStudentForm').on('submit', function(e) {
-          e.preventDefault();
-          
-          // Perform client-side validation
-          if (!validateStudentForm()) {
-              return false;
-          }
-          
-          // Show loading state
-          const $submitBtn = $('#addStudentSubmitBtn');
-          $submitBtn.prop('disabled', true)
-                   .html('<i class="fas fa-spinner fa-spin mr-2"></i>Adding...');
-          
-          // Create a FormData object
-          const formData = new FormData(this);
-          
-          // Convert FormData to URL-encoded string
-          const urlEncodedData = new URLSearchParams(formData).toString();
-          
-          // Log the data being sent for debugging
-          console.log("Submitting form data:", Object.fromEntries(formData));
-          
-          // Make the AJAX request
-          $.ajax({
-              url: 'students.php',
-              type: 'POST',
-              data: urlEncodedData,
-              processData: false, // Don't process the data further
-              contentType: 'application/x-www-form-urlencoded', // Set proper content type
-              headers: {
-                  'X-Requested-With': 'XMLHttpRequest' // Indicate this is an AJAX request
-              },
-              success: function(response) {
-                  console.log("Raw response:", response);
-                  
-                  // Try to parse the response as JSON
-                  let jsonResponse;
-                  try {
-                      // If the response is already a JS object, use it directly
-                      if (typeof response === 'object') {
-                          jsonResponse = response;
-                      } else {
-                          // Otherwise try to parse it as JSON
-                          jsonResponse = JSON.parse(response);
-                      }
-                      
-                      console.log("Parsed response:", jsonResponse);
-                      
-                      if (jsonResponse.success) {
-                          // Close the modal
-                          $('#addStudentModal').modal('hide');
-                          
-                          // Show success message
-                          Swal.fire({
-                              icon: 'success',
-                              title: 'Success!',
-                              text: 'Student added successfully to the system.',
-                              confirmButtonColor: '#0ea5e9'
-                          }).then(() => {
-                              // Reload the page to show the updated list
-                              location.reload();
-                          });
-                      } else {
-                          // Show error message
-                          Swal.fire({
-                              icon: 'error',
-                              title: 'Registration Failed',
-                              text: jsonResponse.message || 'Failed to add student. Please try again.',
-                              confirmButtonColor: '#0ea5e9'
-                          });
-                      }
-                  } catch (e) {
-                      console.error("Failed to parse response as JSON:", e);
-                      
-                      // Check for success indicators in the raw response
-                      if (response.includes('success') || response.includes('registration_success')) {
-                          // Close modal and show success message
-                          $('#addStudentModal').modal('hide');
-                          
-                          Swal.fire({
-                              icon: 'success',
-                              title: 'Success!',
-                              text: 'Student added successfully to the system.',
-                              confirmButtonColor: '#0ea5e9'
-                          }).then(() => {
-                              // Reload the page to show the updated list
-                              location.reload();
-                          });
-                      } else {
-                          // Show error message
-                          Swal.fire({
-                              icon: 'error',
-                              title: 'Registration Failed',
-                              text: 'Failed to add student. Please try again.',
-                              confirmButtonColor: '#0ea5e9'
-                          });
-                      }
-                  }
-              },
-              error: function(xhr, status, error) {
-                  console.error("AJAX Error:", status, error);
-                  console.log("Response text:", xhr.responseText);
-                  
-                  // Show error message
-                  Swal.fire({
-                      icon: 'error',
-                      title: 'Connection Error',
-                      text: 'Failed to connect to the server. Please try again.',
-                      confirmButtonColor: '#0ea5e9'
-                  });
-              },
-              complete: function() {
-                  // Reset button state
-                  $submitBtn.prop('disabled', false)
-                          .html('<i class="fas fa-user-plus mr-2"></i>Add Student');
-              }
-          });
-      });
-      
-      // Add animation when modal appears
-      $('#addStudentModal').on('show.bs.modal', function () {
-          const modalContent = $(this).find('.modal-content');
-          modalContent.addClass('animate__animated animate__fadeInDown animate__faster');
-      });
-      
-      $('#addStudentModal').on('hidden.bs.modal', function () {
-          const modalContent = $(this).find('.modal-content');
-          modalContent.removeClass('animate__animated animate__fadeInDown animate__faster');
-          
-          $('#addStudentForm')[0].reset();
-          $('#passwordStrength').css('width', '0');
-      });
-      
-      <?php if (isset($_SESSION['registration_success']) && $_SESSION['registration_success']): ?>
-      Swal.fire({
-          icon: 'success',
-          title: 'Student Added',
-          text: 'The new student has been successfully registered.',
-          confirmButtonColor: '#0ea5e9',
-          showClass: {
-              popup: 'animate__animated animate__fadeInDown animate__faster'
-          }
-      });
-      <?php 
-      $_SESSION['registration_success'] = false;
-      endif; 
-      ?>
-
-      <?php if (isset($registrationError) && !empty($registrationError)): ?>
-      Swal.fire({
-          icon: 'error',
-          title: 'Registration Failed',
-          text: '<?php echo $registrationError; ?>',
-          confirmButtonColor: '#0ea5e9'
-      });
-      <?php endif; ?>
 
       $('#addStudentBtn').on('click', function() {
           $('#addStudentModal').modal('show');

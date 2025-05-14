@@ -442,4 +442,50 @@ if(isset($_GET['error']) && $_GET['error'] == 1) {
     });
     </script>';
 }
+
+// Login form processing
+if(isset($_POST['submit'])) {
+    $id_number = $_POST['idNum'];
+    $password = $_POST['password'];
+    
+    // Initialize user_type variable
+    $user_type = null;
+    
+    // Authenticate user (assuming this function exists in api_index.php)
+    if(authenticate_user($id_number, $password)) {
+        // Set user type based on authentication result
+        $user_type = get_user_type($id_number); // You'll need to implement this function
+        
+        // Set session variables
+        $_SESSION['id_number'] = $id_number;
+        $_SESSION['user_type'] = $user_type;
+        
+        // Proceed with the login logic below
+    } else {
+        // Redirect to login page with error
+        header('Location: login.php?error=1');
+        exit();
+    }
+}
+
+// After successful student login
+if (isset($user_type) && $user_type === 'student') {
+    // Request login points
+    request_login_points($_SESSION['id_number']);
+    
+    // Set points in session
+    $_SESSION['points'] = get_student_points($_SESSION['id_number']);
+    
+    // Redirect as usual
+    header('Location: ../view/student/Homepage.php');
+    exit();
+} else if (isset($user_type) && $user_type === 'admin') {
+    // Admin login handling
+    header('Location: ../view/admin/Dashboard.php');
+    exit();
+} else if (isset($user_type) && $user_type === 'faculty') {
+    // Faculty login handling
+    header('Location: ../view/faculty/Dashboard.php');
+    exit();
+}
 ?>

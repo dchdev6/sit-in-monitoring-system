@@ -1,7 +1,11 @@
 <?php
 include '../../includes/navbar_admin.php';
 
+// Get sit-in records and initialize as an empty array if null
 $listPerson = retrieve_sit_in();
+if (!is_array($listPerson)) {
+    $listPerson = [];
+}
 ?>
 
 <!DOCTYPE html>
@@ -11,12 +15,20 @@ $listPerson = retrieve_sit_in();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sit In Records</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.tailwind.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css">
+    <!-- Animation Library - Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  
     <script>
-        // Include your Tailwind config
         tailwind.config = {
             theme: {
                 extend: {
@@ -54,227 +66,346 @@ $listPerson = retrieve_sit_in();
                             '0%': { backgroundPosition: '-1000px 0' },
                             '100%': { backgroundPosition: '1000px 0' },
                         },
-                        spin: {
-                            '0%': { transform: 'rotate(0deg)' },
-                            '100%': { transform: 'rotate(360deg)' },
-                        }
                     },
                     animation: {
                         fadeIn: 'fadeIn 0.5s ease-out',
                         slideUp: 'slideUp 0.5s ease-out',
                         pulse: 'pulse 2s infinite',
                         shimmer: 'shimmer 2s infinite linear',
-                        spin: 'spin 1s linear infinite',
                     },
-                    boxShadow: {
-                        card: '0 2px 5px 0 rgba(0,0,0,0.05), 0 1px 2px 0 rgba(0,0,0,0.07)',
-                        'card-hover': '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
-                    }
                 }
             }
         }
     </script>
     <style>
-        /* Custom styles to complement Tailwind */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f9fafb;
         }
         
-        .animate-staggered {
-            opacity: 0;
-            animation: slideUp 0.5s ease-out forwards;
+        /* DataTables Custom Styling */
+        .dataTables_wrapper {
+            background-color: transparent;
+            padding: 0.5rem;
         }
         
-        /* DataTable styling improvements */
-        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-            background-color: #0ea5e9 !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 0.375rem !important;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        .dataTables_filter input {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem; /* Remove left padding that was accommodating the icon */
+            margin-left: 0.5rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            background-image: none; /* Remove the background image */
         }
         
-        .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled) {
-            background-color: #bae6fd !important;
-            color: #0c4a6e !important;
-            border: none !important;
+        .dataTables_filter input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
         }
         
-        .dataTables_wrapper .dataTables_length select, 
-        .dataTables_wrapper .dataTables_filter input {
-            border-radius: 0.375rem !important;
-            border-color: #d1d5db !important;
-            padding: 0.5rem 0.75rem !important;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        .dataTables_length select {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem; /* Adjust padding (remove extra right padding) */
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            background-image: none;
+            -webkit-appearance: auto; /* Reset to browser default */
+            appearance: auto; /* Reset to browser default */
+        }
+        
+        .dataTables_length select:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+        }
+        
+        .dataTables_info, .dataTables_length, .dataTables_filter {
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: #4b5563;
+        }
+        
+        .dataTables_paginate {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .dataTables_paginate .paginate_button {
+            padding: 0.5rem 0.75rem;
+            margin: 0 0.25rem;
+            border-radius: 0.375rem;
+            border: 1px solid #e5e7eb;
+            background-color: #fff;
+            color: #374151;
             transition: all 0.2s;
         }
         
-        .dataTables_wrapper .dataTables_filter input {
-            width: 250px !important;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: 0.625rem 0.75rem;
-            background-size: 1rem;
-            padding-left: 2.5rem !important;
+        .dataTables_paginate .paginate_button.current {
+            background-color: #0ea5e9 !important;
+            border-color: #0ea5e9 !important;
+            color: white !important;
+            font-weight: 500;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
         
-        .dataTables_wrapper .dataTables_filter input:focus {
-            outline: none !important;
-            border-color: #0ea5e9 !important;
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
+            background-color: #f3f4f6 !important;
+            color: #111827 !important;
+            border-color: #e5e7eb !important;
+        }
+        
+        .dataTables_paginate .paginate_button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
         table.dataTable {
-            border-collapse: separate !important;
-            border-spacing: 0 4px !important;
-            margin-top: 0 !important;
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 0.5rem;
+            overflow: hidden;
         }
         
         table.dataTable thead th {
+            background: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+            white-space: nowrap;
             position: relative;
-            background-image: none !important;
-            padding-right: 30px !important;
         }
         
         table.dataTable thead th::after {
+            content: '';
             position: absolute;
-            right: 10px;
-            opacity: 0.4;
-            font-family: 'Font Awesome 6 Free';
-            content: '\f0dc';
-            font-weight: 900;
+            bottom: 0;
+            left: 0;
+            height: 0;
+            width: 0;
+            background-color: transparent;
+            transition: none;
         }
         
-        table.dataTable thead th.sorting_asc::after {
-            content: '\f0de';
-            opacity: 1;
-        }
-        
-        table.dataTable thead th.sorting_desc::after {
-            content: '\f0dd';
-            opacity: 1;
+        table.dataTable thead th:hover::after {
+            width: 0;
         }
         
         table.dataTable tbody tr {
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-            transition: all 0.2s;
-            border-radius: 0.5rem;
-            background-color: white;
-        }
-        
-        table.dataTable tbody tr:hover {
-            background-color: #f0f9ff !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-            transform: translateY(-2px);
-        }
-        
-        table.dataTable tbody td {
-            border-top: none !important;
-            border-bottom: none !important;
-        }
-        
-        table.dataTable tbody tr td:first-child {
-            border-top-left-radius: 0.5rem;
-            border-bottom-left-radius: 0.5rem;
-        }
-        
-        table.dataTable tbody tr td:last-child {
-            border-top-right-radius: 0.5rem;
-            border-bottom-right-radius: 0.5rem;
-        }
-        
-        /* Status styling */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-weight: 500;
-            font-size: 0.75rem;
-        }
-        
-        .status-active {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-        
-        .status-inactive {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-        
-        /* Button styling */
-        .logout-btn {
-            position: relative;
-            overflow: hidden;
             transition: all 0.3s ease;
         }
         
-        .logout-btn::before {
+        table.dataTable tbody tr:hover {
+            background-color: #f0f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        table.dataTable tbody td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: middle;
+            transition: all 0.2s ease;
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.375rem 0.875rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-align: center;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .status-badge.low {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .status-badge.medium {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.good {
+            background-color: #d1fae5;
+            color: #047857;
+        }
+        
+        .status-badge.active {
+            background-color: #d1fae5;
+            color: #047857;
+        }
+        
+        .status-badge.inactive {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        
+        .status-badge i {
+            margin-right: 0.375rem;
+            font-size: 0.75rem;
+        }
+        
+        /* Button Animations */
+        .btn-animated {
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(0);
+        }
+        
+        .btn-animated::before {
             content: '';
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 0;
-            height: 0;
-            background-color: rgba(255, 255, 255, 0.1);
+            width: 300%;
+            height: 300%;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.6s ease-out;
         }
         
-        .logout-btn:hover::before {
-            width: 300px;
-            height: 300px;
+        .btn-animated:hover::before {
+            transform: translate(-50%, -50%) scale(1);
         }
         
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .container {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
+        /* Card hover effects */
+        .stat-card {
+            transition: all 0.3s ease;
         }
-
-        /* Loading spinner */
-        .spinner {
-            width: 40px;
-            height: 40px;
-            margin: 0 auto;
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #0ea5e9;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-card:hover .icon-container {
+            transform: scale(1.1);
+        }
+        
+        .icon-container {
+            transition: transform 0.3s ease;
+        }
+        
+        /* Shimmer effect */
+        .shimmer {
+            background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+        }
+        
+        /* Counter Animation */
+        .counter-value {
+            display: inline-block;
+            transition: all 0.5s ease;
+        }
+        
+        /* Action buttons */
+        .action-btn {
+            width: 2.25rem;
+            height: 2.25rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-btn::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.5s, opacity 1s;
+        }
+        
+        .action-btn:active::after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
+        
+        /* Action button tooltips */
+        .tooltip-container {
+            position: relative;
+        }
+        
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            background-color: #1f2937;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+        
+        .tooltip::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1f2937 transparent transparent transparent;
+        }
+        
+        .tooltip-container:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
         }
     </style>
 </head>
 
-<body class="bg-gray-50 font-sans">
-
-    <div class="container mx-auto px-4 max-w-7xl animate-fadeIn py-8">
+<body class="bg-gray-50 font-sans text-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Page Header -->
         <div class="mb-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6" data-aos="fade-down">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800 flex items-center">
                         <div class="bg-primary-100 p-2 rounded-lg mr-3 shadow-sm">
-                            <i class="fas fa-desktop text-primary-600"></i>
+                            <i class="fas fa-users text-primary-600"></i>
                         </div>
-                        Current Sit-In Records
+                        Active Sit-In Sessions
                     </h1>
-                    <p class="text-gray-500 mt-1 ml-12">Monitor active laboratory sessions in real-time</p>
+                    <p class="text-gray-500 mt-1 ml-12">Monitor students currently using laboratory facilities</p>
                 </div>
-                
-                <div class="flex items-center space-x-2 mt-4 md:mt-0">
-                    <button id="refreshBtn" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated">
-                        <i class="fas fa-sync-alt mr-2"></i> Refresh Data
+                <div class="flex space-x-3 mt-4 md:mt-0">
+                    <button id="refreshButton" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition duration-300 flex items-center shadow-sm">
+                        <i class="fas fa-sync-alt mr-2 text-gray-500"></i>
+                        Refresh Data
                     </button>
-                    
-                    <a href="javascript:void(0)" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition duration-300 flex items-center shadow-sm btn-animated" data-bs-toggle="modal" data-bs-target="#helpModal">
-                        <i class="fas fa-question-circle mr-2 text-gray-500"></i> Help
-                    </a>
                 </div>
             </div>
             
@@ -282,7 +413,7 @@ $listPerson = retrieve_sit_in();
             <nav class="flex mb-6" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm">
                     <li class="inline-flex items-center">
-                        <a href="Admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
+                        <a href="admin.php" class="text-gray-500 hover:text-primary-600 transition-colors inline-flex items-center">
                             <i class="fas fa-home mr-2"></i>
                             Dashboard
                         </a>
@@ -290,254 +421,529 @@ $listPerson = retrieve_sit_in();
                     <li>
                         <div class="flex items-center">
                             <span class="text-gray-400 mx-2">/</span>
-                            <span class="text-primary-600 font-medium">Current Sit-In</span>
+                            <span class="text-primary-600 font-medium">Sit-In Management</span>
                         </div>
                     </li>
                 </ol>
             </nav>
         </div>
 
-        <!-- Main data table container -->
-        <div class="bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
-            <!-- Table loader placeholder -->
-            <div id="tableLoader" class="py-12 text-center">
-                <div class="spinner"></div>
-                <p class="text-gray-500 mt-4">Loading sit-in records...</p>
+        <!-- Table Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 animate__animated animate__fadeInUp animate__faster">
+            <div class="border-b border-gray-100 px-6 py-4">
+                <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                    <i class="fas fa-desktop text-primary-500 mr-2"></i>
+                    Active Sit-In Sessions
+                </h2>
             </div>
-            
-            <div id="tableContent" class="overflow-x-auto p-6" style="display: none;">
+            <div class="p-6">
                 <table id="sitInTable" class="w-full">
                     <thead>
                         <tr>
-                            <th class="bg-primary-600 text-white p-4 font-semibold text-center">Sit ID</th>
-                            <th class="bg-primary-600 text-white p-4 font-semibold text-center">ID Number</th>
-                            <th class="bg-primary-600 text-white p-4 font-semibold">Name</th>
-                            <th class="bg-primary-600 text-white p-4 font-semibold">Purpose</th>
-                            <th class="bg-primary-600 text-white p-4 font-semibold text-center">Lab</th>
-                            <th class="bg-primary-600 text-white p-4 font-semibold text-center">Session</th>
-                            <th class="bg-primary-600 text-white p-4 font-semibold text-center">Status</th>
-                            <th class="bg-primary-600 text-white p-4 font-semibold text-center">Actions</th>
+                            <th>ID</th>
+                            <th>Student Name</th>
+                            <th>ID Number</th>
+                            <th>Purpose</th>
+                            <th>Laboratory</th>
+                            <th>Remaining Sessions</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($listPerson as $index => $person) : ?>
-                            <tr class="border-b border-gray-200 text-gray-700 table-row-animate">
-                                <td class="p-4 text-center font-medium text-primary-600"><?php echo $person['sit_id']; ?></td>
-                                <td class="p-4 text-center"><?php echo $person['id_number']; ?></td>
-                                <td class="p-4 font-medium">
-                                    <?php echo $person['firstName'] . " " . (!empty($person['middleName']) ? $person['middleName'][0] . ". " : "") . $person['lastName']; ?>
-                                </td>
-                                <td class="p-4"><?php echo $person['sit_purpose']; ?></td>
-                                <td class="p-4 text-center">
-                                    <span class="bg-primary-50 text-primary-700 px-2 py-1 rounded-md font-medium">
+                        <?php foreach ($listPerson as $person) : ?>
+                            <tr class="row-animation">
+                                <td class="font-medium"><?php echo $person['sit_id']; ?></td>
+                                <td><?php echo $person['firstName'] . " " . $person['middleName'] . ". " . $person['lastName']; ?></td>
+                                <td><?php echo $person['id_number']; ?></td>
+                                <td><?php echo $person['sit_purpose']; ?></td>
+                                <td>
+                                    <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                         <?php echo $person['sit_lab']; ?>
                                     </span>
                                 </td>
-                                <td class="p-4 text-center"><?php echo $person['session']; ?></td>
-                                <td class="p-4 text-center">
-                                    <span class="status-badge <?php echo ($person['status'] === 'Active') ? 'status-active' : 'status-inactive'; ?>">
-                                        <i class="fas <?php echo ($person['status'] === 'Active') ? 'fa-circle-check' : 'fa-circle-xmark'; ?> mr-1"></i>
+                                <td>
+                                    <?php 
+                                        $session = $person['session'];
+                                        $statusClass = '';
+                                        $statusIcon = '';
+                                        
+                                        if($session <= 6) {
+                                            $statusClass = 'low';
+                                            $statusIcon = 'fa-exclamation-circle';
+                                        } else if($session <= 15) {
+                                            $statusClass = 'medium';
+                                            $statusIcon = 'fa-clock';
+                                        } else {
+                                            $statusClass = 'good';
+                                            $statusIcon = 'fa-check-circle';
+                                        }
+                                    ?>
+                                    <span class="status-badge <?php echo $statusClass; ?>">
+                                        <i class="fas <?php echo $statusIcon; ?>"></i>
+                                        <?php echo $session; ?> sessions
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="status-badge active">
+                                        <i class="fas fa-circle text-xs mr-1"></i>
                                         <?php echo $person['status']; ?>
                                     </span>
                                 </td>
-                                <td class="p-4 text-center">
-                                    <form action="../../api/api_admin.php" method="POST" class="inline-block">
-                                        <input type="hidden" name="session" value="<?php echo $person['session']; ?>" />
-                                        <input type="hidden" name="idNum" value="<?php echo $person['id_number']; ?>" />
-                                        <input type="hidden" name="sitLab" value="<?php echo $person['sit_lab']; ?>" />
-                                        <input type="hidden" name="sitId" value="<?php echo $person['sit_id']; ?>" />
-                                        <button type="submit" name="logout" class="logout-btn bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center mx-auto">
-                                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                        <?php if (empty($listPerson)) : ?>
-                            <tr>
-                                <td colspan="8" class="p-8 text-center">
-                                    <div class="flex flex-col items-center justify-center py-6">
-                                        <i class="fas fa-laptop-code text-gray-300 text-5xl mb-4"></i>
-                                        <p class="text-gray-500 text-xl font-medium">No active sit-in sessions</p>
-                                        <p class="text-gray-400 mt-2">When students log in to a sit-in session, they will appear here.</p>
+                                <td>
+                                    <div class="flex justify-center space-x-2">
+                                        <div class="tooltip-container">
+                                            <button type="button" class="action-btn bg-primary-50 hover:bg-primary-100 text-primary-600 end-session" data-id="<?php echo $person['sit_id']; ?>" data-student="<?php echo $person['id_number']; ?>">
+                                                <i class="fas fa-sign-out-alt"></i>
+                                            </button>
+                                            <div class="tooltip">End Session</div>
+                                        </div>
+                                        
+                                        <div class="tooltip-container">
+                                            <button class="action-btn bg-gray-50 hover:bg-gray-100 text-gray-700 view-details" data-id="<?php echo $person['id_number']; ?>">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <div class="tooltip">View Details</div>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
-
-    <!-- Help Modal -->
-    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-lg shadow-xl border-0">
-                <div class="modal-header bg-primary-50 border-b border-primary-100">
-                    <h5 class="modal-title text-primary-700 font-semibold" id="helpModalLabel">
-                        <i class="fas fa-question-circle mr-2"></i> Sit-In Management Help
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        
+        <!-- Quick Help Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8 animate__animated animate__fadeInUp animate__faster">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 bg-primary-50 rounded-lg p-3 mr-4">
+                    <i class="fas fa-lightbulb text-primary-500 text-xl"></i>
                 </div>
-                <div class="modal-body p-6">
-                    <div class="space-y-4">
-                        <div>
-                            <h6 class="font-medium text-gray-800"><i class="fas fa-info-circle text-primary-500 mr-2"></i> What is this page?</h6>
-                            <p class="text-gray-600 ml-8">This page displays all current sit-in sessions across all computer labs.</p>
-                        </div>
-                        
-                        <div>
-                            <h6 class="font-medium text-gray-800"><i class="fas fa-search text-primary-500 mr-2"></i> Using the search</h6>
-                            <p class="text-gray-600 ml-8">Use the search box to filter records by any field - name, ID number, lab, etc.</p>
-                        </div>
-                        
-                        <div>
-                            <h6 class="font-medium text-gray-800"><i class="fas fa-sign-out-alt text-primary-500 mr-2"></i> Logging out students</h6>
-                            <p class="text-gray-600 ml-8">Click the "Logout" button to end a student's sit-in session.</p>
-                        </div>
-                        
-                        <div>
-                            <h6 class="font-medium text-gray-800"><i class="fas fa-sync-alt text-primary-500 mr-2"></i> Refreshing data</h6>
-                            <p class="text-gray-600 ml-8">Click the "Refresh Data" button to update the table with the latest information.</p>
-                        </div>
+                <div>
+                    <h3 class="text-lg font-medium text-gray-800 mb-2">Quick Tips</h3>
+                    <div class="text-sm text-gray-600 space-y-2">
+                        <p>• Use the search box to quickly find active sit-in sessions by student name or ID</p>
+                        <p>• Click "End Session" to log a student out from their current sit-in session</p>
+                        <p>• Students with fewer than 6 sessions remaining are marked in red</p>
                     </div>
-                </div>
-                <div class="modal-footer bg-gray-50">
-                    <button type="button" class="bg-primary-500 hover:bg-primary-600 text-white font-medium py-2 px-4 rounded-md transition duration-300 ease-in-out" data-bs-dismiss="modal">Got it</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- jQuery (required for DataTables) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.25/js/dataTables.tailwind.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Animation Library - Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    
     <script>
         $(document).ready(function() {
-            // Show loading spinner
-            $('#tableLoader').show();
-            $('#tableContent').hide();
-            
-            // Simulate loading time (remove this in production)
-            setTimeout(function() {
-                $('#tableLoader').fadeOut(300, function() {
-                    $('#tableContent').fadeIn(300);
-                });
-                
-                // Initialize DataTable with advanced options
-                var table = $('#sitInTable').DataTable({
-                    responsive: true,
-                    pageLength: 10,
-                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                    order: [[0, 'desc']], // Sort by sit ID by default
-                    language: {
-                        search: "",
-                        searchPlaceholder: "Search records...",
-                        lengthMenu: "Show _MENU_ entries",
-                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                        infoEmpty: "Showing 0 to 0 of 0 entries",
-                        paginate: {
-                            first: "<i class='fas fa-angle-double-left'></i>",
-                            last: "<i class='fas fa-angle-double-right'></i>",
-                            next: "<i class='fas fa-angle-right'></i>",
-                            previous: "<i class='fas fa-angle-left'></i>"
-                        },
-                        emptyTable: "No sit-in records available"
-                    },
-                    drawCallback: function() {
-                        // Apply staggered animation to rows after each draw
-                        animateTableRows();
-                        
-                        // Update summary statistics whenever the table is redrawn (filtered)
-                        updateStats();
-                    }
-                });
-                
-                // Custom positioning of the length and filter controls
-                $(".dataTables_length").addClass("mb-4");
-                $(".dataTables_filter").addClass("mb-4");
-                
-                // Function to update statistics based on visible rows
-                function updateStats() {
-                    const visibleRows = table.rows({search:'applied'}).data();
-                    let labCounts = {};
-                    let purposeCounts = {};
+            // Initialize animations for page elements
+            function animateElements() {
+                $('.animate__animated').each(function(i) {
+                    $(this).css('opacity', '0');
                     
-                    // Count labs and purposes from visible rows
-                    for (let i = 0; i < visibleRows.length; i++) {
-                        const lab = $(visibleRows[i][4]).text().trim();
-                        const purpose = visibleRows[i][3];
-                        
-                        if (!labCounts[lab]) labCounts[lab] = 0;
-                        labCounts[lab]++;
-                        
-                        if (!purposeCounts[purpose]) purposeCounts[purpose] = 0;
-                        purposeCounts[purpose]++;
-                    }
-                    
-                    // Update displayed stats
-                    $('#totalActiveSessions').text(visibleRows.length);
-                    
-                    const labCount = Object.keys(labCounts).length;
-                    $('#labUsage').text(labCount + (labCount === 1 ? ' Lab' : ' Labs'));
-                    
-                    // Find top purpose
-                    let topPurpose = 'None';
-                    let maxCount = 0;
-                    
-                    for (const purpose in purposeCounts) {
-                        if (purposeCounts[purpose] > maxCount) {
-                            maxCount = purposeCounts[purpose];
-                            topPurpose = purpose;
-                        }
-                    }
-                    
-                    $('#topPurpose').text(topPurpose !== '' ? topPurpose : 'None');
-                }
-            }, 800);
-            
-            // Function to animate table rows with staggered effect
-            function animateTableRows() {
-                $('.table-row-animate').each(function(index) {
-                    const $row = $(this);
-                    $row.css('opacity', 0);
-                    
-                    setTimeout(function() {
-                        $row.css('opacity', 1).addClass('animate-staggered');
-                    }, index * 50); // 50ms delay between each row
+                    setTimeout(() => {
+                        $(this).css('opacity', '1');
+                    }, i * 100);
                 });
             }
             
-            // Enhanced logout button effects
-            $(document).on({
-                mouseenter: function() {
-                    $(this).find('i').addClass('fa-bounce');
-                },
-                mouseleave: function() {
-                    $(this).find('i').removeClass('fa-bounce');
-                }
-            }, '.logout-btn');
+            animateElements();
             
-            // Refresh button functionality
-            $('#refreshBtn').on('click', function() {
-                const $btn = $(this);
-                const originalText = $btn.html();
-                
-                // Disable button and show loading state
-                $btn.prop('disabled', true)
-                   .html('<i class="fas fa-spinner fa-spin mr-2"></i> Refreshing...')
-                   .addClass('opacity-75');
-                
-                // Reload the page after a brief delay
-                setTimeout(function() {
-                    location.reload();
+            // Initialize DataTable with row animation
+            const table = $('#sitInTable').DataTable({
+                responsive: true,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search sessions...",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ sessions",
+                    paginate: {
+                        first: '<i class="fas fa-angle-double-left"></i>',
+                        previous: '<i class="fas fa-angle-left"></i>',
+                        next: '<i class="fas fa-angle-right"></i>',
+                        last: '<i class="fas fa-angle-double-right"></i>'
+                    }
+                },
+                order: [[0, 'desc']], // Order by ID descending
+                columnDefs: [
+                    { orderable: false, targets: 7 } // Disable sorting on actions column
+                ],
+                "drawCallback": function() {
+                    // Animate rows when table is drawn or redrawn
+                    $('.row-animation').each(function(i) {
+                        const $row = $(this);
+                        $row.css('opacity', 0);
+                        
+                        setTimeout(function() {
+                            $row.animate({
+                                opacity: 1,
+                                transform: 'translateY(0)'
+                            }, {
+                                duration: 300,
+                                start: function() {
+                                    $row.css('transform', 'translateY(0px)');
+                                }
+                            });
+                        }, 50 * i); // Stagger the animations
+                    });
+                    
+                    // Enhance pagination
+                    $('.dataTables_paginate .paginate_button').addClass('hover:shadow-sm');
+                    $('.dataTables_paginate .paginate_button.current').css('background-color', '#0284c7').css('border-color', '#0284c7');
+                    
+                    // Add icons to pagination buttons if not already present
+                    if ($('.dataTables_paginate .previous i').length === 0) {
+                        $('.dataTables_paginate .previous').html('<i class="fas fa-angle-left"></i>');
+                        $('.dataTables_paginate .next').html('<i class="fas fa-angle-right"></i>');
+                        $('.dataTables_paginate .first').html('<i class="fas fa-angle-double-left"></i>');
+                        $('.dataTables_paginate .last').html('<i class="fas fa-angle-double-right"></i>');
+                    }
+                },
+                initComplete: function() {
+                    // Add custom classes to DataTable elements
+                    $('.dataTables_filter').addClass('relative');
+                    $('.dataTables_filter label').addClass('flex items-center');
+                    $('.dataTables_filter input').addClass('focus:border-[#0284c7] focus:ring focus:ring-[#0284c7] focus:ring-opacity-20');
+                    $('.dataTables_length select').addClass('focus:border-[#0284c7] focus:ring focus:ring-[#0284c7] focus:ring-opacity-20');
+                    
+                    // Add icon to search input
+                    $('.dataTables_filter label').prepend('<i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>');
+                    $('.dataTables_filter input').addClass('pl-10').css('padding-left', '2.5rem');
+                }
+            });
+            
+            // Add shimmer effect to search when typing
+            $('.dataTables_filter input').on('input', function() {
+                $(this).addClass('shimmer');
+                setTimeout(() => {
+                    $(this).removeClass('shimmer');
                 }, 500);
             });
+            
+            // Refresh button functionality
+            $('#refreshButton').on('click', function() {
+                $(this).addClass('animate-pulse');
+                
+                // Show loading indicator
+                Swal.fire({
+                    title: 'Refreshing...',
+                    html: 'Updating sit-in session data',
+                    timer: 1000,
+                    timerProgressBar: true,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                    willClose: () => {
+                        $(this).removeClass('animate-pulse');
+                        // Reload the page to fetch fresh data
+                        window.location.reload();
+                    }
+                });
+            });
+            
+            // End session functionality
+            $('.end-session').on('click', function() {
+                const sessionId = $(this).data('id');
+                const studentId = $(this).data('student');
+                
+                Swal.fire({
+                    title: '<div class="flex items-center"><i class="fas fa-door-open text-yellow-500 mr-3"></i>End Session</div>',
+                    html: `
+                        <div class="text-left">
+                            <p class="mb-3">End sit-in session for ID: <strong>${sessionId}</strong>?</p>
+                            <div class="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm flex items-start mb-4">
+                                <i class="fas fa-info-circle mr-2 mt-0.5"></i>
+                                <span>This will log out the student and decrease their session count by 1.</span>
+                            </div>
+                            
+                            <!-- Point Award Option -->
+                            <div class="mt-4 border-t pt-3 border-gray-200">
+                                <div class="text-gray-700 font-medium mb-2">Reward Student:</div>
+                                <div class="flex items-center space-x-2">
+                                    <input type="checkbox" id="awardPoints" class="form-checkbox h-5 w-5 text-primary-600 rounded border-gray-300 focus:ring-primary-500" checked>
+                                    <label for="awardPoints" class="text-gray-700 flex items-center">
+                                        <span class="mr-1">Award 1 point to student</span>
+                                        <span class="inline-flex items-center justify-center text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                            <i class="fas fa-award mr-1"></i> +1
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonColor: '#0ea5e9',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: '<i class="fas fa-check mr-2"></i>Yes, end session',
+                    cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown animate__faster'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp animate__faster'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Get the award points value
+                        const awardPoints = $('#awardPoints').is(':checked');
+                        
+                        // Show loading state
+                        Swal.fire({
+                            title: 'Processing...',
+                            html: `Ending sit-in session ${sessionId}`,
+                            timer: 1500,
+                            timerProgressBar: true,
+                            didOpen: () => {
+                                Swal.showLoading();
+                                
+                                // You would add an AJAX request to your endpoint here
+                                // Include the awardPoints parameter in your request
+                                $.ajax({
+                                    url: '../../api/api_admin.php', // You'll need to create/update this endpoint
+                                    type: 'POST',
+                                    data: {
+                                        action: 'end_session',
+                                        sessionId: sessionId,
+                                        studentId: studentId,
+                                        awardPoints: awardPoints ? 1 : 0
+                                    },
+                                    dataType: 'json',
+                                    success: function(response) {
+                                        // Handle success
+                                        let message = 'The student has been logged out successfully.';
+                                        if (awardPoints) {
+                                            message += ' 1 point has been awarded.';
+                                        }
+                                        
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Session Ended!',
+                                            html: message,
+                                            confirmButtonColor: '#0ea5e9'
+                                        }).then(() => {
+                                            // Reload the page to refresh the data
+                                            window.location.reload();
+                                        });
+                                    },
+                                    error: function(xhr, status, error) {
+                                        // Handle error
+                                        console.error("Error ending session:", error);
+                                        
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Error!',
+                                            text: 'Could not end the session. Please try again.',
+                                            confirmButtonColor: '#0ea5e9'
+                                        });
+                                    }
+                                });
+                            },
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            allowEnterKey: false
+                        });
+                    }
+                });
+            });
+            
+            // View student details functionality
+            $('.view-details').on('click', function() {
+                const studentId = $(this).data('id');
+                
+                // Add spin animation
+                $(this).addClass('animate-spin');
+                setTimeout(() => {
+                    $(this).removeClass('animate-spin');
+                }, 500);
+                
+                // Extract data from the table row
+                const rowData = $(this).closest('tr').find('td');
+                const sessionId = rowData.eq(0).text().trim();
+                const studentName = rowData.eq(1).text().trim();
+                const purpose = rowData.eq(3).text().trim();
+                const lab = rowData.eq(4).text().trim();
+                const sessions = rowData.eq(5).text().trim();
+                
+                // Show student details modal
+                Swal.fire({
+                    title: '<div class="flex items-center justify-between w-full pr-6"><span class="flex items-center"><i class="fas fa-user-graduate text-primary-600 mr-2"></i>Sit-In Details</span><span class="text-sm font-normal text-gray-500">ID: ' + studentId + '</span></div>',
+                    html: `
+                        <div class="bg-white rounded-lg border border-gray-200">
+                            <!-- Name and badge row -->
+                            <div class="px-4 py-3 flex items-center justify-between border-b border-gray-200">
+                                <div class="flex items-center">
+                                    <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center mr-3">
+                                        <i class="fas fa-user text-primary-600"></i>
+                                    </div>
+                                    <h3 class="font-bold text-gray-800">${studentName}</h3>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="bg-blue-50 px-2 py-0.5 rounded text-xs text-blue-700">${purpose}</span>
+                                    <span class="bg-purple-50 px-2 py-0.5 rounded text-xs text-purple-700">${lab}</span>
+                                    <span class="status-badge ${parseInt(sessions) <= 6 ? 'low' : (parseInt(sessions) <= 15 ? 'medium' : 'good')}">
+                                        <i class="fas ${parseInt(sessions) <= 6 ? 'fa-exclamation-circle' : (parseInt(sessions) <= 15 ? 'fa-clock' : 'fa-check-circle')}"></i>
+                                        ${sessions}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Information row - all in one line -->
+                            <div class="grid grid-cols-3 divide-x divide-gray-200">
+                                <div class="p-3 flex items-center">
+                                    <i class="fas fa-clock text-primary-500 mr-2"></i>
+                                    <div class="overflow-hidden">
+                                        <div class="text-xs text-gray-500">Session ID</div>
+                                        <div class="font-medium text-sm">#${sessionId}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-3 flex items-center">
+                                    <i class="fas fa-calendar-alt text-primary-500 mr-2"></i>
+                                    <div>
+                                        <div class="text-xs text-gray-500">Start Time</div>
+                                        <div class="font-medium text-sm">${new Date().toLocaleTimeString()}</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-3 flex justify-center">
+                                    <button type="button" class="text-primary-600 border border-primary-300 bg-primary-50 hover:bg-primary-100 text-sm font-medium py-1.5 px-4 rounded-lg transition-all duration-300 flex items-center" onclick="endSession('${sessionId}', '${studentId}')">
+                                        <i class="fas fa-sign-out-alt mr-2"></i> End Session
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    showConfirmButton: false,
+                    showCancelButton: false,
+                    showCloseButton: true,
+                    padding: '0.5rem',
+                    width: 'auto',
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown animate__faster'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp animate__faster'
+                    },
+                    customClass: {
+                        container: 'student-details-modal',
+                        popup: 'rounded-lg shadow-md max-w-4xl',
+                        closeButton: 'focus:outline-none text-gray-500 hover:text-gray-700',
+                        title: 'pr-8' // Add right padding to the title
+                    }
+                });
+            });
+
+            // Define the endSession function in the global scope
+            window.endSession = function(sessionId, studentId) {
+                Swal.fire({
+                    title: '<div class="flex items-center"><i class="fas fa-door-open text-yellow-500 mr-3"></i>End Session</div>',
+                    html: `
+                        <div class="text-left">
+                            <p class="mb-3">End sit-in session for ID: <strong>${sessionId}</strong>?</p>
+                            <div class="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm flex items-start mb-4">
+                                <i class="fas fa-info-circle mr-2 mt-0.5"></i>
+                                <span>This will log out the student and decrease their session count by 1.</span>
+                            </div>
+                            
+                            <!-- Point Award Option -->
+                            <div class="mt-4 border-t pt-3 border-gray-200">
+                                <div class="text-gray-700 font-medium mb-2">Reward Student:</div>
+                                <div class="flex items-center space-x-2">
+                                    <input type="checkbox" id="awardPointsModal" class="form-checkbox h-5 w-5 text-primary-600 rounded border-gray-300 focus:ring-primary-500" checked>
+                                    <label for="awardPointsModal" class="text-gray-700 flex items-center">
+                                        <span class="mr-1">Award 1 point to student</span>
+                                        <span class="inline-flex items-center justify-center text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                            <i class="fas fa-award mr-1"></i> +1
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonColor: '#0ea5e9',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: '<i class="fas fa-check mr-2"></i>Yes, end session',
+                    cancelButtonText: '<i class="fas fa-times mr-2"></i>Cancel',
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown animate__faster'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp animate__faster'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Get the award points value
+                        const awardPoints = $('#awardPointsModal').is(':checked');
+                        
+                        // Show loading state
+                        Swal.fire({
+                            title: 'Processing...',
+                            html: `Ending sit-in session ${sessionId}`,
+                            timer: 1500,
+                            timerProgressBar: true,
+                            didOpen: () => {
+                                Swal.showLoading();
+                                
+                                // You would add an AJAX request to your endpoint here
+                                // Include the awardPoints parameter in your request
+                                $.ajax({
+                                    url: '../../api/api_admin.php', // You'll need to create/update this endpoint
+                                    type: 'POST',
+                                    data: {
+                                        action: 'end_session',
+                                        sessionId: sessionId,
+                                        studentId: studentId,
+                                        awardPoints: awardPoints ? 1 : 0
+                                    },
+                                    dataType: 'json',
+                                    success: function(response) {
+                                        // Handle success
+                                        let message = 'The student has been logged out successfully.';
+                                        if (awardPoints) {
+                                            message += ' 1 point has been awarded.';
+                                        }
+                                        
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Session Ended!',
+                                            html: message,
+                                            confirmButtonColor: '#0ea5e9'
+                                        }).then(() => {
+                                            // Reload the page to refresh the data
+                                            window.location.reload();
+                                        });
+                                    },
+                                    error: function(xhr, status, error) {
+                                        // Handle error
+                                        console.error("Error ending session:", error);
+                                        
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Error!',
+                                            text: 'Could not end the session. Please try again.',
+                                            confirmButtonColor: '#0ea5e9'
+                                        });
+                                    }
+                                });
+                            },
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            allowEnterKey: false
+                        });
+                    }
+                });
+            };
         });
     </script>
-
 </body>
-
 </html>

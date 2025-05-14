@@ -166,14 +166,16 @@ function retrieve_student_history($idNumber) {
     return $listPerson;
 }
 
-function view_announcement() {
-    $db = Database::getInstance();
-    $con = $db->getConnection();
+if (!function_exists('view_announcement')) {
+    function view_announcement() {
+        $db = Database::getInstance();
+        $con = $db->getConnection();
 
-    $sql = "SELECT * FROM announce ORDER BY announce_id DESC";
-    $result = mysqli_query($con, $sql);
-    $announcement = mysqli_fetch_all($result, MYSQLI_ASSOC);
-    return $announcement;
+        $sql = "SELECT * FROM announce ORDER BY announce_id DESC";
+        $result = mysqli_query($con, $sql);
+        $announcement = mysqli_fetch_all($result, MYSQLI_ASSOC);
+        return $announcement;
+    }
 }
 
 function submit_feedback($id, $lab, $message) {
@@ -191,13 +193,45 @@ function submit_reservation($id_number, $purpose, $lab, $pc_number, $time, $date
     $db = Database::getInstance();
     $con = $db->getConnection();
     
-    $sql = "INSERT INTO reservation (reservation_date, reservation_time, pc_number, lab, purpose, id_number, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')";
-    $stmt = $con->prepare($sql);
-    $stmt->bind_param("ssssss", $date, $time, $pc_number, $lab, $purpose, $id_number);
-    return $stmt->execute();
+    try {
+        $con->begin_transaction();
+        
+        // Insert reservation
+        $sql = "INSERT INTO reservation (reservation_date, reservation_time, pc_number, lab, purpose, id_number, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending')";
+        $stmt = $con->prepare($sql);
+        $stmt->bind_param("ssssss", $date, $time, $pc_number, $lab, $purpose, $id_number);
+        $stmt->execute();
+        
+        // Get student name for notification
+        $student_sql = "SELECT firstName, lastName FROM students WHERE id_number = ?";
+        $student_stmt = $con->prepare($student_sql);
+        $student_stmt->bind_param("s", $id_number);
+        $student_stmt->execute();
+        $student_result = $student_stmt->get_result();
+        $student = $student_result->fetch_assoc();
+        $student_name = $student['firstName'] . ' ' . $student['lastName'];
+        
+        // Add notification for all admins
+        $admin_sql = "SELECT id_number FROM admin";
+        $admin_result = mysqli_query($con, $admin_sql);
+        while ($admin = mysqli_fetch_assoc($admin_result)) {
+            $notification_message = "New reservation request from $student_name (ID: $id_number) for $lab lab on " . date('F j, Y', strtotime($date)) . " at $time";
+            $notify_sql = "INSERT INTO notification (id_number, message) VALUES (?, ?)";
+            $notify_stmt = $con->prepare($notify_sql);
+            $notify_stmt->bind_param("ss", $admin['id_number'], $notification_message);
+            $notify_stmt->execute();
+        }
+        
+        $con->commit();
+        return true;
+    } catch (Exception $e) {
+        $con->rollback();
+        error_log("Error in submit_reservation: " . $e->getMessage());
+        return false;
+    }
 }
 
-function retrieve_reservation_logs($id_number) {
+function retrieve_student_reservation_logs($id_number) {
     $db = Database::getInstance();
     $con = $db->getConnection();
 
@@ -219,15 +253,32 @@ function notifications($id_number, $message) {
 }
 
 function retrieve_notification($id_number) {
-    $db = Database::getInstance();
-    $con = $db->getConnection();
+    try {
+        $db = Database::getInstance();
+        $con = $db->getConnection();
 
-    $sql = "SELECT * FROM notification WHERE id_number = ? ORDER BY notification_id DESC";
-    $stmt = $con->prepare($sql);
-    $stmt->bind_param("s", $id_number);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        // First check if the is_read column exists
+        $check_column = "SHOW COLUMNS FROM notification LIKE 'is_read'";
+        $result = mysqli_query($con, $check_column);
+        
+        if (mysqli_num_rows($result) == 0) {
+            // Column doesn't exist, add it
+            $alter_table = "ALTER TABLE notification ADD COLUMN is_read TINYINT(1) DEFAULT 0";
+            if (!mysqli_query($con, $alter_table)) {
+                error_log("Failed to add is_read column: " . mysqli_error($con));
+            }
+        }
+
+        $sql = "SELECT *, COALESCE(is_read, 0) as is_read FROM notification WHERE id_number = ? ORDER BY notification_id DESC";
+        $stmt = $con->prepare($sql);
+        $stmt->bind_param("s", $id_number);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    } catch (Exception $e) {
+        error_log("Error in retrieve_notification: " . $e->getMessage());
+        return [];
+    }
 }
 
 ?>

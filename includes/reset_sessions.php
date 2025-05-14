@@ -5,8 +5,7 @@ require_once '../backend/database_connection.php';
 
 // Check if this is a POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Log POST request
-    file_put_contents('reset_log.txt', "POST request received\n", FILE_APPEND);
+
     
     // Default value to reset sessions to
     $defaultSessions = 30;
